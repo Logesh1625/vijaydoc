@@ -1,1129 +1,159 @@
-import { Component, OnInit } from '@angular/core';
-import * as XLSX from "xlsx";
-import * as FileSaver from "file-saver";
-
-import { SharedModule } from "@shared";
-import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
-import {
-  NzMessageService,
-  UploadFile,
-  NzDrawerRef
-} from "ng-zorro-antd";
-
-@Component({
-  selector: 'app-F1-Details-import',
-  templateUrl: './F1-Details-import.html',
-})
-export class F1ManageImportComponent implements OnInit {
-
-  fileList: UploadFile[] = [];
-
-  addLoading: boolean = false;
-  isSpinning: boolean = false;
-
-  sussessUpLoad = {
-    total: 0,
-    suc: 0,
-    fail: 0,
-  };
-
-  allData: any[] = [];
-  subData: any[] = [];
-  excelData: any[] = [];
-
-  fileForm = {
-    fileListStr: "",
-  };
-
-  siteOptions = [];
-
-  // ==========================================
-  // MEAL PREFERENCE MASTER
-  // ==========================================
-
-  mealPreferenceList: any[] = [];
-
-  templateData = {
-    "Groups": '',
-    "Sub Group": '',
-    "Meal Preference": '',
-    "FX Badge": '',
-    "Name": '',
-    "First Day at FXBL": '',
-    "Last Day at FXBL": ''
-  };
-
-
-  constructor(
-    private apiSvr: PublicNetService,
-    private shareSvr: SharedModule,
-    private msgSvr: NzMessageService,
-    private ref: NzDrawerRef
-  ) { }
-
-
-  // ==========================================
-  // INIT
-  // ==========================================
-
-  ngOnInit() {
-
-    this.loadMealPreferences();
-
-  }
-
-
-  // ==========================================
-  // LOAD MEAL PREFERENCE
-  // ==========================================
-
-  loadMealPreferences() {
-
-    this.apiSvr
-      .getGuardPassCode("GuardPass-Meal Preference")
-      .subscribe(
-        (res: any) => {
-
-          this.mealPreferenceList = res || [];
-
-          console.log(
-            "🔥 IMPORT - MEAL PREFERENCE LIST:",
-            JSON.stringify(this.mealPreferenceList)
-          );
-
-        },
-        (error: any) => {
-
-          console.error(
-            "❌ Failed to load Meal Preference:",
-            error
-          );
-
-          this.msgSvr.error(
-            "Unable to load Meal Preference master data."
-          );
-
-        }
-      );
-
-  }
-
-
-  // ==========================================
-  // FILE BEFORE UPLOAD
-  // ==========================================
-
-  beforeUpload = (file: UploadFile): boolean => {
-
-    this.fileForm.fileListStr = file.name;
-
-    this.fileList = [file];
-
-    let fileType =
-      file.name
-        .substring(
-          file.name.lastIndexOf("."),
-          file.name.length
-        )
-        .toLocaleUpperCase();
-
-
-    if (
-      fileType !== ".XLS" &&
-      fileType !== ".XLSX"
-    ) {
-
-      this.shareSvr.modalSvr.confirm({
-
-        nzCancelText: null,
-
-        nzContent:
-          "Attachment format must be excel!",
-
-        nzOnOk: () => {
-
-          this.fileForm.fileListStr = "";
-
-          this.fileList = [];
-
-        },
-
-      });
-
-    } else {
-
-      this.addLoading = false;
-
+{
+  "skipLibCheck": true,
+  "name": "ng-alain-pro",
+  "version": "0.0.0",
+  "description": "Ng-alain business theme, ng-zorro-antd admin panel front-end framework",
+  "author": "cipchk <cipchk@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ng-alain/ng-alain.git"
+  },
+  "homepage": "https://e.ng-alain.com/theme/pro",
+  "scripts": {
+    "ng": "ng",
+    "start": "npm run color-less && ng serve -o --host 0.0.0.0 --port 4205",
+    "hmr": "npm run color-less && ng serve -c=hmr --host=0.0.0.0",
+    "build": "npm run color-less && node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng build --prod --output-Path ./dist-FMS && javascript-obfuscator ./dist-FMS --output ./dist-FMS --compact true --self-defending true",
+    "buildpublish": "npm run color-less && node --max_old_space_size=8192 ./node_modules/@angular/cli/bin/ng build --prod --output-Path d:/publish/dist-FMS",
+    "analyze": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng build --prod --stats-json",
+    "lint": "npm run lint:ts && npm run lint:style",
+    "lint:ts": "tslint -p tsconfig.app.json -c tslint.json \"src/**/*.ts\" --fix",
+    "lint:style": "stylelint \"src/**/*.less\" --syntax less --fix",
+    "lint-staged": "lint-staged",
+    "tslint-check": "tslint-config-prettier-check ./tslint.json",
+    "e2e": "ng e2e",
+    "test": "ng test --watch",
+    "test-coverage": "ng test --code-coverage --watch=false",
+    "color-less": "node scripts/color-less.js",
+    "icon": "ng g ng-alain:plugin icon"
+  },
+  "dependencies": {
+    "@agm/core": "^1.0.0-beta.5",
+    "@angular/animations": "~8.2.3",
+    "@angular/cdk": "^8.2.3",
+    "@angular/common": "~8.2.3",
+    "@angular/compiler": "~8.2.3",
+    "@angular/core": "~8.2.3",
+    "@angular/forms": "~8.2.3",
+    "@angular/material": "^8.2.3",
+    "@angular/platform-browser": "~8.2.3",
+    "@angular/platform-browser-dynamic": "~8.2.3",
+    "@angular/router": "~8.2.3",
+    "@antv/data-set": "^0.10.2",
+    "@antv/g2": "^3.5.3",
+    "@antv/g2-plugin-slider": "^2.1.1",
+    "@delon/abc": "^8.4.0",
+    "@delon/acl": "^8.4.0",
+    "@delon/auth": "^8.4.0",
+    "@delon/cache": "^8.4.0",
+    "@delon/chart": "^8.4.0",
+    "@delon/form": "^8.4.0",
+    "@delon/mock": "^8.4.0",
+    "@delon/theme": "^8.4.0",
+    "@delon/util": "^8.4.0",
+    "@fullcalendar/core": "^4.3.0",
+    "@fullcalendar/daygrid": "^4.3.0",
+    "@fullcalendar/interaction": "^4.3.0",
+    "@fullcalendar/list": "^4.3.0",
+    "@fullcalendar/timegrid": "^4.3.0",
+    "@ngx-translate/core": "^11.0.1",
+    "@ngx-translate/http-loader": "^4.0.0",
+    "@swimlane/ngx-charts": "^12.0.1",
+    "@types/jquery": "^3.3.31",
+    "ajv": "^6.10.2",
+    "angular-baidu-maps": "^3.0.0",
+    "classlist.js": "^1.1.20150312",
+    "crypto-js": "^3.1.9-1",
+    "element-closest": "^3.0.1",
+    "file-saver": "^2.0.2",
+    "great-zorroutils": "^8.0.1-alpha3",
+    "jquery": "^3.6.0",
+    "jquery-ui": "^1.13.2",
+    "js-base64": "^2.5.1",
+    "jspdf": "^2.5.1",
+    "lodash": "^4.18.1",
+    "masonry-layout": "^4.2.2",
+    "moment": "^2.29.4",
+    "ng-zorro-antd": "^8.2.1",
+    "ngx-cookie-service": "^11.0.2",
+    "ngx-countdown": "^3.2.0",
+    "ngx-image-gallery": "^1.3.1",
+    "ngx-trend": "^4.0.0",
+    "perfect-scrollbar": "^1.4.0",
+    "qrious": "^4.0.2",
+    "quill": "^1.3.6",
+    "quill-image-resize-module": "^3.0.0",
+    "rxjs": "^6.6.7",
+    "screenfull": "^4.2.1",
+    "tslib": "^1.10.0",
+    "wangeditor": "^3.1.1",
+    "zone.js": "~0.9.1"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "~0.803.1",
+    "@angular/cli": "~8.3.1",
+    "@angular/compiler-cli": "~8.2.3",
+    "@angular/language-service": "~8.2.3",
+    "@angularclass/hmr": "^2.1.3",
+    "@delon/testing": "^8.4.0",
+    "@types/jasmine": "~3.3.8",
+    "@types/jasminewd2": "~2.0.3",
+    "@types/js-base64": "^2.3.1",
+    "@types/jszip": "^3.1.6",
+    "@types/mockjs": "^1.0.2",
+    "@types/node": "~8.9.4",
+    "antd-theme-generator": "^1.1.7",
+    "codecov": "^3.5.0",
+    "codelyzer": "^5.0.0",
+    "husky": "^3.0.4",
+    "jasmine-core": "~3.4.0",
+    "jasmine-spec-reporter": "~4.2.1",
+    "javascript-obfuscator": "^4.1.1",
+    "karma": "~4.1.0",
+    "karma-chrome-launcher": "~2.2.0",
+    "karma-coverage-istanbul-reporter": "~2.0.1",
+    "karma-jasmine": "~2.0.1",
+    "karma-jasmine-html-reporter": "^1.4.0",
+    "less-bundle-promise": "^1.0.7",
+    "lint-staged": "^8.2.1",
+    "mockjs": "^1.0.1-beta3",
+    "ng-alain": "^8.4.0",
+    "ng-alain-codelyzer": "^0.0.1",
+    "prettier": "^1.18.2",
+    "prettier-stylelint": "^0.4.2",
+    "protractor": "~5.4.0",
+    "stylelint": "^10.1.0",
+    "stylelint-config-prettier": "^5.2.0",
+    "stylelint-config-rational-order": "^0.1.2",
+    "stylelint-config-standard": "^18.3.0",
+    "stylelint-declaration-block-no-ignored-properties": "^2.1.0",
+    "stylelint-order": "^3.0.0",
+    "ts-node": "~7.0.0",
+    "tslint": "~5.15.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.3",
+    "webpack-bundle-analyzer": "^3.3.2",
+    "xlsx": "^0.15.6"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint-staged"
     }
-
-    return false;
-  };
-
-
-  // ==========================================
-  // DOWNLOAD EXCEL TEMPLATE
-  // ==========================================
-
-DownloadExcelfile() {
-  const worksheet: XLSX.WorkSheet =
-    XLSX.utils.json_to_sheet([this.templateData]);
-
-  const workbook: XLSX.WorkBook = {
-    Sheets: {
-      template: worksheet
+  },
+  "lint-staged": {
+    "linters": {
+      "src/**/*.ts": [
+        "npm run lint:ts",
+        "git add"
+      ]
     },
-    SheetNames: ["Template"]
-  };
-
-  const excelBuffer: any = XLSX.write(workbook, {
-    bookType: "xlsx",
-    type: "array"
-  });
-
-  const data: Blob = new Blob([excelBuffer], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8"
-  });
-
-  FileSaver.saveAs(
-    data,
-    "F1Meal-info Template.xlsx"
-  );
+    "ignore": [
+      "src/assets/*"
+    ]
+  },
+  "private": true,
+  "theme": {
+    "name": "pro",
+    "version": "8.2.0"
+  }
 }
-
-
-  // ==========================================
-  // ADD FILE
-  // ==========================================
-
-  addFile() {
-
-    this.addLoading = true;
-
-    this.isSpinning = true;
-
-    this.sussessUpLoad = {
-      total: 0,
-      suc: 0,
-      fail: 0
-    };
-
-    this.allData = [];
-
-    this.subData = [];
-
-
-    this.fileList.forEach(
-      (file) => {
-
-        this.getFileData(
-          file,
-          (data) => {
-
-            const wb: XLSX.WorkBook =
-              XLSX.read(
-                data,
-                {
-                  type: "binary",
-                  cellDates: true
-                }
-              );
-
-
-            const wsname: string =
-              wb.SheetNames[0];
-
-
-            const ws: XLSX.WorkSheet =
-              wb.Sheets[wsname];
-
-
-            const json =
-              XLSX.utils.sheet_to_json(ws);
-
-
-            this.batchAdd(json);
-
-          }
-        );
-
-      }
-    );
-
-  }
-
-
-  // ==========================================
-  // READ FILE
-  // ==========================================
-
-  getFileData(
-    file,
-    callback: (fle: string) => void
-  ): void {
-
-    const reader =
-      new FileReader();
-
-    reader.readAsBinaryString(file);
-
-    reader.addEventListener(
-      "load",
-      () => {
-
-        callback(
-          reader.result!.toString()
-        );
-
-      }
-    );
-
-  }
-
-
-  // ==========================================
-  // BATCH ADD
-  // ==========================================
-
-  batchAdd(data: any[]) {
-
-    this.excelData = data;
-
-    this.sussessUpLoad.total =
-      this.excelData.length;
-
-
-    if (
-      this.excelData &&
-      this.excelData.length > 0
-    ) {
-
-      this.excelData.forEach(
-        (item) => {
-
-          this.validateAndProcessRow(item);
-
-        }
-      );
-
-      this.isSpinning = false;
-
-    }
-    else {
-
-      this.fileForm.fileListStr = "";
-
-      this.fileList = [];
-
-      this.isSpinning = false;
-
-      this.msgSvr.error(
-        "Excel data does not exist"
-      );
-
-    }
-
-  }
-
-
-  // ==========================================
-  // VALIDATE ROW
-  // ==========================================
-
-  validateAndProcessRow(item: any) {
-
-    const requiredKeys = [
-
-      "Groups",
-
-      "Sub Group",
-
-      "Meal Preference",
-
-      "FX Badge",
-
-      "Name",
-
-      "First Day at FXBL",
-
-      "Last Day at FXBL"
-
-    ];
-
-
-    const hasAllProps =
-      requiredKeys.every(
-        (key) =>
-          item.hasOwnProperty(key)
-      );
-
-
-    let rowRecord = {
-      ...this.templateData,
-      ...item
-    };
-
-
-    if (!hasAllProps) {
-
-      this.sussessUpLoad.fail++;
-
-      rowRecord["Wrong Reason"] =
-        "All of template content is required.";
-
-      this.allData.push(
-        rowRecord
-      );
-
-      return;
-
-    }
-
-
-    // ======================================
-    // MEAL PREFERENCE VALIDATION
-    // ======================================
-
-    const mealName =
-      item["Meal Preference"]
-        ? item["Meal Preference"]
-            .toString()
-            .trim()
-        : "";
-
-
-    const selectedMeal =
-      this.getMealPreferenceByName(
-        mealName
-      );
-
-
-    if (!selectedMeal) {
-
-      this.sussessUpLoad.fail++;
-
-      rowRecord["Wrong Reason"] =
-        "Invalid Meal Preference. Please select a value from the Excel dropdown.";
-
-      this.allData.push(
-        rowRecord
-      );
-
-      return;
-
-    }
-
-
-    // ======================================
-    // SUCCESS
-    // ======================================
-
-    this.sussessUpLoad.suc++;
-
-    this.allData.push(
-      rowRecord
-    );
-
-    this.subData.push(
-      rowRecord
-    );
-
-  }
-
-
-  // ==========================================
-  // FIND MEAL PREFERENCE BY NAME
-  // ==========================================
-
-  getMealPreferenceByName(
-    mealName: string
-  ): any {
-
-    if (!mealName) {
-      return null;
-    }
-
-
-    return this.mealPreferenceList.find(
-      (item: any) =>
-
-        String(item.label)
-          .trim()
-          .toUpperCase() ===
-
-        String(mealName)
-          .trim()
-          .toUpperCase()
-    );
-
-  }
-
-
-  // ==========================================
-  // EXPORT FAILED EXCEL
-  // ==========================================
-
-  exportFailedExcel() {
-
-    if (
-      this.allData.length > 0
-    ) {
-
-      this.apiSvr.exportHandle(
-        this.allData,
-        68
-      );
-
-    }
-    else {
-
-      this.msgSvr.error(
-        "No Data."
-      );
-
-    }
-
-  }
-
-
-  // ==========================================
-  // SUBMIT
-  // ==========================================
-
-  submit() {
-
-    if (
-      this.subData.length === 0
-    ) {
-
-      this.msgSvr.error(
-        "No valid data to submit. Please check your file."
-      );
-
-      return;
-
-    }
-
-
-    this.isSpinning = true;
-
-
-    let completedCount = 0;
-
-    let successCount = 0;
-
-    let failCount = 0;
-
-
-    const validSubData =
-      [...this.subData];
-
-
-    this.subData = [];
-
-    this.allData = [];
-
-
-    validSubData.forEach(
-      (item) => {
-
-        this.submitData(
-          item,
-          (isSuccess) => {
-
-            completedCount++;
-
-
-            if (isSuccess) {
-
-              successCount++;
-
-            }
-            else {
-
-              failCount++;
-
-            }
-
-
-            if (
-              completedCount ===
-              validSubData.length
-            ) {
-
-              this.isSpinning = false;
-
-              this.sussessUpLoad.suc =
-                successCount;
-
-              this.sussessUpLoad.fail =
-                failCount;
-
-
-              if (
-                failCount === 0
-              ) {
-
-                this.msgSvr.success(
-                  "Success."
-                );
-
-                this.ref.close(
-                  "refresh"
-                );
-
-              }
-              else {
-
-                this.msgSvr.error(
-                  `${failCount} records failed to import. Check error report.`
-                );
-
-              }
-
-            }
-
-          }
-        );
-
-      }
-    );
-
-  }
-
-
-  // ==========================================
-  // DATE FORMAT
-  // ==========================================
-
-  formatDateValue(
-    value: any
-  ): string {
-
-    if (!value) {
-      return "";
-    }
-
-
-    // JS Date
-    if (
-      value instanceof Date &&
-      !isNaN(value.getTime())
-    ) {
-
-      const day =
-        String(
-          value.getDate()
-        ).padStart(2, '0');
-
-
-      const month =
-        String(
-          value.getMonth() + 1
-        ).padStart(2, '0');
-
-
-      const year =
-        value.getFullYear();
-
-
-      return `${day}-${month}-${year}`;
-
-    }
-
-
-    // String
-    if (
-      typeof value === 'string'
-    ) {
-
-      return value.trim();
-
-    }
-
-
-    // Excel serial number
-    if (
-      typeof value === 'number'
-    ) {
-
-      const utcDays =
-        Math.floor(
-          value - 25569
-        );
-
-
-      const utcValue =
-        utcDays * 86400;
-
-
-      const dateInfo =
-        new Date(
-          utcValue * 1000
-        );
-
-
-      const day =
-        String(
-          dateInfo.getDate()
-        ).padStart(2, '0');
-
-
-      const month =
-        String(
-          dateInfo.getMonth() + 1
-        ).padStart(2, '0');
-
-
-      const year =
-        dateInfo.getFullYear();
-
-
-      return `${day}-${month}-${year}`;
-
-    }
-
-
-    return "";
-
-  }
-
-
-  // ==========================================
-  // SUBMIT SINGLE DATA
-  // ==========================================
-
-  submitData(
-    item: any,
-    callback: (success: boolean) => void
-  ) {
-
-    // ========================================
-    // GET MEAL NAME
-    // ========================================
-
-    const mealName =
-      item["Meal Preference"]
-        ? item["Meal Preference"]
-            .toString()
-            .trim()
-        : "";
-
-
-    // ========================================
-    // FIND MASTER ID
-    // ========================================
-
-    const selectedMeal =
-      this.getMealPreferenceByName(
-        mealName
-      );
-
-
-    if (!selectedMeal) {
-
-      item["Wrong Reason"] =
-        "Invalid Meal Preference.";
-
-      this.allData.push({
-        ...this.templateData,
-        ...item
-      });
-
-      callback(false);
-
-      return;
-
-    }
-
-
-    // ========================================
-    // IMPORTANT
-    // NAME -> ID
-    // ========================================
-
-    const mealPreferenceId =
-      selectedMeal.value;
-
-
-    console.log(
-      "🔥 IMPORT MEAL:",
-      mealName,
-      "→ ID:",
-      mealPreferenceId
-    );
-
-
-    // ========================================
-    // API PARAMS
-    // ========================================
-
-    const params = {
-
-      Groups:
-        item["Groups"]
-          ? item["Groups"].toString()
-          : "",
-
-
-      SubGroup:
-        item["Sub Group"]
-          ? item["Sub Group"].toString()
-          : "",
-
-
-      // IMPORTANT:
-      // DB receives ID
-      MealPreference:
-        mealPreferenceId,
-
-
-      FxBadge:
-        item["FX Badge"]
-          ? item["FX Badge"].toString()
-          : "",
-
-
-      Name:
-        item["Name"]
-          ? item["Name"].toString()
-          : "",
-
-
-      FirstDateFxbl:
-        this.formatDateValue(
-          item["First Day at FXBL"]
-        ),
-
-
-      LastDateFxbl:
-        this.formatDateValue(
-          item["Last Day at FXBL"]
-        ),
-
-
-      AddBy:
-        (
-          this.apiSvr.getSettingUserInfo() &&
-          this.apiSvr.getSettingUserInfo().eeid
-        ) || "",
-
-
-      Func:
-        "CMS-BulkF1Menu"
-
-    };
-
-
-    console.log(
-      "🔥 BULK IMPORT PARAMS:",
-      JSON.stringify(params)
-    );
-
-
-    // ========================================
-    // API CALL
-    // ========================================
-
-    this.apiSvr.iwxPostF1(
-      params,
-      {
-
-        headers: {
-
-          apiID:
-            "ffff-1789627520107-10208193125-1282",
-
-          userKey:
-            "E9785F13CCEAFB251A6AB147AFD24336"
-
-        }
-
-      },
-      true
-
-    )
-    .then(
-      (res: any) => {
-
-        if (
-          res &&
-          res.IsOK === '1'
-        ) {
-
-          item["Import Result"] =
-            "Success.";
-
-          this.allData.push({
-            ...this.templateData,
-            ...item
-          });
-
-          callback(true);
-
-        }
-        else {
-
-          item["Wrong Reason"] =
-            (
-              res &&
-              res.Msg
-            )
-              ? res.Msg
-              : "API Error";
-
-
-          this.allData.push({
-            ...this.templateData,
-            ...item
-          });
-
-          callback(false);
-
-        }
-
-      }
-    )
-    .catch(
-      (err) => {
-
-        console.error(
-          "❌ Import API error:",
-          err
-        );
-
-
-        item["Wrong Reason"] =
-          "Network or Server Error";
-
-
-        this.allData.push({
-          ...this.templateData,
-          ...item
-        });
-
-
-        callback(false);
-
-      }
-    );
-
-  }
-
-}
-
-
-
-
-
-<div
-  class="import_container"
-  style="width: 800px; margin: 0 auto;"
->
-
-  <form
-    nz-form
-    #JF="ngForm"
-    se-container="1"
-  >
-
-    <se
-      label="File"
-      [labelWidth]="60"
-    >
-
-      <nz-input-group
-        nzSearch
-        [nzAddOnAfter]="afterTpl"
-      >
-
-        <input
-          type="text"
-          [(ngModel)]="fileForm.fileListStr"
-          name="fileListStr"
-          nz-input
-          readonly
-        />
-
-      </nz-input-group>
-
-
-      <ng-template #afterTpl>
-
-        <!-- Select Excel -->
-
-        <nz-upload
-          [(nzFileList)]="fileList"
-          [nzShowUploadList]="false"
-          [nzBeforeUpload]="beforeUpload"
-        >
-
-          <button
-            class="r_t_l_0 r_b_l_0"
-            nz-button
-            size="small"
-          >
-            Select File
-          </button>
-
-        </nz-upload>
-
-
-        <!-- Add File -->
-
-        <button
-          class="r_t_l_0 r_b_l_0"
-          nz-button
-          size="small"
-          (click)="addFile()"
-          [disabled]="addLoading"
-        >
-          Add File
-        </button>
-
-      </ng-template>
-
-
-      <!-- Download Template -->
-
-      <button
-        nz-button
-        nzType="link"
-        (click)="DownloadExcelfile()"
-      >
-        Download Template
-      </button>
-
-    </se>
-
-  </form>
-
-
-  <!-- ====================================== -->
-  <!-- REMARK -->
-  <!-- ====================================== -->
-
-  <div
-    class="tips ml-lg mr-lg"
-  >
-
-    <span>Remark:</span>
-
-    <ol>
-
-      <li>
-        Mandatory fields cannot be left blank
-        and must conform to the content format.
-      </li>
-
-      <li>
-        Meal Preference must be selected
-        from the Excel dropdown.
-      </li>
-
-      <li>
-        Do not manually enter an invalid
-        Meal Preference.
-      </li>
-
-      <li>
-        Date format: DD-MM-YYYY.
-      </li>
-
-    </ol>
-
-  </div>
-
-
-  <!-- ====================================== -->
-  <!-- SUMMARY -->
-  <!-- ====================================== -->
-
-  <div
-    class="d-flex align-items-center justify-content-between mt-lg ml-lg mr-lg"
-  >
-
-    <div
-      class="text-md text-primary"
-    >
-      Total：
-      {{ sussessUpLoad ? sussessUpLoad.total : "" }}
-    </div>
-
-
-    <div
-      class="text-md text-success"
-      style="width: auto;"
-    >
-      Success：
-      {{ sussessUpLoad ? sussessUpLoad.suc : "" }}
-    </div>
-
-
-    <div
-      class="text-md text-error"
-    >
-
-      Failure：
-
-      <span>
-        {{ sussessUpLoad ? sussessUpLoad.fail : "" }}
-      </span>
-
-
-      <button
-        nz-button
-        nzType="link"
-        (click)="exportFailedExcel()"
-        *ngIf="
-          sussessUpLoad &&
-          sussessUpLoad.fail !== 0
-        "
-      >
-        download
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <!-- ====================================== -->
-  <!-- LOADING -->
-  <!-- ====================================== -->
-
-  <nz-spin
-    style="margin-top: 20px;"
-    [nzSpinning]="isSpinning"
-    [nzTip]="'Loading'"
-  >
-  </nz-spin>
-
-</div>
-
-
-<!-- ====================================== -->
-<!-- FOOTER -->
-<!-- ====================================== -->
-
-<div
-  class="drawer-footer"
->
-
-  <button
-    nz-button
-    nzType="primary"
-    (click)="submit()"
-    style="
-      float: right;
-      margin-right: 10px;
-    "
-    [disabled]="
-      fileList.length < 1 ||
-      sussessUpLoad.total == 0 ||
-      sussessUpLoad.fail > 0
-    "
-  >
-    Submit
-  </button>
-
-</div>
