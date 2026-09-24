@@ -1,45 +1,40 @@
 DownloadExcelfile() {
 
-  const headers = [
-    "Groups",
-    "Sub Group",
-    "Meal Preference",
-    "FX Badge",
-    "Name",
-    "First Day at FXBL",
-    "Last Day at FXBL"
-  ];
+  console.log("DOWNLOAD TEMPLATE START");
 
-  // DB-la irundhu Meal Preference names
   const mealNames = this.mealPreferenceList
     .map((item: any) => item.label)
     .filter((x: any) => x)
     .map((x: any) => String(x).trim());
 
-  console.log("Meal Preference Dropdown:", mealNames);
+  console.log("MEAL LIST:", mealNames);
 
   XlsxPopulate.fromBlankAsync()
     .then((workbook: any) => {
 
+      console.log("WORKBOOK CREATED");
+
       const sheet = workbook.sheet(0);
       sheet.name("Template");
 
-      // =========================
+      // ==========================
       // HEADER
-      // =========================
+      // ==========================
+      const headers = [
+        "Groups",
+        "Sub Group",
+        "Meal Preference",
+        "FX Badge",
+        "Name",
+        "First Day at FXBL",
+        "Last Day at FXBL"
+      ];
+
       sheet.range("A1:G1").value([headers]);
 
-      // Header style
-      sheet.range("A1:G1").style({
-        bold: true,
-        horizontalAlignment: "center",
-        verticalAlignment: "center",
-        wrapText: true
-      });
-
-      // =========================
+      // ==========================
       // COLUMN WIDTH
-      // =========================
+      // ==========================
       sheet.column("A").width(20);
       sheet.column("B").width(20);
       sheet.column("C").width(25);
@@ -48,39 +43,51 @@ DownloadExcelfile() {
       sheet.column("F").width(22);
       sheet.column("G").width(22);
 
-      // =========================
+      // ==========================
+      // HEADER STYLE
+      // ==========================
+      sheet.range("A1:G1").style({
+        bold: true,
+        horizontalAlignment: "center",
+        verticalAlignment: "center"
+      });
+
+      // ==========================
       // DATE FORMAT
-      // =========================
+      // ==========================
       sheet.range("F2:G500").style(
         "numberFormat",
         "dd-mm-yyyy"
       );
 
-      // =========================
-      // MEAL PREFERENCE DROPDOWN
-      // =========================
+      // ==========================
+      // MEAL MASTER SHEET
+      // ==========================
       if (mealNames.length > 0) {
 
-        // Hidden master sheet
         const masterSheet = workbook.addSheet("MealMaster");
 
         masterSheet.cell("A1").value("Meal Preference");
 
-        mealNames.forEach((name: string, index: number) => {
+        for (let i = 0; i < mealNames.length; i++) {
           masterSheet
-            .cell(`A${index + 2}`)
-            .value(name);
-        });
+            .cell(`A${i + 2}`)
+            .value(mealNames[i]);
+        }
+
+        console.log(
+          "MEAL MASTER CREATED:",
+          mealNames.length
+        );
 
         // Hide master sheet
         masterSheet.hidden(true);
 
         const lastRow = mealNames.length + 1;
 
-        // Dropdown source
-        const validationFormula =
-          `'MealMaster'!$A$2:$A$${lastRow}`;
-
+        // ==========================
+        // DROPDOWN
+        // ==========================
         sheet
           .range("C2:C500")
           .dataValidation({
@@ -89,37 +96,20 @@ DownloadExcelfile() {
             showErrorMessage: true,
             error: "Please select a valid Meal Preference.",
             errorTitle: "Invalid Meal Preference",
-            formula1: validationFormula
+            formula1: `'MealMaster'!$A$2:$A$${lastRow}`
           });
+
+        console.log("DROPDOWN CREATED");
       }
 
-      // =========================
-      // UNLOCK DATA ROWS
-      // =========================
-      sheet.range("A2:G500").style(
-        "locked",
-        false
-      );
-
-      // =========================
-      // LOCK HEADER
-      // =========================
-      sheet.range("A1:G1").style(
-        "locked",
-        true
-      );
-
-      // =========================
-      // FREEZE HEADER
-      // =========================
-      sheet.freezePanes(0, 1);
-
-      // =========================
+      // ==========================
       // OUTPUT
-      // =========================
+      // ==========================
       return workbook.outputAsync();
     })
     .then((data: any) => {
+
+      console.log("EXCEL BUFFER CREATED");
 
       const blob = new Blob(
         [data],
@@ -134,17 +124,39 @@ DownloadExcelfile() {
         "F1Meal-info Template.xlsx"
       );
 
+      console.log("EXCEL DOWNLOAD SUCCESS");
+
+      this.msgSvr.success(
+        "Excel template downloaded successfully."
+      );
     })
     .catch((error: any) => {
 
       console.error(
-        "Excel Template Error:",
+        "================================"
+      );
+
+      console.error(
+        "EXCEL TEMPLATE ERROR:",
         error
       );
 
-      this.msgSvr.error(
-        "Unable to generate Excel template."
+      console.error(
+        "ERROR MESSAGE:",
+        error && error.message
       );
 
+      console.error(
+        "ERROR STACK:",
+        error && error.stack
+      );
+
+      console.error(
+        "================================"
+      );
+
+      this.msgSvr.error(
+        "Unable to generate Excel template. Check browser console."
+      );
     });
 }
