@@ -43,10 +43,21 @@ export class AddDetailsDrawComponent implements OnInit {
       this.firstDateFxbl = this.parseDate(this.editData.FirstDateFxbl);
       this.lastDateFxbl = this.parseDate(this.editData.LastDateFxbl);
     }
-      this.publicSvr.getGuardPassCode("GuardPass-Meal Preference")
-    .subscribe((res: any) => {
-      this.mealPreferenceList = res;
-   });
+ this.publicSvr.getGuardPassCode("GuardPass-Meal Preference")
+  .subscribe((res: any) => {
+
+    this.mealPreferenceList = res;
+
+    console.log(
+      "🔥 MEAL PREFERENCE LIST = ",
+      JSON.stringify(this.mealPreferenceList)
+    );
+
+    console.log(
+      "🔥 EDIT DATA = ",
+      JSON.stringify(this.editData)
+    );
+  });
 
   }
 
@@ -132,3 +143,114 @@ edit() {
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<form nz-form #f="ngForm" nz-row>
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Groups</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <input nz-input [(ngModel)]="groups" name="groups" required autocomplete="off" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Sub Group</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <input nz-input [(ngModel)]="subGroup" name="subGroup" required autocomplete="off" />
+    </nz-form-control>
+  </nz-form-item>
+   <nz-form-item nz-col [nzSpan]="24">
+        <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Meal Preference</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+            <nz-select [(ngModel)]="mealPreference" name="mealPreference" required nzPlaceHolder="Please select" [disabled]="option=='Edit'"
+                *ngIf="option=='Add' else elseTemplate">
+                <nz-option *ngFor="let item of mealPreferenceList" [nzValue]="item.value" [nzLabel]="item.label"></nz-option>
+            </nz-select>
+            <ng-template #elseTemplate>
+                <input nz-input [(ngModel)]="mealPreference" name="mealPreference" required nzPlaceHolder="Please select"
+                    />
+            </ng-template>
+        </nz-form-control>
+
+    </nz-form-item>
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>FX Badge</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <input nz-input [(ngModel)]="fxBadge" name="fxBadge" required autocomplete="off" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Name</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <input nz-input [(ngModel)]="name" name="name" required autocomplete="off" />
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>First Date At FXBL</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-date-picker
+        name="firstDateFxbl"
+        [(ngModel)]="firstDateFxbl"
+        nzFormat="DD-MM-YYYY"
+        nzPlaceHolder="DD-MM-YYYY"
+        nzShowToday="false"
+      >
+      </nz-date-picker>
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Last Date At FXBL</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <nz-date-picker
+        name="lastDateFxbl"
+        [(ngModel)]="lastDateFxbl"
+        nzFormat="DD-MM-YYYY"
+        nzPlaceHolder="DD-MM-YYYY"
+        nzShowToday="false"
+      >
+      </nz-date-picker>
+    </nz-form-control>
+  </nz-form-item>
+
+  <nz-form-item nz-col [nzSpan]="24">
+    <nz-form-label class="form-label" [nzSpan]="4">Remark</nz-form-label>
+    <nz-form-control [nzSpan]="14">
+      <textarea nz-input [(ngModel)]="remark" name="remark" style="resize: none;" rows="5" placeholder="Remark">
+      </textarea>
+    </nz-form-control>
+  </nz-form-item>
+
+</form>
+<div class="drawer-footer">
+  <button nz-button [nzType]="'default'" (click)="cancel()">
+    Cancel
+  </button>
+  <button *ngIf="option=='Add'" nz-button [nzType]="'primary'" [disabled]="f.invalid" (click)="add()">
+    Add
+  </button>
+  <button *ngIf="option=='Edit'" nz-button [nzType]="'primary'" [disabled]="f.invalid" (click)="edit()">
+    Edit
+  </button>
+</div>
