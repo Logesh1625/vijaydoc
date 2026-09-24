@@ -1,15 +1,13 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
-import { SFSchema, SFComponent, SFUISchema } from "@delon/form";
+import { Component, OnInit } from "@angular/core";
 import { NzMessageService, NzDrawerRef } from "ng-zorro-antd";
 import { SharedModule } from "@shared";
-import { I18NService } from '@core';
+import { I18NService } from "@core";
 import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
 
 @Component({
   selector: 'app-F1-Details-add',
   templateUrl: './F1-Details-add.html',
 })
-
 export class AddDetailsDrawComponent implements OnInit {
 
   constructor(
@@ -20,125 +18,328 @@ export class AddDetailsDrawComponent implements OnInit {
     private shareSvr: SharedModule,
   ) { }
 
-  groups: any;
-  subGroup: any;
-  mealPreference: any;
-  fxBadge: any;
-  name: any;
-  firstDateFxbl: any;
-  lastDateFxbl: any;
+  groups: any = '';
+  subGroup: any = '';
+  mealPreference: any = null;
+  fxBadge: any = '';
+  name: any = '';
+
+  firstDateFxbl: Date | null = null;
+  lastDateFxbl: Date | null = null;
 
   option: any;
   editData: any;
   timer: any;
-  mealPreferenceList=[]
+
+  mealPreferenceList: any[] = [];
 
   ngOnInit() {
+
+    // ==========================================
+    // LOAD EDIT DATA
+    // ==========================================
+
     if (this.editData) {
+
       this.groups = this.editData.Groups;
       this.subGroup = this.editData.SubGroup;
-      this.mealPreference = this.editData.MealPreference;
+
       this.fxBadge = this.editData.FxBadge;
       this.name = this.editData.Name;
-      this.firstDateFxbl = this.parseDate(this.editData.FirstDateFxbl);
-      this.lastDateFxbl = this.parseDate(this.editData.LastDateFxbl);
+
+      this.firstDateFxbl =
+        this.parseDate(this.editData.FirstDateFxbl);
+
+      this.lastDateFxbl =
+        this.parseDate(this.editData.LastDateFxbl);
+
+      console.log(
+        "🔥 EDIT DATA:",
+        JSON.stringify(this.editData)
+      );
     }
- this.publicSvr.getGuardPassCode("GuardPass-Meal Preference")
-  .subscribe((res: any) => {
 
-    this.mealPreferenceList = res;
+    // ==========================================
+    // LOAD MEAL PREFERENCE MASTER
+    // ==========================================
 
-    console.log(
-      "🔥 MEAL PREFERENCE LIST = ",
-      JSON.stringify(this.mealPreferenceList)
-    );
+    this.publicSvr
+      .getGuardPassCode("GuardPass-Meal Preference")
+      .subscribe((res: any) => {
 
-    console.log(
-      "🔥 EDIT DATA = ",
-      JSON.stringify(this.editData)
-    );
-  });
+        this.mealPreferenceList = res || [];
 
+        console.log(
+          "🔥 MEAL PREFERENCE LIST:",
+          JSON.stringify(this.mealPreferenceList)
+        );
+
+        // ======================================
+        // EDIT MODE
+        // Convert NAME -> ID
+        // ======================================
+
+        if (this.option === 'Edit' && this.editData) {
+
+          const selectedMeal =
+            this.mealPreferenceList.find(
+              (item: any) =>
+                String(item.label)
+                  .trim()
+                  .toUpperCase() ===
+                String(this.editData.MealPreference)
+                  .trim()
+                  .toUpperCase()
+            );
+
+          console.log(
+            "🔥 SELECTED MEAL:",
+            selectedMeal
+          );
+
+          if (selectedMeal) {
+
+            // IMPORTANT
+            // Dropdown internally stores ID
+            this.mealPreference =
+              Number(selectedMeal.value);
+
+          } else {
+
+            this.mealPreference = null;
+
+            console.warn(
+              "⚠️ Meal Preference not found:",
+              this.editData.MealPreference
+            );
+          }
+
+          console.log(
+            "🔥 FINAL MEAL PREFERENCE ID:",
+            this.mealPreference
+          );
+        }
+      });
   }
 
+
+  // ==========================================
+  // DATE PARSER
+  // ==========================================
+
   parseDate(value: any): Date | null {
-    if (!value) return null;
-    if (value instanceof Date) return value;
+
+    if (!value) {
+      return null;
+    }
+
+    if (value instanceof Date) {
+      return value;
+    }
 
     if (typeof value === 'string') {
+
       const parts = value.split(/[-\/]/);
+
       if (parts.length === 3) {
+
         const day = parseInt(parts[0], 10);
         const month = parseInt(parts[1], 10) - 1;
         const year = parseInt(parts[2], 10);
-        const parsed = new Date(year, month, day);
-        if (!isNaN(parsed.getTime())) return parsed;
+
+        const parsed =
+          new Date(year, month, day);
+
+        if (!isNaN(parsed.getTime())) {
+          return parsed;
+        }
       }
     }
+
     return null;
   }
 
-  add() {
-    const params = {
-      Groups: this.groups,
-      SubGroup: this.subGroup,
-      MealPreference: this.mealPreference,
-      FxBadge: this.fxBadge,
-      Name: this.name,
-      FirstDateFxbl: this.firstDateFxbl ? this.publicSvr.dateFormat(this.firstDateFxbl, 'DD-MM-YYYY') : '',
-      LastDateFxbl: this.lastDateFxbl ? this.publicSvr.dateFormat(this.lastDateFxbl, 'DD-MM-YYYY') : '',
-      AddBy: this.publicSvr.getSettingUserInfo().eeid,
-      Func: "CMS-InsertF1Menu"
-    }
 
-    this.publicSvr.iwxPostF1(params, {
-      headers: {
-        apiID: "ffff-1789631992006-10208193125-1291",
-        userKey: "E9785F13CCEAFB251A6AB147AFD24336"
-      }
-    }, true).then((res: any) => {
+  // ==========================================
+  // ADD
+  // ==========================================
+
+  add() {
+
+    const params = {
+
+      Groups: this.groups,
+
+      SubGroup: this.subGroup,
+
+      // ID will be sent
+      MealPreference: this.mealPreference,
+
+      FxBadge: this.fxBadge,
+
+      Name: this.name,
+
+      FirstDateFxbl:
+        this.firstDateFxbl
+          ? this.publicSvr.dateFormat(
+              this.firstDateFxbl,
+              'DD-MM-YYYY'
+            )
+          : '',
+
+      LastDateFxbl:
+        this.lastDateFxbl
+          ? this.publicSvr.dateFormat(
+              this.lastDateFxbl,
+              'DD-MM-YYYY'
+            )
+          : '',
+
+      AddBy:
+        this.publicSvr
+          .getSettingUserInfo()
+          .eeid,
+
+      Func: "CMS-InsertF1Menu"
+    };
+
+
+    console.log(
+      "🔍 DEBUG - Add params:",
+      JSON.stringify(params)
+    );
+
+
+    this.publicSvr.iwxPostF1(
+      params,
+      {
+        headers: {
+          apiID:
+            "ffff-1789631992006-10208193125-1291",
+
+          userKey:
+            "E9785F13CCEAFB251A6AB147AFD24336"
+        }
+      },
+      true
+    )
+    .then((res: any) => {
+
+      console.log(
+        "🔍 DEBUG - Add server response:",
+        res
+      );
+
       if (res.IsOK == "1") {
+
         this.msgSvr.success("Success");
+
         this.ref.close(true);
+
       } else {
+
         this.msgSvr.error(res.Msg);
       }
-    })
+
+    });
   }
 
-edit() {
-  const params = {
-    Id: this.editData.Id,   // ✅ ADD THIS LINE — capital ID
-    Groups: this.groups,
-    SubGroup: this.subGroup,
-    MealPreference: this.mealPreference,
-    FxBadge: this.fxBadge,
-    Name: this.name,
-    FirstDateFxbl: this.firstDateFxbl ? this.publicSvr.dateFormat(this.firstDateFxbl, 'DD-MM-YYYY') : '',
-    LastDateFxbl: this.lastDateFxbl ? this.publicSvr.dateFormat(this.lastDateFxbl, 'DD-MM-YYYY') : '',
-    EditBy: this.publicSvr.getSettingUserInfo().eeid,
-    Func: "CMS-UpdateF1MenuManage"
+
+  // ==========================================
+  // EDIT
+  // ==========================================
+
+  edit() {
+
+    const params = {
+
+      Id: this.editData.Id,
+
+      Groups: this.groups,
+
+      SubGroup: this.subGroup,
+
+      // IMPORTANT:
+      // ID will be sent here
+      MealPreference: this.mealPreference,
+
+      FxBadge: this.fxBadge,
+
+      Name: this.name,
+
+      FirstDateFxbl:
+        this.firstDateFxbl
+          ? this.publicSvr.dateFormat(
+              this.firstDateFxbl,
+              'DD-MM-YYYY'
+            )
+          : '',
+
+      LastDateFxbl:
+        this.lastDateFxbl
+          ? this.publicSvr.dateFormat(
+              this.lastDateFxbl,
+              'DD-MM-YYYY'
+            )
+          : '',
+
+      EditBy:
+        this.publicSvr
+          .getSettingUserInfo()
+          .eeid,
+
+      Func: "CMS-UpdateF1MenuManage"
+    };
+
+
+    console.log(
+      "🔍 DEBUG - Edit params being sent:",
+      JSON.stringify(params)
+    );
+
+
+    this.publicSvr.iwxPostF1(
+      params,
+      {
+        headers: {
+          apiID:
+            "ffff-1789634002932-10208193125-1317",
+
+          userKey:
+            "E9785F13CCEAFB251A6AB147AFD24336"
+        }
+      },
+      true
+    )
+    .then((res: any) => {
+
+      console.log(
+        "🔍 DEBUG - Edit server response:",
+        res
+      );
+
+
+      if (res.IsOK == "1") {
+
+        this.msgSvr.success("Success");
+
+        this.ref.close(true);
+
+      } else {
+
+        this.msgSvr.error(res.Msg);
+      }
+
+    });
   }
 
-  console.log("🔍 DEBUG - Edit params being sent:", JSON.stringify(params));
 
-  this.publicSvr.iwxPostF1(params, {
-    headers: {
-      apiID: "ffff-1789634002932-10208193125-1317",
-      userKey: "E9785F13CCEAFB251A6AB147AFD24336"
-    }
-  }, true).then((res: any) => {
-    console.log("🔍 DEBUG - Edit server response:", res);
-    if (res.IsOK == "1") {
-      this.msgSvr.success("Success");
-      this.ref.close(true);
-    } else {
-      this.msgSvr.error(res.Msg);
-    }
-  })
-}
+  // ==========================================
+  // CANCEL
+  // ==========================================
 
   cancel() {
+
     this.ref.close();
   }
 
@@ -148,109 +349,303 @@ edit() {
 
 
 
+<form
+  nz-form
+  #f="ngForm"
+  nz-row
+>
 
+  <!-- ========================================= -->
+  <!-- GROUPS -->
+  <!-- ========================================= -->
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<form nz-form #f="ngForm" nz-row>
   <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Groups</nz-form-label>
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Groups
+    </nz-form-label>
+
     <nz-form-control [nzSpan]="14">
-      <input nz-input [(ngModel)]="groups" name="groups" required autocomplete="off" />
+
+      <input
+        nz-input
+        [(ngModel)]="groups"
+        name="groups"
+        required
+        autocomplete="off"
+      />
+
     </nz-form-control>
+
   </nz-form-item>
 
-  <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Sub Group</nz-form-label>
-    <nz-form-control [nzSpan]="14">
-      <input nz-input [(ngModel)]="subGroup" name="subGroup" required autocomplete="off" />
-    </nz-form-control>
-  </nz-form-item>
-   <nz-form-item nz-col [nzSpan]="24">
-        <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Meal Preference</nz-form-label>
-        <nz-form-control [nzSpan]="14">
-            <nz-select [(ngModel)]="mealPreference" name="mealPreference" required nzPlaceHolder="Please select" [disabled]="option=='Edit'"
-                *ngIf="option=='Add' else elseTemplate">
-                <nz-option *ngFor="let item of mealPreferenceList" [nzValue]="item.value" [nzLabel]="item.label"></nz-option>
-            </nz-select>
-            <ng-template #elseTemplate>
-                <input nz-input [(ngModel)]="mealPreference" name="mealPreference" required nzPlaceHolder="Please select"
-                    />
-            </ng-template>
-        </nz-form-control>
 
-    </nz-form-item>
-  <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>FX Badge</nz-form-label>
-    <nz-form-control [nzSpan]="14">
-      <input nz-input [(ngModel)]="fxBadge" name="fxBadge" required autocomplete="off" />
-    </nz-form-control>
-  </nz-form-item>
+  <!-- ========================================= -->
+  <!-- SUB GROUP -->
+  <!-- ========================================= -->
 
   <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Name</nz-form-label>
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Sub Group
+    </nz-form-label>
+
     <nz-form-control [nzSpan]="14">
-      <input nz-input [(ngModel)]="name" name="name" required autocomplete="off" />
+
+      <input
+        nz-input
+        [(ngModel)]="subGroup"
+        name="subGroup"
+        required
+        autocomplete="off"
+      />
+
     </nz-form-control>
+
   </nz-form-item>
 
+
+  <!-- ========================================= -->
+  <!-- MEAL PREFERENCE -->
+  <!-- ========================================= -->
+
   <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>First Date At FXBL</nz-form-label>
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Meal Preference
+    </nz-form-label>
+
     <nz-form-control [nzSpan]="14">
+
+      <nz-select
+        [(ngModel)]="mealPreference"
+        name="mealPreference"
+        required
+        nzPlaceHolder="Please select"
+        style="width: 100%;"
+      >
+
+        <nz-option
+          *ngFor="let item of mealPreferenceList"
+          [nzValue]="item.value"
+          [nzLabel]="item.label"
+        >
+        </nz-option>
+
+      </nz-select>
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- FX BADGE -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      FX Badge
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <input
+        nz-input
+        [(ngModel)]="fxBadge"
+        name="fxBadge"
+        required
+        autocomplete="off"
+      />
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- NAME -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Name
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <input
+        nz-input
+        [(ngModel)]="name"
+        name="name"
+        required
+        autocomplete="off"
+      />
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- FIRST DATE -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      First Date At FXBL
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
       <nz-date-picker
         name="firstDateFxbl"
         [(ngModel)]="firstDateFxbl"
         nzFormat="DD-MM-YYYY"
         nzPlaceHolder="DD-MM-YYYY"
         nzShowToday="false"
+        style="width: 100%;"
       >
       </nz-date-picker>
+
     </nz-form-control>
+
   </nz-form-item>
 
+
+  <!-- ========================================= -->
+  <!-- LAST DATE -->
+  <!-- ========================================= -->
+
   <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="5" nzRequired>Last Date At FXBL</nz-form-label>
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Last Date At FXBL
+    </nz-form-label>
+
     <nz-form-control [nzSpan]="14">
+
       <nz-date-picker
         name="lastDateFxbl"
         [(ngModel)]="lastDateFxbl"
         nzFormat="DD-MM-YYYY"
         nzPlaceHolder="DD-MM-YYYY"
         nzShowToday="false"
+        style="width: 100%;"
       >
       </nz-date-picker>
+
     </nz-form-control>
+
   </nz-form-item>
 
+
+  <!-- ========================================= -->
+  <!-- REMARK -->
+  <!-- ========================================= -->
+
   <nz-form-item nz-col [nzSpan]="24">
-    <nz-form-label class="form-label" [nzSpan]="4">Remark</nz-form-label>
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="4"
+    >
+      Remark
+    </nz-form-label>
+
     <nz-form-control [nzSpan]="14">
-      <textarea nz-input [(ngModel)]="remark" name="remark" style="resize: none;" rows="5" placeholder="Remark">
+
+      <textarea
+        nz-input
+        [(ngModel)]="remark"
+        name="remark"
+        style="resize: none;"
+        rows="5"
+        placeholder="Remark"
+      >
       </textarea>
+
     </nz-form-control>
+
   </nz-form-item>
 
 </form>
+
+
+<!-- ========================================= -->
+<!-- FOOTER -->
+<!-- ========================================= -->
+
 <div class="drawer-footer">
-  <button nz-button [nzType]="'default'" (click)="cancel()">
+
+  <button
+    nz-button
+    [nzType]="'default'"
+    (click)="cancel()"
+  >
     Cancel
   </button>
-  <button *ngIf="option=='Add'" nz-button [nzType]="'primary'" [disabled]="f.invalid" (click)="add()">
+
+
+  <!-- ADD BUTTON -->
+
+  <button
+    *ngIf="option == 'Add'"
+    nz-button
+    [nzType]="'primary'"
+    [disabled]="f.invalid"
+    (click)="add()"
+  >
     Add
   </button>
-  <button *ngIf="option=='Edit'" nz-button [nzType]="'primary'" [disabled]="f.invalid" (click)="edit()">
+
+
+  <!-- EDIT BUTTON -->
+
+  <button
+    *ngIf="option == 'Edit'"
+    nz-button
+    [nzType]="'primary'"
+    [disabled]="f.invalid"
+    (click)="edit()"
+  >
     Edit
   </button>
+
 </div>
+
+
+
+
+
