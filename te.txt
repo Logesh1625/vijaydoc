@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import * as XLSX from "xlsx";
-import * as ExcelJS from "exceljs";
 import * as FileSaver from "file-saver";
 
 import { SharedModule } from "@shared";
@@ -165,275 +164,31 @@ export class F1ManageImportComponent implements OnInit {
   // DOWNLOAD EXCEL TEMPLATE
   // ==========================================
 
-  async DownloadExcelfile() {
-
-    // Make sure master data is loaded
-    if (
-      !this.mealPreferenceList ||
-      this.mealPreferenceList.length === 0
-    ) {
-
-      this.msgSvr.warning(
-        "Meal Preference data is still loading. Please try again."
-      );
-
-      return;
-    }
-
-
-    try {
-
-      const workbook = new ExcelJS.Workbook();
-
-      workbook.creator = "FMS";
-      workbook.created = new Date();
-
-
-      // ======================================
-      // TEMPLATE SHEET
-      // ======================================
-
-      const worksheet =
-        workbook.addWorksheet("Template");
-
-
-      // Header
-      worksheet.columns = [
-
-        {
-          header: "Groups",
-          key: "Groups",
-          width: 25
-        },
-
-        {
-          header: "Sub Group",
-          key: "Sub Group",
-          width: 25
-        },
-
-        {
-          header: "Meal Preference",
-          key: "Meal Preference",
-          width: 30
-        },
-
-        {
-          header: "FX Badge",
-          key: "FX Badge",
-          width: 20
-        },
-
-        {
-          header: "Name",
-          key: "Name",
-          width: 25
-        },
-
-        {
-          header: "First Day at FXBL",
-          key: "First Day at FXBL",
-          width: 20
-        },
-
-        {
-          header: "Last Day at FXBL",
-          key: "Last Day at FXBL",
-          width: 20
-        }
-
-      ];
-
-
-      // ======================================
-      // HEADER STYLE
-      // ======================================
-
-      const headerRow = worksheet.getRow(1);
-
-      headerRow.font = {
-        bold: true
-      };
-
-      headerRow.alignment = {
-        vertical: "middle",
-        horizontal: "center"
-      };
-
-
-      // ======================================
-      // HIDDEN MASTER SHEET
-      // ======================================
-
-      const masterSheet =
-        workbook.addWorksheet("MealPreferenceMaster");
-
-
-      masterSheet.columns = [
-
-        {
-          header: "Meal Preference",
-          key: "label",
-          width: 30
-        },
-
-        {
-          header: "ID",
-          key: "value",
-          width: 15
-        }
-
-      ];
-
-
-      // Add master values
-      this.mealPreferenceList.forEach(
-        (item: any) => {
-
-          masterSheet.addRow({
-
-            label: item.label,
-
-            value: item.value
-
-          });
-
-        }
-      );
-
-
-      // ======================================
-      // HIDE MASTER SHEET
-      // ======================================
-
-      masterSheet.state = "hidden";
-
-
-      // ======================================
-      // EXCEL DROPDOWN
-      // ======================================
-
-      const mealCount =
-        this.mealPreferenceList.length;
-
-
-      if (mealCount > 0) {
-
-        const lastMasterRow =
-          mealCount + 1;
-
-
-        // Apply dropdown to Meal Preference column
-        // C2:C1000
-
-        for (let row = 2; row <= 1000; row++) {
-
-          worksheet.getCell(
-            `C${row}`
-          ).dataValidation = {
-
-            type: "list",
-
-            allowBlank: false,
-
-            formulae: [
-              `'MealPreferenceMaster'!$A$2:$A$${lastMasterRow}`
-            ],
-
-            showErrorMessage: true,
-
-            errorTitle:
-              "Invalid Meal Preference",
-
-            error:
-              "Please select Meal Preference from the dropdown.",
-
-            showInputMessage: true,
-
-            promptTitle:
-              "Meal Preference",
-
-            prompt:
-              "Please select a Meal Preference."
-
-          };
-
-        }
-
-      }
-
-
-      // ======================================
-      // DATE FORMAT
-      // ======================================
-
-      for (let row = 2; row <= 1000; row++) {
-
-        worksheet.getCell(
-          `F${row}`
-        ).numFmt = "dd-mm-yyyy";
-
-        worksheet.getCell(
-          `G${row}`
-        ).numFmt = "dd-mm-yyyy";
-
-      }
-
-
-      // ======================================
-      // FREEZE HEADER
-      // ======================================
-
-      worksheet.views = [
-        {
-          state: "frozen",
-          ySplit: 1
-        }
-      ];
-
-
-      // ======================================
-      // CREATE EXCEL FILE
-      // ======================================
-
-      const buffer =
-        await workbook.xlsx.writeBuffer();
-
-
-      const blob = new Blob(
-        [buffer],
-        {
-          type:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        }
-      );
-
-
-      FileSaver.saveAs(
-        blob,
-        "F1Meal-info Template.xlsx"
-      );
-
-
-      this.msgSvr.success(
-        "Excel template downloaded successfully."
-      );
-
-    }
-    catch (error) {
-
-      console.error(
-        "❌ Excel template error:",
-        error
-      );
-
-      this.msgSvr.error(
-        "Failed to create Excel template."
-      );
-
-    }
-
-  }
+DownloadExcelfile() {
+  const worksheet: XLSX.WorkSheet =
+    XLSX.utils.json_to_sheet([this.templateData]);
+
+  const workbook: XLSX.WorkBook = {
+    Sheets: {
+      template: worksheet
+    },
+    SheetNames: ["Template"]
+  };
+
+  const excelBuffer: any = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array"
+  });
+
+  const data: Blob = new Blob([excelBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8"
+  });
+
+  FileSaver.saveAs(
+    data,
+    "F1Meal-info Template.xlsx"
+  );
+}
 
 
   // ==========================================
@@ -1155,8 +910,6 @@ export class F1ManageImportComponent implements OnInit {
   }
 
 }
-
-
 
 
 
