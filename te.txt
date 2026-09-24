@@ -1,7 +1,9 @@
 CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
 AS
--- Package body
 
+/* ============================================================
+   INSERT F1 MENU
+   ============================================================ */
 PROCEDURE INSERT_F1_MENU(
     V_GROUPS IN VARCHAR2,
     V_SUB_GROUP IN VARCHAR2,
@@ -15,6 +17,7 @@ PROCEDURE INSERT_F1_MENU(
     V_RESULT OUT VARCHAR2
 ) IS
 BEGIN
+
     INSERT INTO CMS.C_F1_MEAL_INFO (
         ID,
         GROUPS,
@@ -26,7 +29,8 @@ BEGIN
         LAST_DATE_FXBL,
         ADD_BY,
         ADD_DATE
-    ) VALUES (
+    )
+    VALUES (
         SEQ_C_F1_MEAL_INFO.NEXTVAL,
         V_GROUPS,
         V_SUB_GROUP,
@@ -38,12 +42,24 @@ BEGIN
         V_ADD_BY,
         SYSDATE
     );
+
     COMMIT;
+
     V_RES := '1';
     V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
 END INSERT_F1_MENU;
 
 
+/* ============================================================
+   BULK F1 MENU
+   ============================================================ */
 PROCEDURE BULK_F1_MENU(
     V_GROUPS IN VARCHAR2,
     V_SUB_GROUP IN VARCHAR2,
@@ -55,8 +71,9 @@ PROCEDURE BULK_F1_MENU(
     V_ADD_BY IN VARCHAR2,
     V_RES OUT VARCHAR2,
     V_RESULT OUT VARCHAR2
-) IS 
+) IS
 BEGIN
+
     INSERT INTO CMS.C_F1_MEAL_INFO (
         ID,
         GROUPS,
@@ -68,7 +85,8 @@ BEGIN
         LAST_DATE_FXBL,
         ADD_BY,
         ADD_DATE
-    ) VALUES (
+    )
+    VALUES (
         SEQ_C_F1_MEAL_INFO.NEXTVAL,
         V_GROUPS,
         V_SUB_GROUP,
@@ -80,12 +98,35 @@ BEGIN
         V_ADD_BY,
         SYSDATE
     );
+
     COMMIT;
+
     V_RES := '1';
     V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
 END BULK_F1_MENU;
 
 
+/* ============================================================
+   GET F1 MENU MANAGEMENT
+
+   MEAL_PREFERENCE:
+       C_F1_MEAL_INFO.MEAL_PREFERENCE = Base Code ID
+       C_BASE_CODE_T.ID = Primary Key
+       C_BASE_CODE_T.TYPE_ID = 81
+       C_BASE_CODE_T.NAME = Display value
+
+   Example:
+       148 -> Western Non-Veg
+       149 -> Vegan
+       150 -> Jain
+   ============================================================ */
 PROCEDURE GET_F1_MENU_MANAGE(
     V_GROUPS IN VARCHAR2,
     V_SUB_GROUP IN VARCHAR2,
@@ -97,7 +138,9 @@ PROCEDURE GET_F1_MENU_MANAGE(
     P_CURSOR OUT SYS_REFCURSOR
 ) IS
 BEGIN
+
     OPEN P_CURSOR FOR
+
     SELECT
         RN,
         ROWSCOUNT,
@@ -114,44 +157,98 @@ BEGIN
         EDIT_BY,
         EDIT_DATE
     FROM
-        (
+    (
         SELECT
             ROWNUM AS RN,
             COUNT(1) OVER() AS ROWSCOUNT,
+
             V.ID,
             V.GROUPS,
             V.SUB_GROUP,
-            V.MEAL_PREFERENCE,
+
+            /* ID -> NAME */
+            BC.NAME AS MEAL_PREFERENCE,
+
             V.FX_BADGE,
             V.NAME,
-            TO_CHAR(V.FIRST_DATE_FXBL,'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-            TO_CHAR(V.LAST_DATE_FXBL,'DD-MM-YYYY') AS LAST_DATE_FXBL,
+
+            TO_CHAR(
+                V.FIRST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ) AS FIRST_DATE_FXBL,
+
+            TO_CHAR(
+                V.LAST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ) AS LAST_DATE_FXBL,
+
             V.ADD_BY,
-            TO_CHAR(V.ADD_DATE,'DD-MM-YYYY HH24:MI:SS') AS ADD_DATE,
+
+            TO_CHAR(
+                V.ADD_DATE,
+                'DD-MM-YYYY HH24:MI:SS'
+            ) AS ADD_DATE,
+
             V.EDIT_BY,
-            TO_CHAR(V.EDIT_DATE,'DD-MM-YYYY HH24:MI:SS') AS EDIT_DATE
-        FROM
-            CMS.C_F1_MEAL_INFO V
-        WHERE
-            NVL(V.DEL_FLAG, 0) = 0
-            AND (V_GROUPS IS NULL OR V.GROUPS LIKE '%' || V_GROUPS || '%')          -- ✅ ADD THIS
-            AND (V_SUB_GROUP IS NULL OR V.SUB_GROUP LIKE '%' || V_SUB_GROUP || '%')  -- ✅ ADD THIS
-            AND (V_FX_BADGE IS NULL OR V.FX_BADGE LIKE '%' || V_FX_BADGE || '%')     -- ✅ ADD THIS
-        )
+
+            TO_CHAR(
+                V.EDIT_DATE,
+                'DD-MM-YYYY HH24:MI:SS'
+            ) AS EDIT_DATE
+
+        FROM CMS.C_F1_MEAL_INFO V
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+            ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
+           AND BC.TYPE_ID = 81
+
+        WHERE NVL(V.DEL_FLAG, 0) = 0
+
+          AND (
+                V_GROUPS IS NULL
+                OR V.GROUPS LIKE '%' || V_GROUPS || '%'
+              )
+
+          AND (
+                V_SUB_GROUP IS NULL
+                OR V.SUB_GROUP LIKE '%' || V_SUB_GROUP || '%'
+              )
+
+          AND (
+                V_FX_BADGE IS NULL
+                OR V.FX_BADGE LIKE '%' || V_FX_BADGE || '%'
+              )
+    )
+
     WHERE RN > (L_START_PAGE - 1) * L_PAGE_SIZE
-      AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE;
+
+      AND RN <=
+          (L_START_PAGE - 1) * L_PAGE_SIZE
+          + L_PAGE_SIZE;
 
     V_RES := '1';
     V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
 END GET_F1_MENU_MANAGE;
 
+
+/* ============================================================
+   UPDATE F1 MENU MANAGEMENT
+
+   DB still stores MEAL_PREFERENCE ID.
+   ============================================================ */
 PROCEDURE UPDATE_F1_MENU_MANAGE(
     V_ID IN NUMBER,
     V_GROUPS IN VARCHAR2,
     V_SUB_GROUP IN VARCHAR2,
     V_MEAL_PREFERENCE IN VARCHAR2,
     V_FX_BADGE IN VARCHAR2,
-    V_NAME IN VARCHAR2, 
+    V_NAME IN VARCHAR2,
     V_FIRST_DATE_FXBL IN VARCHAR2,
     V_LAST_DATE_FXBL IN VARCHAR2,
     V_EDIT_BY IN VARCHAR2,
@@ -159,6 +256,7 @@ PROCEDURE UPDATE_F1_MENU_MANAGE(
     V_RESULT OUT VARCHAR2
 ) IS
 BEGIN
+
     UPDATE CMS.C_F1_MEAL_INFO
     SET
         GROUPS = V_GROUPS,
@@ -166,31 +264,47 @@ BEGIN
         SUB_GROUP = V_SUB_GROUP,
         MEAL_PREFERENCE = V_MEAL_PREFERENCE,
         NAME = V_NAME,
-        FIRST_DATE_FXBL = TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
-        LAST_DATE_FXBL = TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
+        FIRST_DATE_FXBL =
+            TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
+        LAST_DATE_FXBL =
+            TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
         EDIT_BY = V_EDIT_BY,
         EDIT_DATE = SYSDATE
-    WHERE 
-        ID = V_ID;
+    WHERE ID = V_ID;
 
     IF SQL%ROWCOUNT = 0 THEN
+
         ROLLBACK;
+
         V_RES := '0';
-        V_RESULT := 'No record found with ID = ' || V_ID || '. Update failed.';
+        V_RESULT :=
+            'No record found with ID = ' ||
+            V_ID ||
+            '. Update failed.';
+
     ELSE
+
         COMMIT;
+
         V_RES := '1';
         V_RESULT := 'Success';
+
     END IF;
 
 EXCEPTION
     WHEN OTHERS THEN
+
         ROLLBACK;
+
         V_RES := '0';
         V_RESULT := 'Error: ' || SQLERRM;
+
 END UPDATE_F1_MENU_MANAGE;
 
 
+/* ============================================================
+   DELETE F1 MENU MANAGEMENT
+   ============================================================ */
 PROCEDURE DELETE_F1_MENU_MANAGE(
     L_IDS IN VARCHAR2,
     V_EDIT_BY IN VARCHAR2,
@@ -198,196 +312,383 @@ PROCEDURE DELETE_F1_MENU_MANAGE(
     V_RESULT OUT VARCHAR2
 ) IS
 BEGIN
-    UPDATE
-        CMS.C_F1_MEAL_INFO
+
+    UPDATE CMS.C_F1_MEAL_INFO
     SET
         DEL_FLAG = 1,
         EDIT_DATE = SYSDATE,
         EDIT_BY = V_EDIT_BY
-    WHERE
-        INSTR(',' || L_IDS, ',' || ID || ',') > 0;
+    WHERE INSTR(',' || L_IDS || ',', ',' || ID || ',') > 0;
 
     COMMIT;
+
     V_RES := '1';
     V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
 END DELETE_F1_MENU_MANAGE;
 
 
+/* ============================================================
+   GET F1 MENU BY FX BADGE
+
+   MEAL_PREFERENCE returned as NAME.
+
+   Entitlement also checks Base Code NAME.
+   ============================================================ */
 PROCEDURE GET_F1_MENU_BY_FXBADGE(
     V_FX_BADGE IN VARCHAR2,
     V_RES OUT VARCHAR2,
     V_RESULT OUT VARCHAR2,
     P_CURSOR OUT SYS_REFCURSOR
 ) IS
+
     V_COUNT NUMBER;
     V_ALREADY NUMBER;
+
 BEGIN
-    SELECT COUNT(1) INTO V_COUNT
+
+    /* Check FX Badge */
+    SELECT COUNT(1)
+    INTO V_COUNT
     FROM CMS.C_F1_MEAL_INFO
     WHERE FX_BADGE = V_FX_BADGE
-    AND NVL(DEL_FLAG, 0) = 0;
- 
+      AND NVL(DEL_FLAG, 0) = 0;
+
+
     IF V_COUNT = 0 THEN
+
         V_RES := '0';
         V_RESULT := 'No record found for this FX Badge.';
-        OPEN P_CURSOR FOR SELECT NULL AS FX_BADGE FROM DUAL WHERE 1=0;
+
+        OPEN P_CURSOR FOR
+        SELECT NULL AS FX_BADGE
+        FROM DUAL
+        WHERE 1 = 0;
+
         RETURN;
+
     END IF;
- 
-    -- meal already collected today?
-    SELECT COUNT(1) INTO V_ALREADY
+
+
+    /* Already collected today */
+    SELECT COUNT(1)
+    INTO V_ALREADY
     FROM CMS.C_F1_SCAN_LOG
     WHERE FX_BADGE = V_FX_BADGE
-    AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-    AND NVL(DEL_FLAG, 0) = 0
-    AND COLLECTED_DATA = 'SUCCESS';
- 
+      AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
+      AND NVL(DEL_FLAG, 0) = 0
+      AND COLLECTED_DATA = 'SUCCESS';
+
+
     OPEN P_CURSOR FOR
+
     SELECT
-        GROUPS,
-        SUB_GROUP,
-        MEAL_PREFERENCE,
-        FX_BADGE,
-        NAME,
-        TO_CHAR(FIRST_DATE_FXBL,'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-        TO_CHAR(LAST_DATE_FXBL,'DD-MM-YYYY') AS LAST_DATE_FXBL,
+        V.GROUPS,
+        V.SUB_GROUP,
+
+        /* ID -> NAME */
+        BC.NAME AS MEAL_PREFERENCE,
+
+        V.FX_BADGE,
+        V.NAME,
+
+        TO_CHAR(
+            V.FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS FIRST_DATE_FXBL,
+
+        TO_CHAR(
+            V.LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS LAST_DATE_FXBL,
+
         CASE
-            WHEN UPPER(TRIM(MEAL_PREFERENCE)) = 'NO MEAL REQUIRED' THEN 'NOT_ENTITLED'
-            WHEN FIRST_DATE_FXBL IS NULL OR LAST_DATE_FXBL IS NULL THEN 'NOT_UPDATED'
-            WHEN TRUNC(SYSDATE) NOT BETWEEN TRUNC(FIRST_DATE_FXBL) AND TRUNC(LAST_DATE_FXBL) THEN 'LAST DATE EXPIRED'
-            WHEN V_ALREADY > 0 THEN 'ALREADY_SCANNED'
+
+            WHEN UPPER(TRIM(BC.NAME)) =
+                 'NO MEAL REQUIRED'
+            THEN 'NOT_ENTITLED'
+
+            WHEN V.FIRST_DATE_FXBL IS NULL
+              OR V.LAST_DATE_FXBL IS NULL
+            THEN 'NOT_UPDATED'
+
+            WHEN TRUNC(SYSDATE) NOT BETWEEN
+                 TRUNC(V.FIRST_DATE_FXBL)
+                 AND TRUNC(V.LAST_DATE_FXBL)
+            THEN 'LAST DATE EXPIRED'
+
+            WHEN V_ALREADY > 0
+            THEN 'ALREADY_SCANNED'
+
             ELSE 'ENTITLED'
+
         END AS ENTITLEMENT_STATUS
-    FROM (
+
+    FROM
+    (
         SELECT *
         FROM CMS.C_F1_MEAL_INFO
         WHERE FX_BADGE = V_FX_BADGE
-        AND NVL(DEL_FLAG, 0) = 0
+          AND NVL(DEL_FLAG, 0) = 0
         ORDER BY ADD_DATE DESC, ID DESC
-    )
+    ) V
+
+    LEFT JOIN CMS.C_BASE_CODE_T BC
+        ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
+       AND BC.TYPE_ID = 81
+
     WHERE ROWNUM = 1;
- 
+
+
     V_RES := '1';
     V_RESULT := 'Success';
- 
+
+
 EXCEPTION
     WHEN OTHERS THEN
+
         V_RES := '0';
         V_RESULT := 'Error: ' || SQLERRM;
+
 END GET_F1_MENU_BY_FXBADGE;
- 
+
+
+/* ============================================================
+   INSERT MEAL SCAN LOG
+
+   DB stores MEAL_PREFERENCE ID.
+   Logic uses Base Code NAME.
+   ============================================================ */
 PROCEDURE INSERT_MEAL_SCAN_LOG(
     V_FX_BADGE IN VARCHAR2,
     V_RES OUT VARCHAR2,
     V_RESULT OUT VARCHAR2,
     P_CURSOR OUT SYS_REFCURSOR
 ) IS
+
     V_COUNT NUMBER;
     V_ALREADY_COUNT NUMBER;
-    V_GROUPS CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
-    V_SUB_GROUP CMS.C_F1_MEAL_INFO.SUB_GROUP%TYPE;
-    V_NAME CMS.C_F1_MEAL_INFO.NAME%TYPE;
-    V_MEAL_PREF CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
-    V_FIRST_DATE CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
-    V_LAST_DATE CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
+
+    V_GROUPS
+        CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
+
+    V_SUB_GROUP
+        CMS.C_F1_MEAL_INFO.SUB_GROUP%TYPE;
+
+    V_NAME
+        CMS.C_F1_MEAL_INFO.NAME%TYPE;
+
+    V_MEAL_PREF
+        CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
+
+    V_MEAL_PREF_NAME
+        CMS.C_BASE_CODE_T.NAME%TYPE;
+
+    V_FIRST_DATE
+        CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
+
+    V_LAST_DATE
+        CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
+
     V_STATUS VARCHAR2(50);
     V_MESSAGE VARCHAR2(200);
+
 BEGIN
-    -- Check if FX Badge exists in master table
-    SELECT COUNT(1) INTO V_COUNT
+
+    /* Check FX Badge */
+    SELECT COUNT(1)
+    INTO V_COUNT
     FROM CMS.C_F1_MEAL_INFO
     WHERE FX_BADGE = V_FX_BADGE
-    AND NVL(DEL_FLAG, 0) = 0;
- 
+      AND NVL(DEL_FLAG, 0) = 0;
+
+
     IF V_COUNT = 0 THEN
+
         V_STATUS := 'INVALID';
         V_MESSAGE := 'FX Badge not found';
+
         V_GROUPS := NULL;
         V_SUB_GROUP := NULL;
         V_NAME := NULL;
         V_MEAL_PREF := NULL;
+        V_MEAL_PREF_NAME := NULL;
         V_FIRST_DATE := NULL;
         V_LAST_DATE := NULL;
+
     ELSE
-        -- latest added record
-        SELECT GROUPS, SUB_GROUP, NAME, MEAL_PREFERENCE, FIRST_DATE_FXBL, LAST_DATE_FXBL
-        INTO V_GROUPS, V_SUB_GROUP, V_NAME, V_MEAL_PREF, V_FIRST_DATE, V_LAST_DATE
-        FROM (
+
+        /* Get latest record */
+        SELECT
+            GROUPS,
+            SUB_GROUP,
+            NAME,
+            MEAL_PREFERENCE,
+            FIRST_DATE_FXBL,
+            LAST_DATE_FXBL
+        INTO
+            V_GROUPS,
+            V_SUB_GROUP,
+            V_NAME,
+            V_MEAL_PREF,
+            V_FIRST_DATE,
+            V_LAST_DATE
+        FROM
+        (
             SELECT *
             FROM CMS.C_F1_MEAL_INFO
             WHERE FX_BADGE = V_FX_BADGE
-            AND NVL(DEL_FLAG, 0) = 0
+              AND NVL(DEL_FLAG, 0) = 0
             ORDER BY ADD_DATE DESC, ID DESC
         )
         WHERE ROWNUM = 1;
- 
-        -- Determine entitlement (old logic, unchanged)
-        IF UPPER(TRIM(V_MEAL_PREF)) = 'NO MEAL REQUIRED' THEN
+
+
+        /* Get Meal Preference NAME */
+        SELECT NVL(MAX(BC.NAME), V_MEAL_PREF)
+        INTO V_MEAL_PREF_NAME
+        FROM CMS.C_BASE_CODE_T BC
+        WHERE BC.TYPE_ID = 81
+          AND TO_CHAR(BC.ID) = TO_CHAR(V_MEAL_PREF);
+
+
+        /* Entitlement */
+        IF UPPER(TRIM(V_MEAL_PREF_NAME)) =
+           'NO MEAL REQUIRED' THEN
+
             V_STATUS := 'INVALID';
-            V_MESSAGE := 'NO MEAL REQUIRED BUT COME TO COLLECT ';
-        ELSIF V_FIRST_DATE IS NULL OR V_LAST_DATE IS NULL THEN
+
+            V_MESSAGE :=
+                'NO MEAL REQUIRED BUT COME TO COLLECT';
+
+        ELSIF V_FIRST_DATE IS NULL
+           OR V_LAST_DATE IS NULL THEN
+
             V_STATUS := 'INVALID';
+
             V_MESSAGE := 'Dates not updated';
-        ELSIF TRUNC(SYSDATE) >= V_LAST_DATE THEN
-            -- NOTE: this treats the last date itself as expired.
-            -- The scan screen treats the last date as still valid.
-            -- To match the scan screen, replace the line above with:
-            -- ELSIF TRUNC(SYSDATE) NOT BETWEEN TRUNC(V_FIRST_DATE) AND TRUNC(V_LAST_DATE) THEN
+
+        ELSIF TRUNC(SYSDATE) NOT BETWEEN
+              TRUNC(V_FIRST_DATE)
+              AND TRUNC(V_LAST_DATE) THEN
+
             V_STATUS := 'INVALID';
+
             V_MESSAGE := 'LAST DATE EXPIRED';
+
         ELSE
+
             V_STATUS := 'SUCCESS';
+
             V_MESSAGE := 'Entitled for meal';
+
         END IF;
- 
-        -- Meal already collected today? Then this scan is saved as
-        -- a separate ALREADY_SCANNED row (SUCCESS row is not touched).
+
+
+        /* Already scanned today */
         IF V_STATUS = 'SUCCESS' THEN
-            SELECT COUNT(1) INTO V_ALREADY_COUNT
+
+            SELECT COUNT(1)
+            INTO V_ALREADY_COUNT
             FROM CMS.C_F1_SCAN_LOG
             WHERE FX_BADGE = V_FX_BADGE
-            AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-            AND NVL(DEL_FLAG, 0) = 0
-            AND COLLECTED_DATA = 'SUCCESS';
- 
+              AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
+              AND NVL(DEL_FLAG, 0) = 0
+              AND COLLECTED_DATA = 'SUCCESS';
+
+
             IF V_ALREADY_COUNT > 0 THEN
+
                 V_STATUS := 'ALREADY_SCANNED';
-                V_MESSAGE := 'Meal already collected today';
+
+                V_MESSAGE :=
+                    'Meal already collected today';
+
             END IF;
+
         END IF;
+
     END IF;
- 
-    -- Insert new log entry (SUCCESS / ALREADY_SCANNED / INVALID)
+
+
+    /* Insert scan log */
     INSERT INTO CMS.C_F1_SCAN_LOG (
-        ID, GROUPS, SUB_GROUP, MEAL_PREFERENCE, FX_BADGE, NAME,
-        FIRST_DATE_FXBL, LAST_DATE_FXBL, COLLECTED_DATA, STATUS_MESSAGE,
-        MEAL_DATE, FIRST_SCANTIME, LAST_SCANTIME
-    ) VALUES (
-        SEQ_C_F1_SCAN_LOG.NEXTVAL, V_GROUPS, V_SUB_GROUP, V_MEAL_PREF, V_FX_BADGE, V_NAME,
-        V_FIRST_DATE, V_LAST_DATE, V_STATUS, V_MESSAGE,
-        SYSDATE, SYSDATE, SYSDATE
+        ID,
+        GROUPS,
+        SUB_GROUP,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        COLLECTED_DATA,
+        STATUS_MESSAGE,
+        MEAL_DATE,
+        FIRST_SCANTIME,
+        LAST_SCANTIME
+    )
+    VALUES (
+        SEQ_C_F1_SCAN_LOG.NEXTVAL,
+        V_GROUPS,
+        V_SUB_GROUP,
+        V_MEAL_PREF,
+        V_FX_BADGE,
+        V_NAME,
+        V_FIRST_DATE,
+        V_LAST_DATE,
+        V_STATUS,
+        V_MESSAGE,
+        SYSDATE,
+        SYSDATE,
+        SYSDATE
     );
+
+
     COMMIT;
- 
+
+
+    /* Return NAME instead of ID */
     OPEN P_CURSOR FOR
+
     SELECT
         V_FX_BADGE AS FX_BADGE,
         V_NAME AS NAME,
-        V_MEAL_PREF AS MEAL_PREFERENCE,
-        TO_CHAR(SYSDATE, 'DD-MM-YYYY HH24:MI:SS') AS SCAN_TIME,
+        V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
+        TO_CHAR(
+            SYSDATE,
+            'DD-MM-YYYY HH24:MI:SS'
+        ) AS SCAN_TIME,
         V_STATUS AS STATUS,
         V_MESSAGE AS STATUS_MESSAGE
     FROM DUAL;
- 
+
+
     V_RES := '1';
     V_RESULT := 'Success';
- 
+
+
 EXCEPTION
     WHEN OTHERS THEN
+
+        ROLLBACK;
+
         V_RES := '0';
         V_RESULT := 'Error: ' || SQLERRM;
+
 END INSERT_MEAL_SCAN_LOG;
 
+
+/* ============================================================
+   GET MEAL SCAN LOG
+   ============================================================ */
 PROCEDURE GET_MEAL_SCAN_LOG(
     V_SEARCH_TEXT IN VARCHAR2,
     V_STATUS_FILTER IN VARCHAR2,
@@ -397,45 +698,114 @@ PROCEDURE GET_MEAL_SCAN_LOG(
     P_SUMMARY_CURSOR OUT SYS_REFCURSOR
 ) IS
 BEGIN
-    OPEN P_CURSOR FOR
-    SELECT
-        FX_BADGE,
-        NAME,
-        GROUPS,
-        SUB_GROUP,
-          TO_CHAR(FIRST_DATE_FXBL,'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-        TO_CHAR(LAST_DATE_FXBL,'DD-MM-YYYY') AS LAST_DATE_FXBL,
-        MEAL_PREFERENCE,
-        TO_CHAR(NVL(LAST_SCANTIME, FIRST_SCANTIME), 'DD-MM-YYYY HH24:MI:SS') AS SCAN_TIME,
-        COLLECTED_DATA AS STATUS,
-        STATUS_MESSAGE
-    FROM CMS.C_F1_SCAN_LOG
-    WHERE NVL(DEL_FLAG, 0) = 0                                                    -- ✅ ADDED
-    AND (V_SEARCH_TEXT IS NULL OR V_SEARCH_TEXT = ''
-         OR UPPER(FX_BADGE) LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
-         OR UPPER(NAME) LIKE '%' || UPPER(V_SEARCH_TEXT) || '%')
-    AND (V_STATUS_FILTER IS NULL OR V_STATUS_FILTER = 'All' OR COLLECTED_DATA = V_STATUS_FILTER)
-    ORDER BY MEAL_DATE DESC;
 
+    /* Scan Log */
+    OPEN P_CURSOR FOR
+
+    SELECT
+        S.FX_BADGE,
+        S.NAME,
+        S.GROUPS,
+        S.SUB_GROUP,
+
+        /* ID -> NAME */
+        BC.NAME AS MEAL_PREFERENCE,
+
+        TO_CHAR(
+            S.FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS FIRST_DATE_FXBL,
+
+        TO_CHAR(
+            S.LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS LAST_DATE_FXBL,
+
+        TO_CHAR(
+            NVL(S.LAST_SCANTIME, S.FIRST_SCANTIME),
+            'DD-MM-YYYY HH24:MI:SS'
+        ) AS SCAN_TIME,
+
+        S.COLLECTED_DATA AS STATUS,
+        S.STATUS_MESSAGE
+
+    FROM CMS.C_F1_SCAN_LOG S
+
+    LEFT JOIN CMS.C_BASE_CODE_T BC
+        ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
+       AND BC.TYPE_ID = 81
+
+    WHERE NVL(S.DEL_FLAG, 0) = 0
+
+      AND (
+            V_SEARCH_TEXT IS NULL
+            OR V_SEARCH_TEXT = ''
+            OR UPPER(S.FX_BADGE)
+               LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
+            OR UPPER(S.NAME)
+               LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
+          )
+
+      AND (
+            V_STATUS_FILTER IS NULL
+            OR V_STATUS_FILTER = 'All'
+            OR S.COLLECTED_DATA = V_STATUS_FILTER
+          )
+
+    ORDER BY S.MEAL_DATE DESC;
+
+
+    /* Summary */
     OPEN P_SUMMARY_CURSOR FOR
+
     SELECT
         COUNT(1) AS TOTAL_SCANS,
-        SUM(CASE WHEN COLLECTED_DATA = 'SUCCESS' THEN 1 ELSE 0 END) AS SUCCESS_COUNT,
-        SUM(CASE WHEN COLLECTED_DATA = 'ALREADY_SCANNED' THEN 1 ELSE 0 END) AS ALREADY_SCANNED_COUNT,
-        SUM(CASE WHEN COLLECTED_DATA = 'INVALID' THEN 1 ELSE 0 END) AS INVALID_COUNT
-     
+
+        SUM(
+            CASE
+                WHEN COLLECTED_DATA = 'SUCCESS'
+                THEN 1
+                ELSE 0
+            END
+        ) AS SUCCESS_COUNT,
+
+        SUM(
+            CASE
+                WHEN COLLECTED_DATA = 'ALREADY_SCANNED'
+                THEN 1
+                ELSE 0
+            END
+        ) AS ALREADY_SCANNED_COUNT,
+
+        SUM(
+            CASE
+                WHEN COLLECTED_DATA = 'INVALID'
+                THEN 1
+                ELSE 0
+            END
+        ) AS INVALID_COUNT
+
     FROM CMS.C_F1_SCAN_LOG
-    WHERE NVL(DEL_FLAG, 0) = 0;                                                    -- ✅ ADDED
+
+    WHERE NVL(DEL_FLAG, 0) = 0;
+
 
     V_RES := '1';
     V_RESULT := 'Success';
 
+
 EXCEPTION
     WHEN OTHERS THEN
+
         V_RES := '0';
         V_RESULT := 'Error: ' || SQLERRM;
+
 END GET_MEAL_SCAN_LOG;
 
+
+/* ============================================================
+   GET MEAL DASHBOARD
+   ============================================================ */
 PROCEDURE GET_MEAL_DASHBOARD(
     V_DATE IN VARCHAR2,
     V_RES OUT VARCHAR2,
@@ -443,100 +813,258 @@ PROCEDURE GET_MEAL_DASHBOARD(
     P_CURSOR OUT SYS_REFCURSOR,
     P_SUMMARY_CURSOR OUT SYS_REFCURSOR
 ) IS
+
     V_DAY DATE;
-    V_TOTAL NUMBER := 0;          -- records uploaded on the selected date
-    V_NO_MEAL NUMBER := 0;        -- uploaded with NO MEAL REQUIRED
-    V_COLLECTED NUMBER := 0;      -- meals collected (SUCCESS) on the date
-    V_NOT_REQ_CAME NUMBER := 0;   -- NO MEAL REQUIRED but scanned
-    V_NOT_COLLECTED NUMBER := 0;  -- entitled, not scanned yet
+
+    V_TOTAL NUMBER := 0;
+    V_NO_MEAL NUMBER := 0;
+    V_COLLECTED NUMBER := 0;
+    V_NOT_REQ_CAME NUMBER := 0;
+    V_NOT_COLLECTED NUMBER := 0;
+
 BEGIN
-    V_DAY := NVL(TO_DATE(V_DATE, 'DD-MM-YYYY'), TRUNC(SYSDATE));
- 
-    WITH EMP AS (
-        -- latest record per badge among the records uploaded on the date
-        -- (same "latest added record" rule as the scan screen)
-        SELECT FX_BADGE, MEAL_PREFERENCE
-        FROM (
-            SELECT FX_BADGE,
-                   MEAL_PREFERENCE,
-                   ROW_NUMBER() OVER (
-                       PARTITION BY FX_BADGE
-                       ORDER BY ADD_DATE DESC, ID DESC
-                   ) AS RN
-            FROM CMS.C_F1_MEAL_INFO
-            WHERE NVL(DEL_FLAG, 0) = 0
-            AND TRUNC(ADD_DATE) = V_DAY        -- <== defines "Total Employees"
+
+    V_DAY :=
+        NVL(
+            TO_DATE(V_DATE, 'DD-MM-YYYY'),
+            TRUNC(SYSDATE)
+        );
+
+
+    /* ========================================================
+       EMP
+       Latest record per badge on selected date
+       ======================================================== */
+    WITH EMP AS
+    (
+        SELECT
+            FX_BADGE,
+            MEAL_PREFERENCE,
+            MEAL_PREFERENCE_NAME
+        FROM
+        (
+            SELECT
+                M.FX_BADGE,
+                M.MEAL_PREFERENCE,
+                BC.NAME AS MEAL_PREFERENCE_NAME,
+
+                ROW_NUMBER() OVER (
+                    PARTITION BY M.FX_BADGE
+                    ORDER BY M.ADD_DATE DESC, M.ID DESC
+                ) AS RN
+
+            FROM CMS.C_F1_MEAL_INFO M
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+                ON TO_CHAR(M.MEAL_PREFERENCE)
+                   = TO_CHAR(BC.ID)
+               AND BC.TYPE_ID = 81
+
+            WHERE NVL(M.DEL_FLAG, 0) = 0
+              AND TRUNC(M.ADD_DATE) = V_DAY
         )
         WHERE RN = 1
     ),
-    COLLECTED AS (
+
+    /* ========================================================
+       Collected employees
+       ======================================================== */
+    COLLECTED AS
+    (
         SELECT DISTINCT FX_BADGE
         FROM CMS.C_F1_SCAN_LOG
         WHERE NVL(DEL_FLAG, 0) = 0
-        AND TRUNC(MEAL_DATE) = V_DAY
-        AND COLLECTED_DATA = 'SUCCESS'
+          AND TRUNC(MEAL_DATE) = V_DAY
+          AND COLLECTED_DATA = 'SUCCESS'
     )
+
     SELECT
-        (SELECT COUNT(1) FROM EMP),
-        (SELECT COUNT(1) FROM EMP
-          WHERE UPPER(TRIM(MEAL_PREFERENCE)) = 'NO MEAL REQUIRED'),
-        (SELECT COUNT(1) FROM COLLECTED),
-        (SELECT COUNT(DISTINCT FX_BADGE)
-           FROM CMS.C_F1_SCAN_LOG
-          WHERE NVL(DEL_FLAG, 0) = 0
-            AND TRUNC(MEAL_DATE) = V_DAY
-            AND UPPER(TRIM(MEAL_PREFERENCE)) = 'NO MEAL REQUIRED'),
-        (SELECT COUNT(1) FROM EMP E
-          WHERE NVL(UPPER(TRIM(E.MEAL_PREFERENCE)), 'X') <> 'NO MEAL REQUIRED'
-            AND NOT EXISTS (SELECT 1 FROM COLLECTED C WHERE C.FX_BADGE = E.FX_BADGE))
-    INTO V_TOTAL, V_NO_MEAL, V_COLLECTED, V_NOT_REQ_CAME, V_NOT_COLLECTED
+
+        /* Total employees */
+        (
+            SELECT COUNT(1)
+            FROM EMP
+        ),
+
+        /* No Meal Required */
+        (
+            SELECT COUNT(1)
+            FROM EMP
+            WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME))
+                  = 'NO MEAL REQUIRED'
+        ),
+
+        /* Meals collected */
+        (
+            SELECT COUNT(1)
+            FROM COLLECTED
+        ),
+
+        /* No Meal Required but came */
+        (
+            SELECT COUNT(DISTINCT S.FX_BADGE)
+
+            FROM CMS.C_F1_SCAN_LOG S
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+                ON TO_CHAR(S.MEAL_PREFERENCE)
+                   = TO_CHAR(BC.ID)
+               AND BC.TYPE_ID = 81
+
+            WHERE NVL(S.DEL_FLAG, 0) = 0
+              AND TRUNC(S.MEAL_DATE) = V_DAY
+
+              AND UPPER(TRIM(BC.NAME))
+                  = 'NO MEAL REQUIRED'
+        ),
+
+        /* Entitled but not collected */
+        (
+            SELECT COUNT(1)
+            FROM EMP E
+
+            WHERE NVL(
+                    UPPER(TRIM(E.MEAL_PREFERENCE_NAME)),
+                    'X'
+                  ) <> 'NO MEAL REQUIRED'
+
+              AND NOT EXISTS
+              (
+                  SELECT 1
+                  FROM COLLECTED C
+                  WHERE C.FX_BADGE = E.FX_BADGE
+              )
+        )
+
+    INTO
+        V_TOTAL,
+        V_NO_MEAL,
+        V_COLLECTED,
+        V_NOT_REQ_CAME,
+        V_NOT_COLLECTED
+
     FROM DUAL;
- 
-    -- Cards
+
+
+    /* ========================================================
+       Dashboard Cards
+       ======================================================== */
     OPEN P_CURSOR FOR
+
     SELECT
-        V_TOTAL         AS TOTAL_EMPLOYEES,
-        V_COLLECTED     AS MEALS_COLLECTED,
+        V_TOTAL AS TOTAL_EMPLOYEES,
+        V_COLLECTED AS MEALS_COLLECTED,
         V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
-        V_NO_MEAL       AS NO_MEAL_REQUIRED,
-        V_NOT_REQ_CAME  AS NOT_REQUIRED_CAME
+        V_NO_MEAL AS NO_MEAL_REQUIRED,
+        V_NOT_REQ_CAME AS NOT_REQUIRED_CAME
+
     FROM DUAL;
- 
-    -- Meals collected - category wise (all 6 categories always returned)
+
+
+    /* ========================================================
+       Category-wise collected meals
+       ======================================================== */
     OPEN P_SUMMARY_CURSOR FOR
-    WITH CATS AS (
-        SELECT 1 AS SORT_NO, 'Indian Veg' AS CATEGORY FROM DUAL UNION ALL
-        SELECT 2, 'Indian Non-Veg' FROM DUAL UNION ALL
-        SELECT 3, 'Western Veg' FROM DUAL UNION ALL
-        SELECT 4, 'Western Non-Veg' FROM DUAL UNION ALL
-        SELECT 5, 'Jain' FROM DUAL UNION ALL
-        SELECT 6, 'Vegan' FROM DUAL  
+
+    WITH CATS AS
+    (
+        SELECT 1 AS SORT_NO,
+               'Indian Veg' AS CATEGORY
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 2,
+               'Indian Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 3,
+               'Western Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 4,
+               'Western Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 5,
+               'Jain'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 6,
+               'Vegan'
+        FROM DUAL
     ),
-    CNT AS (
-        SELECT UPPER(TRIM(MEAL_PREFERENCE)) AS PREF,
-               COUNT(DISTINCT FX_BADGE) AS TOTAL_COUNT
-        FROM CMS.C_F1_SCAN_LOG
-        WHERE NVL(DEL_FLAG, 0) = 0
-        AND TRUNC(MEAL_DATE) = V_DAY
-        AND COLLECTED_DATA = 'SUCCESS'
-        GROUP BY UPPER(TRIM(MEAL_PREFERENCE))
+
+    CNT AS
+    (
+        SELECT
+            UPPER(TRIM(BC.NAME)) AS PREF,
+
+            COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+            ON TO_CHAR(S.MEAL_PREFERENCE)
+               = TO_CHAR(BC.ID)
+           AND BC.TYPE_ID = 81
+
+        WHERE NVL(S.DEL_FLAG, 0) = 0
+          AND TRUNC(S.MEAL_DATE) = V_DAY
+          AND S.COLLECTED_DATA = 'SUCCESS'
+
+        GROUP BY UPPER(TRIM(BC.NAME))
     )
+
     SELECT
         C.CATEGORY,
-        NVL(N.TOTAL_COUNT, 0) AS COLLECTED_COUNT,
-        CASE WHEN V_COLLECTED = 0 THEN 0
-             ELSE ROUND(NVL(N.TOTAL_COUNT, 0) * 100 / V_COLLECTED)
+
+        NVL(
+            N.TOTAL_COUNT,
+            0
+        ) AS COLLECTED_COUNT,
+
+        CASE
+
+            WHEN V_COLLECTED = 0
+            THEN 0
+
+            ELSE ROUND(
+                NVL(N.TOTAL_COUNT, 0)
+                * 100
+                / V_COLLECTED
+            )
+
         END AS PERCENTAGE
+
     FROM CATS C
-    LEFT JOIN CNT N ON N.PREF = UPPER(C.CATEGORY)
+
+    LEFT JOIN CNT N
+        ON N.PREF = UPPER(C.CATEGORY)
+
     ORDER BY C.SORT_NO;
- 
+
+
     V_RES := '1';
     V_RESULT := 'Success';
- 
+
+
 EXCEPTION
     WHEN OTHERS THEN
+
         V_RES := '0';
         V_RESULT := 'Error: ' || SQLERRM;
+
 END GET_MEAL_DASHBOARD;
+
+
 END F1_MEAL_MANAGEMENT;
+/
