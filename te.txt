@@ -1,16 +1,24 @@
 import { Component, OnInit } from '@angular/core';
 import * as XLSX from "xlsx";
-import { SharedModule } from "@shared";
+import * as ExcelJS from "exceljs";
 import * as FileSaver from "file-saver";
+
+import { SharedModule } from "@shared";
 import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
-import { NzMessageService, UploadFile, NzDrawerRef } from "ng-zorro-antd";
+import {
+  NzMessageService,
+  UploadFile,
+  NzDrawerRef
+} from "ng-zorro-antd";
 
 @Component({
   selector: 'app-F1-Details-import',
   templateUrl: './F1-Details-import.html',
 })
 export class F1ManageImportComponent implements OnInit {
+
   fileList: UploadFile[] = [];
+
   addLoading: boolean = false;
   isSpinning: boolean = false;
 
@@ -30,6 +38,12 @@ export class F1ManageImportComponent implements OnInit {
 
   siteOptions = [];
 
+  // ==========================================
+  // MEAL PREFERENCE MASTER
+  // ==========================================
+
+  mealPreferenceList: any[] = [];
+
   templateData = {
     "Groups": '',
     "Sub Group": '',
@@ -40,6 +54,7 @@ export class F1ManageImportComponent implements OnInit {
     "Last Day at FXBL": ''
   };
 
+
   constructor(
     private apiSvr: PublicNetService,
     private shareSvr: SharedModule,
@@ -47,291 +62,1315 @@ export class F1ManageImportComponent implements OnInit {
     private ref: NzDrawerRef
   ) { }
 
-  ngOnInit() { }
+
+  // ==========================================
+  // INIT
+  // ==========================================
+
+  ngOnInit() {
+
+    this.loadMealPreferences();
+
+  }
+
+
+  // ==========================================
+  // LOAD MEAL PREFERENCE
+  // ==========================================
+
+  loadMealPreferences() {
+
+    this.apiSvr
+      .getGuardPassCode("GuardPass-Meal Preference")
+      .subscribe(
+        (res: any) => {
+
+          this.mealPreferenceList = res || [];
+
+          console.log(
+            "🔥 IMPORT - MEAL PREFERENCE LIST:",
+            JSON.stringify(this.mealPreferenceList)
+          );
+
+        },
+        (error: any) => {
+
+          console.error(
+            "❌ Failed to load Meal Preference:",
+            error
+          );
+
+          this.msgSvr.error(
+            "Unable to load Meal Preference master data."
+          );
+
+        }
+      );
+
+  }
+
+
+  // ==========================================
+  // FILE BEFORE UPLOAD
+  // ==========================================
 
   beforeUpload = (file: UploadFile): boolean => {
+
     this.fileForm.fileListStr = file.name;
+
     this.fileList = [file];
 
-    let fileType = file.name.substring(file.name.lastIndexOf("."), file.name.length).toLocaleUpperCase();
+    let fileType =
+      file.name
+        .substring(
+          file.name.lastIndexOf("."),
+          file.name.length
+        )
+        .toLocaleUpperCase();
 
-    if (fileType !== ".XLS" && fileType !== ".XLSX") {
+
+    if (
+      fileType !== ".XLS" &&
+      fileType !== ".XLSX"
+    ) {
+
       this.shareSvr.modalSvr.confirm({
+
         nzCancelText: null,
-        nzContent: "Attachment format must be excel!",
+
+        nzContent:
+          "Attachment format must be excel!",
+
         nzOnOk: () => {
+
           this.fileForm.fileListStr = "";
+
           this.fileList = [];
+
         },
+
       });
+
     } else {
+
       this.addLoading = false;
+
     }
+
     return false;
   };
 
-  DownloadExcelfile() {
-    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet([this.templateData]);
-    const workbook: XLSX.WorkBook = {
-      Sheets: { template: worksheet },
-      SheetNames: ["Template"],
-    };
-    const excelBuffer: any = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const data: Blob = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-    });
-    FileSaver.saveAs(data, "F1Meal-info Template.xlsx");
+
+  // ==========================================
+  // DOWNLOAD EXCEL TEMPLATE
+  // ==========================================
+
+  async DownloadExcelfile() {
+
+    // Make sure master data is loaded
+    if (
+      !this.mealPreferenceList ||
+      this.mealPreferenceList.length === 0
+    ) {
+
+      this.msgSvr.warning(
+        "Meal Preference data is still loading. Please try again."
+      );
+
+      return;
+    }
+
+
+    try {
+
+      const workbook = new ExcelJS.Workbook();
+
+      workbook.creator = "FMS";
+      workbook.created = new Date();
+
+
+      // ======================================
+      // TEMPLATE SHEET
+      // ======================================
+
+      const worksheet =
+        workbook.addWorksheet("Template");
+
+
+      // Header
+      worksheet.columns = [
+
+        {
+          header: "Groups",
+          key: "Groups",
+          width: 25
+        },
+
+        {
+          header: "Sub Group",
+          key: "Sub Group",
+          width: 25
+        },
+
+        {
+          header: "Meal Preference",
+          key: "Meal Preference",
+          width: 30
+        },
+
+        {
+          header: "FX Badge",
+          key: "FX Badge",
+          width: 20
+        },
+
+        {
+          header: "Name",
+          key: "Name",
+          width: 25
+        },
+
+        {
+          header: "First Day at FXBL",
+          key: "First Day at FXBL",
+          width: 20
+        },
+
+        {
+          header: "Last Day at FXBL",
+          key: "Last Day at FXBL",
+          width: 20
+        }
+
+      ];
+
+
+      // ======================================
+      // HEADER STYLE
+      // ======================================
+
+      const headerRow = worksheet.getRow(1);
+
+      headerRow.font = {
+        bold: true
+      };
+
+      headerRow.alignment = {
+        vertical: "middle",
+        horizontal: "center"
+      };
+
+
+      // ======================================
+      // HIDDEN MASTER SHEET
+      // ======================================
+
+      const masterSheet =
+        workbook.addWorksheet("MealPreferenceMaster");
+
+
+      masterSheet.columns = [
+
+        {
+          header: "Meal Preference",
+          key: "label",
+          width: 30
+        },
+
+        {
+          header: "ID",
+          key: "value",
+          width: 15
+        }
+
+      ];
+
+
+      // Add master values
+      this.mealPreferenceList.forEach(
+        (item: any) => {
+
+          masterSheet.addRow({
+
+            label: item.label,
+
+            value: item.value
+
+          });
+
+        }
+      );
+
+
+      // ======================================
+      // HIDE MASTER SHEET
+      // ======================================
+
+      masterSheet.state = "hidden";
+
+
+      // ======================================
+      // EXCEL DROPDOWN
+      // ======================================
+
+      const mealCount =
+        this.mealPreferenceList.length;
+
+
+      if (mealCount > 0) {
+
+        const lastMasterRow =
+          mealCount + 1;
+
+
+        // Apply dropdown to Meal Preference column
+        // C2:C1000
+
+        for (let row = 2; row <= 1000; row++) {
+
+          worksheet.getCell(
+            `C${row}`
+          ).dataValidation = {
+
+            type: "list",
+
+            allowBlank: false,
+
+            formulae: [
+              `'MealPreferenceMaster'!$A$2:$A$${lastMasterRow}`
+            ],
+
+            showErrorMessage: true,
+
+            errorTitle:
+              "Invalid Meal Preference",
+
+            error:
+              "Please select Meal Preference from the dropdown.",
+
+            showInputMessage: true,
+
+            promptTitle:
+              "Meal Preference",
+
+            prompt:
+              "Please select a Meal Preference."
+
+          };
+
+        }
+
+      }
+
+
+      // ======================================
+      // DATE FORMAT
+      // ======================================
+
+      for (let row = 2; row <= 1000; row++) {
+
+        worksheet.getCell(
+          `F${row}`
+        ).numFmt = "dd-mm-yyyy";
+
+        worksheet.getCell(
+          `G${row}`
+        ).numFmt = "dd-mm-yyyy";
+
+      }
+
+
+      // ======================================
+      // FREEZE HEADER
+      // ======================================
+
+      worksheet.views = [
+        {
+          state: "frozen",
+          ySplit: 1
+        }
+      ];
+
+
+      // ======================================
+      // CREATE EXCEL FILE
+      // ======================================
+
+      const buffer =
+        await workbook.xlsx.writeBuffer();
+
+
+      const blob = new Blob(
+        [buffer],
+        {
+          type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+      );
+
+
+      FileSaver.saveAs(
+        blob,
+        "F1Meal-info Template.xlsx"
+      );
+
+
+      this.msgSvr.success(
+        "Excel template downloaded successfully."
+      );
+
+    }
+    catch (error) {
+
+      console.error(
+        "❌ Excel template error:",
+        error
+      );
+
+      this.msgSvr.error(
+        "Failed to create Excel template."
+      );
+
+    }
+
   }
+
+
+  // ==========================================
+  // ADD FILE
+  // ==========================================
 
   addFile() {
+
     this.addLoading = true;
-    this.isSpinning = true;
-    this.sussessUpLoad = { total: 0, suc: 0, fail: 0 };
-    this.allData = [];
-    this.subData = [];
-
-    this.fileList.forEach((file) => {
-      this.getFileData(file, (data) => {
-        // ✅ cellDates: true — Excel date cells ah proper JS Date objects ah parse pண்ணும்
-        const wb: XLSX.WorkBook = XLSX.read(data, { type: "binary", cellDates: true });
-        const wsname: string = wb.SheetNames[0];
-        const ws: XLSX.WorkSheet = wb.Sheets[wsname];
-        const json = XLSX.utils.sheet_to_json(ws);
-        this.batchAdd(json);
-      });
-    });
-  }
-
-  getFileData(file, callback: (fle: string) => void): void {
-    const reader = new FileReader();
-    reader.readAsBinaryString(file);
-    reader.addEventListener("load", () => callback(reader.result!.toString()));
-  }
-
-  batchAdd(data: any[]) {
-    this.excelData = data;
-    this.sussessUpLoad.total = this.excelData.length;
-
-    if (this.excelData && this.excelData.length > 0) {
-      this.excelData.forEach((item) => {
-        this.validateAndProcessRow(item);
-      });
-      this.isSpinning = false;
-    } else {
-      this.fileForm.fileListStr = "";
-      this.fileList = [];
-      this.isSpinning = false;
-      this.msgSvr.error("Excel data does not exist");
-    }
-  }
-
-  validateAndProcessRow(item: any) {
-    const requiredKeys = ["Groups", "Sub Group", "Meal Preference", "FX Badge", "Name", "First Day at FXBL", "Last Day at FXBL"];
-
-    const hasAllProps = requiredKeys.every((key) => item.hasOwnProperty(key));
-
-    let rowRecord = { ...this.templateData, ...item };
-
-    if (!hasAllProps) {
-      this.sussessUpLoad.fail++;
-      rowRecord["Wrong Reason"] = "All of template content is required.";
-      this.allData.push(rowRecord);
-      return;
-    }
-
-    if (item['Phone No']) {
-      const phoneReg = /^[6789]\d{9}$/;
-      if (!phoneReg.test(item['Phone No'])) {
-        this.sussessUpLoad.fail++;
-        rowRecord["Wrong Reason"] = "Phone Number format is incorrect.";
-        this.allData.push(rowRecord);
-        return;
-      }
-    }
-
-    this.sussessUpLoad.suc++;
-    this.allData.push(rowRecord);
-    this.subData.push(rowRecord);
-  }
-
-  exportFailedExcel() {
-    if (this.allData.length > 0) {
-      this.apiSvr.exportHandle(this.allData, 68);
-    } else {
-      this.msgSvr.error("No Data.");
-    }
-  }
-
-  submit() {
-    if (this.subData.length === 0) {
-      this.msgSvr.error("No valid data to submit. Please check your file.");
-      return;
-    }
 
     this.isSpinning = true;
-    let completedCount = 0;
-    let successCount = 0;
-    let failCount = 0;
 
-    const validSubData = [...this.subData];
-    this.subData = [];
-    this.allData = [];
-
-    validSubData.forEach((item) => {
-      this.submitData(item, (isSuccess) => {
-        completedCount++;
-        if (isSuccess) {
-          successCount++;
-        } else {
-          failCount++;
-        }
-
-        if (completedCount === validSubData.length) {
-          this.isSpinning = false;
-          this.sussessUpLoad.suc = successCount;
-          this.sussessUpLoad.fail = failCount;
-
-          if (failCount === 0) {
-            this.msgSvr.success("Success.");
-            this.ref.close("refresh");
-          } else {
-            this.msgSvr.error(`${failCount} records failed to import. Check error report.`);
-          }
-        }
-      });
-    });
-  }
-
-  // ✅ Helper — Date object, string, illa Excel serial number ah safe ah 'DD-MM-YYYY' string ah maathும்
-  formatDateValue(value: any): string {
-    if (!value) return "";
-
-    // Case 1: already a proper JS Date object (cellDates: true set pண்ணின apparam idhே varும்)
-    if (value instanceof Date && !isNaN(value.getTime())) {
-      const day = String(value.getDate()).padStart(2, '0');
-      const month = String(value.getMonth() + 1).padStart(2, '0');
-      const year = value.getFullYear();
-      return `${day}-${month}-${year}`;
-    }
-
-    // Case 2: already a string (manually typed in Excel, e.g. "03-09-2026")
-    if (typeof value === 'string') {
-      return value.trim();
-    }
-
-    // Case 3: fallback — Excel serial number
-    if (typeof value === 'number') {
-      const utcDays = Math.floor(value - 25569);
-      const utcValue = utcDays * 86400;
-      const dateInfo = new Date(utcValue * 1000);
-      const day = String(dateInfo.getDate()).padStart(2, '0');
-      const month = String(dateInfo.getMonth() + 1).padStart(2, '0');
-      const year = dateInfo.getFullYear();
-      return `${day}-${month}-${year}`;
-    }
-
-    return "";
-  }
-
-  submitData(item, callback: (success: boolean) => void) {
-    const params = {
-      Groups: item["Groups"] ? item["Groups"].toString() : "",
-      SubGroup: item["Sub Group"] ? item["Sub Group"].toString() : "",
-      MealPreference: item["Meal Preference"] ? item["Meal Preference"].toString() : "",
-      FxBadge: item["FX Badge"] ? item["FX Badge"].toString() : "",
-      Name: item["Name"] ? item["Name"].toString() : "",
-      FirstDateFxbl: this.formatDateValue(item["First Day at FXBL"]),   // ✅ fixed
-      LastDateFxbl: this.formatDateValue(item["Last Day at FXBL"]),     // ✅ fixed
-      AddBy: (this.apiSvr.getSettingUserInfo() && this.apiSvr.getSettingUserInfo().eeid) || "",   // ✅ fixed
-      Func: "CMS-BulkF1Menu",
+    this.sussessUpLoad = {
+      total: 0,
+      suc: 0,
+      fail: 0
     };
 
-    this.apiSvr.iwxPostF1(params, {
-      headers: {
-        apiID: "ffff-1789627520107-10208193125-1282",
-        userKey: "E9785F13CCEAFB251A6AB147AFD24336",
+    this.allData = [];
+
+    this.subData = [];
+
+
+    this.fileList.forEach(
+      (file) => {
+
+        this.getFileData(
+          file,
+          (data) => {
+
+            const wb: XLSX.WorkBook =
+              XLSX.read(
+                data,
+                {
+                  type: "binary",
+                  cellDates: true
+                }
+              );
+
+
+            const wsname: string =
+              wb.SheetNames[0];
+
+
+            const ws: XLSX.WorkSheet =
+              wb.Sheets[wsname];
+
+
+            const json =
+              XLSX.utils.sheet_to_json(ws);
+
+
+            this.batchAdd(json);
+
+          }
+        );
+
       }
-    }, true).then((res: any) => {
-      if (res && res.IsOK === '1') {
-        item["Import Result"] = "Success.";
-        this.allData.push({ ...this.templateData, ...item });
-        callback(true);
-      } else {
-        item["Wrong Reason"] = (res && res.Msg) ? res.Msg : "API Error";
-        this.allData.push({ ...this.templateData, ...item });
-        callback(false);
-      }
-    }).catch(err => {
-      item["Wrong Reason"] = "Network or Server Error";
-      this.allData.push({ ...this.templateData, ...item });
-      callback(false);
-    });
+    );
+
   }
+
+
+  // ==========================================
+  // READ FILE
+  // ==========================================
+
+  getFileData(
+    file,
+    callback: (fle: string) => void
+  ): void {
+
+    const reader =
+      new FileReader();
+
+    reader.readAsBinaryString(file);
+
+    reader.addEventListener(
+      "load",
+      () => {
+
+        callback(
+          reader.result!.toString()
+        );
+
+      }
+    );
+
+  }
+
+
+  // ==========================================
+  // BATCH ADD
+  // ==========================================
+
+  batchAdd(data: any[]) {
+
+    this.excelData = data;
+
+    this.sussessUpLoad.total =
+      this.excelData.length;
+
+
+    if (
+      this.excelData &&
+      this.excelData.length > 0
+    ) {
+
+      this.excelData.forEach(
+        (item) => {
+
+          this.validateAndProcessRow(item);
+
+        }
+      );
+
+      this.isSpinning = false;
+
+    }
+    else {
+
+      this.fileForm.fileListStr = "";
+
+      this.fileList = [];
+
+      this.isSpinning = false;
+
+      this.msgSvr.error(
+        "Excel data does not exist"
+      );
+
+    }
+
+  }
+
+
+  // ==========================================
+  // VALIDATE ROW
+  // ==========================================
+
+  validateAndProcessRow(item: any) {
+
+    const requiredKeys = [
+
+      "Groups",
+
+      "Sub Group",
+
+      "Meal Preference",
+
+      "FX Badge",
+
+      "Name",
+
+      "First Day at FXBL",
+
+      "Last Day at FXBL"
+
+    ];
+
+
+    const hasAllProps =
+      requiredKeys.every(
+        (key) =>
+          item.hasOwnProperty(key)
+      );
+
+
+    let rowRecord = {
+      ...this.templateData,
+      ...item
+    };
+
+
+    if (!hasAllProps) {
+
+      this.sussessUpLoad.fail++;
+
+      rowRecord["Wrong Reason"] =
+        "All of template content is required.";
+
+      this.allData.push(
+        rowRecord
+      );
+
+      return;
+
+    }
+
+
+    // ======================================
+    // MEAL PREFERENCE VALIDATION
+    // ======================================
+
+    const mealName =
+      item["Meal Preference"]
+        ? item["Meal Preference"]
+            .toString()
+            .trim()
+        : "";
+
+
+    const selectedMeal =
+      this.getMealPreferenceByName(
+        mealName
+      );
+
+
+    if (!selectedMeal) {
+
+      this.sussessUpLoad.fail++;
+
+      rowRecord["Wrong Reason"] =
+        "Invalid Meal Preference. Please select a value from the Excel dropdown.";
+
+      this.allData.push(
+        rowRecord
+      );
+
+      return;
+
+    }
+
+
+    // ======================================
+    // SUCCESS
+    // ======================================
+
+    this.sussessUpLoad.suc++;
+
+    this.allData.push(
+      rowRecord
+    );
+
+    this.subData.push(
+      rowRecord
+    );
+
+  }
+
+
+  // ==========================================
+  // FIND MEAL PREFERENCE BY NAME
+  // ==========================================
+
+  getMealPreferenceByName(
+    mealName: string
+  ): any {
+
+    if (!mealName) {
+      return null;
+    }
+
+
+    return this.mealPreferenceList.find(
+      (item: any) =>
+
+        String(item.label)
+          .trim()
+          .toUpperCase() ===
+
+        String(mealName)
+          .trim()
+          .toUpperCase()
+    );
+
+  }
+
+
+  // ==========================================
+  // EXPORT FAILED EXCEL
+  // ==========================================
+
+  exportFailedExcel() {
+
+    if (
+      this.allData.length > 0
+    ) {
+
+      this.apiSvr.exportHandle(
+        this.allData,
+        68
+      );
+
+    }
+    else {
+
+      this.msgSvr.error(
+        "No Data."
+      );
+
+    }
+
+  }
+
+
+  // ==========================================
+  // SUBMIT
+  // ==========================================
+
+  submit() {
+
+    if (
+      this.subData.length === 0
+    ) {
+
+      this.msgSvr.error(
+        "No valid data to submit. Please check your file."
+      );
+
+      return;
+
+    }
+
+
+    this.isSpinning = true;
+
+
+    let completedCount = 0;
+
+    let successCount = 0;
+
+    let failCount = 0;
+
+
+    const validSubData =
+      [...this.subData];
+
+
+    this.subData = [];
+
+    this.allData = [];
+
+
+    validSubData.forEach(
+      (item) => {
+
+        this.submitData(
+          item,
+          (isSuccess) => {
+
+            completedCount++;
+
+
+            if (isSuccess) {
+
+              successCount++;
+
+            }
+            else {
+
+              failCount++;
+
+            }
+
+
+            if (
+              completedCount ===
+              validSubData.length
+            ) {
+
+              this.isSpinning = false;
+
+              this.sussessUpLoad.suc =
+                successCount;
+
+              this.sussessUpLoad.fail =
+                failCount;
+
+
+              if (
+                failCount === 0
+              ) {
+
+                this.msgSvr.success(
+                  "Success."
+                );
+
+                this.ref.close(
+                  "refresh"
+                );
+
+              }
+              else {
+
+                this.msgSvr.error(
+                  `${failCount} records failed to import. Check error report.`
+                );
+
+              }
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+  }
+
+
+  // ==========================================
+  // DATE FORMAT
+  // ==========================================
+
+  formatDateValue(
+    value: any
+  ): string {
+
+    if (!value) {
+      return "";
+    }
+
+
+    // JS Date
+    if (
+      value instanceof Date &&
+      !isNaN(value.getTime())
+    ) {
+
+      const day =
+        String(
+          value.getDate()
+        ).padStart(2, '0');
+
+
+      const month =
+        String(
+          value.getMonth() + 1
+        ).padStart(2, '0');
+
+
+      const year =
+        value.getFullYear();
+
+
+      return `${day}-${month}-${year}`;
+
+    }
+
+
+    // String
+    if (
+      typeof value === 'string'
+    ) {
+
+      return value.trim();
+
+    }
+
+
+    // Excel serial number
+    if (
+      typeof value === 'number'
+    ) {
+
+      const utcDays =
+        Math.floor(
+          value - 25569
+        );
+
+
+      const utcValue =
+        utcDays * 86400;
+
+
+      const dateInfo =
+        new Date(
+          utcValue * 1000
+        );
+
+
+      const day =
+        String(
+          dateInfo.getDate()
+        ).padStart(2, '0');
+
+
+      const month =
+        String(
+          dateInfo.getMonth() + 1
+        ).padStart(2, '0');
+
+
+      const year =
+        dateInfo.getFullYear();
+
+
+      return `${day}-${month}-${year}`;
+
+    }
+
+
+    return "";
+
+  }
+
+
+  // ==========================================
+  // SUBMIT SINGLE DATA
+  // ==========================================
+
+  submitData(
+    item: any,
+    callback: (success: boolean) => void
+  ) {
+
+    // ========================================
+    // GET MEAL NAME
+    // ========================================
+
+    const mealName =
+      item["Meal Preference"]
+        ? item["Meal Preference"]
+            .toString()
+            .trim()
+        : "";
+
+
+    // ========================================
+    // FIND MASTER ID
+    // ========================================
+
+    const selectedMeal =
+      this.getMealPreferenceByName(
+        mealName
+      );
+
+
+    if (!selectedMeal) {
+
+      item["Wrong Reason"] =
+        "Invalid Meal Preference.";
+
+      this.allData.push({
+        ...this.templateData,
+        ...item
+      });
+
+      callback(false);
+
+      return;
+
+    }
+
+
+    // ========================================
+    // IMPORTANT
+    // NAME -> ID
+    // ========================================
+
+    const mealPreferenceId =
+      selectedMeal.value;
+
+
+    console.log(
+      "🔥 IMPORT MEAL:",
+      mealName,
+      "→ ID:",
+      mealPreferenceId
+    );
+
+
+    // ========================================
+    // API PARAMS
+    // ========================================
+
+    const params = {
+
+      Groups:
+        item["Groups"]
+          ? item["Groups"].toString()
+          : "",
+
+
+      SubGroup:
+        item["Sub Group"]
+          ? item["Sub Group"].toString()
+          : "",
+
+
+      // IMPORTANT:
+      // DB receives ID
+      MealPreference:
+        mealPreferenceId,
+
+
+      FxBadge:
+        item["FX Badge"]
+          ? item["FX Badge"].toString()
+          : "",
+
+
+      Name:
+        item["Name"]
+          ? item["Name"].toString()
+          : "",
+
+
+      FirstDateFxbl:
+        this.formatDateValue(
+          item["First Day at FXBL"]
+        ),
+
+
+      LastDateFxbl:
+        this.formatDateValue(
+          item["Last Day at FXBL"]
+        ),
+
+
+      AddBy:
+        (
+          this.apiSvr.getSettingUserInfo() &&
+          this.apiSvr.getSettingUserInfo().eeid
+        ) || "",
+
+
+      Func:
+        "CMS-BulkF1Menu"
+
+    };
+
+
+    console.log(
+      "🔥 BULK IMPORT PARAMS:",
+      JSON.stringify(params)
+    );
+
+
+    // ========================================
+    // API CALL
+    // ========================================
+
+    this.apiSvr.iwxPostF1(
+      params,
+      {
+
+        headers: {
+
+          apiID:
+            "ffff-1789627520107-10208193125-1282",
+
+          userKey:
+            "E9785F13CCEAFB251A6AB147AFD24336"
+
+        }
+
+      },
+      true
+
+    )
+    .then(
+      (res: any) => {
+
+        if (
+          res &&
+          res.IsOK === '1'
+        ) {
+
+          item["Import Result"] =
+            "Success.";
+
+          this.allData.push({
+            ...this.templateData,
+            ...item
+          });
+
+          callback(true);
+
+        }
+        else {
+
+          item["Wrong Reason"] =
+            (
+              res &&
+              res.Msg
+            )
+              ? res.Msg
+              : "API Error";
+
+
+          this.allData.push({
+            ...this.templateData,
+            ...item
+          });
+
+          callback(false);
+
+        }
+
+      }
+    )
+    .catch(
+      (err) => {
+
+        console.error(
+          "❌ Import API error:",
+          err
+        );
+
+
+        item["Wrong Reason"] =
+          "Network or Server Error";
+
+
+        this.allData.push({
+          ...this.templateData,
+          ...item
+        });
+
+
+        callback(false);
+
+      }
+    );
+
+  }
+
 }
 
 
 
 
 
-<div class="import_container" style="width: 800px;margin: 0 auto;">
-    <form nz-form #JF="ngForm" se-container="1">
-        <se label="File" [labelWidth]="60">
-            <nz-input-group nzSearch [nzAddOnAfter]="afterTpl">
-                <input type="text" [(ngModel)]="fileForm.fileListStr" name="fileListStr" nz-input placeholder=""
-                    readonly />
-            </nz-input-group>
-            <ng-template #afterTpl>
-                <nz-upload [(nzFileList)]="fileList" [nzShowUploadList]="false" [nzBeforeUpload]="beforeUpload">
-                    <button class="r_t_l_0 r_b_l_0" nz-button size="small"><span>Select File</span></button>
 
-                </nz-upload>
 
-                <button class="r_t_l_0 r_b_l_0" nz-button size="small" (click)="addFile()"
-                    [disabled]="addLoading"><span>Add
-                        File</span></button>
-            </ng-template>
-            <!-- <button nz-button nzType="link" down-file [http-url]="downUrl" http-method="Get">Click here to download the template</button> -->
-            <button nz-button nzType="link" (click)="DownloadExcelfile()">Download Template</button>
-            <!-- <button nz-button nzType="link" (click)="downloadDeptInfo()">Download Excel format for system codes</button> -->
-        </se>
-    </form>
-    <div class="tips ml-lg mr-lg">
-        <!-- Note：the format of the uploaded file should be arranged according to the template. -->
-        <span>Remark:</span>
-        <ol>
-            <!-- <li>Date: DD-MM-YYYY</li> -->
-         <!-- <li> The Vendor name must be right (same as Vendor page)</li> -->
-            <!-- <li>Exit Type can only enter Resignation or Termination.</li> -->
-            <li>Mandatory fields cannot be left blank and must confirm to the content format.</li>
+<div
+  class="import_container"
+  style="width: 800px; margin: 0 auto;"
+>
 
-        </ol>
+  <form
+    nz-form
+    #JF="ngForm"
+    se-container="1"
+  >
+
+    <se
+      label="File"
+      [labelWidth]="60"
+    >
+
+      <nz-input-group
+        nzSearch
+        [nzAddOnAfter]="afterTpl"
+      >
+
+        <input
+          type="text"
+          [(ngModel)]="fileForm.fileListStr"
+          name="fileListStr"
+          nz-input
+          readonly
+        />
+
+      </nz-input-group>
+
+
+      <ng-template #afterTpl>
+
+        <!-- Select Excel -->
+
+        <nz-upload
+          [(nzFileList)]="fileList"
+          [nzShowUploadList]="false"
+          [nzBeforeUpload]="beforeUpload"
+        >
+
+          <button
+            class="r_t_l_0 r_b_l_0"
+            nz-button
+            size="small"
+          >
+            Select File
+          </button>
+
+        </nz-upload>
+
+
+        <!-- Add File -->
+
+        <button
+          class="r_t_l_0 r_b_l_0"
+          nz-button
+          size="small"
+          (click)="addFile()"
+          [disabled]="addLoading"
+        >
+          Add File
+        </button>
+
+      </ng-template>
+
+
+      <!-- Download Template -->
+
+      <button
+        nz-button
+        nzType="link"
+        (click)="DownloadExcelfile()"
+      >
+        Download Template
+      </button>
+
+    </se>
+
+  </form>
+
+
+  <!-- ====================================== -->
+  <!-- REMARK -->
+  <!-- ====================================== -->
+
+  <div
+    class="tips ml-lg mr-lg"
+  >
+
+    <span>Remark:</span>
+
+    <ol>
+
+      <li>
+        Mandatory fields cannot be left blank
+        and must conform to the content format.
+      </li>
+
+      <li>
+        Meal Preference must be selected
+        from the Excel dropdown.
+      </li>
+
+      <li>
+        Do not manually enter an invalid
+        Meal Preference.
+      </li>
+
+      <li>
+        Date format: DD-MM-YYYY.
+      </li>
+
+    </ol>
+
+  </div>
+
+
+  <!-- ====================================== -->
+  <!-- SUMMARY -->
+  <!-- ====================================== -->
+
+  <div
+    class="d-flex align-items-center justify-content-between mt-lg ml-lg mr-lg"
+  >
+
+    <div
+      class="text-md text-primary"
+    >
+      Total：
+      {{ sussessUpLoad ? sussessUpLoad.total : "" }}
     </div>
-    <div class="d-flex align-items-center justify-content-between mt-lg ml-lg mr-lg">
-        <div class="text-md text-primary">
-            Total：{{ sussessUpLoad ? sussessUpLoad.total : "" }}
-        </div>
-        <div class="text-md text-success" style="width: auto;">
-            Success：{{ sussessUpLoad ? sussessUpLoad.suc : "" }}
-        </div>
-        <div class="text-md text-error">
-            Failure：
-            <span>{{ sussessUpLoad ? sussessUpLoad.fail : "" }}</span>
-            <button nz-button nzType="link" (click)="exportFailedExcel()"
-                *ngIf="sussessUpLoad && sussessUpLoad.fail !== 0">download</button>
-        </div>
+
+
+    <div
+      class="text-md text-success"
+      style="width: auto;"
+    >
+      Success：
+      {{ sussessUpLoad ? sussessUpLoad.suc : "" }}
     </div>
-    <nz-spin style="margin-top: 20px;" [nzSpinning]="isSpinning" [nzTip]="'Loading'"></nz-spin>
+
+
+    <div
+      class="text-md text-error"
+    >
+
+      Failure：
+
+      <span>
+        {{ sussessUpLoad ? sussessUpLoad.fail : "" }}
+      </span>
+
+
+      <button
+        nz-button
+        nzType="link"
+        (click)="exportFailedExcel()"
+        *ngIf="
+          sussessUpLoad &&
+          sussessUpLoad.fail !== 0
+        "
+      >
+        download
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ====================================== -->
+  <!-- LOADING -->
+  <!-- ====================================== -->
+
+  <nz-spin
+    style="margin-top: 20px;"
+    [nzSpinning]="isSpinning"
+    [nzTip]="'Loading'"
+  >
+  </nz-spin>
+
 </div>
 
-<div class="drawer-footer">
-    <!-- <button nz-button nzType="primary" (click)="submit('FIH')" style="float:right"
-        [disabled]="fileList.length < 1  ||sussessUpLoad.total==0||sussessUpLoad.fail>0">
-       {{ "common.submit" | translate }}
-        FIH Submit
-    </button> -->
-    <button nz-button nzType="primary" (click)="submit()" style="float:right; margin-right: 10px;"
-        [disabled]="fileList.length < 1  ||sussessUpLoad.total==0||sussessUpLoad.fail>0">
-        <!-- Submit to iPocket only -->
-        Submit
-    </button>
-  </div>
+
+<!-- ====================================== -->
+<!-- FOOTER -->
+<!-- ====================================== -->
+
+<div
+  class="drawer-footer"
+>
+
+  <button
+    nz-button
+    nzType="primary"
+    (click)="submit()"
+    style="
+      float: right;
+      margin-right: 10px;
+    "
+    [disabled]="
+      fileList.length < 1 ||
+      sussessUpLoad.total == 0 ||
+      sussessUpLoad.fail > 0
+    "
+  >
+    Submit
+  </button>
+
+</div>
