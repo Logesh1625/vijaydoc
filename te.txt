@@ -1,967 +1,337 @@
-import { Component, OnInit } from '@angular/core';
-import * as XLSX from "xlsx";
-import * as FileSaver from "file-saver";
+DownloadExcelfile() {
 
-import { SharedModule } from "@shared";
-import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
-import {
-  NzMessageService,
-  UploadFile,
-  NzDrawerRef
-} from "ng-zorro-antd";
+  // =====================================================
+  // 1. CHECK MEAL PREFERENCE MASTER DATA
+  // =====================================================
 
-@Component({
-  selector: 'app-F1-Details-import',
-  templateUrl: './F1-Details-import.html',
-})
-export class F1ManageImportComponent implements OnInit {
+  const mealValues = (this.mealPreferenceList || [])
+    .map((item: any) => item.label)
+    .filter((value: any) =>
+      value !== null &&
+      value !== undefined &&
+      value !== ""
+    );
 
-  fileList: UploadFile[] = [];
+  if (mealValues.length === 0) {
 
-  addLoading: boolean = false;
-  isSpinning: boolean = false;
+    this.msgSvr.warning(
+      "Meal Preference data is not loaded. Please try again."
+    );
 
-  sussessUpLoad = {
-    total: 0,
-    suc: 0,
-    fail: 0,
-  };
-
-  allData: any[] = [];
-  subData: any[] = [];
-  excelData: any[] = [];
-
-  fileForm = {
-    fileListStr: "",
-  };
-
-  siteOptions = [];
-
-  mealPreferenceList: any[] = [];
-
-  templateData = {
-    "Groups": '',
-    "Sub Group": '',
-    "Meal Preference": '',
-    "FX Badge": '',
-    "Name": '',
-    "First Day at FXBL": '',
-    "Last Day at FXBL": ''
-  };
-
-  constructor(
-    private apiSvr: PublicNetService,
-    private shareSvr: SharedModule,
-    private msgSvr: NzMessageService,
-    private ref: NzDrawerRef
-  ) { }
-
-
-  // ==========================================
-  // INIT
-  // ==========================================
-
-  ngOnInit() {
     this.loadMealPreferences();
+
+    return;
   }
 
-
-  // ==========================================
-  // LOAD MEAL PREFERENCE
-  // ==========================================
-
-  loadMealPreferences() {
-
-    this.apiSvr
-      .getGuardPassCode("GuardPass-Meal Preference")
-      .subscribe(
-        (res: any) => {
-
-          this.mealPreferenceList = res || [];
-
-          console.log(
-            "IMPORT - MEAL PREFERENCE LIST:",
-            JSON.stringify(this.mealPreferenceList)
-          );
-
-        },
-        (error: any) => {
-
-          console.error(
-            "Failed to load Meal Preference:",
-            error
-          );
-
-          this.msgSvr.error(
-            "Unable to load Meal Preference master data."
-          );
-
-        }
-      );
-
-  }
+  console.log(
+    "Meal Preference values:",
+    mealValues
+  );
 
 
-  // ==========================================
-  // FILE BEFORE UPLOAD
-  // ==========================================
+  // =====================================================
+  // 2. CREATE WORKBOOK
+  // =====================================================
 
-  beforeUpload = (file: UploadFile): boolean => {
+  const workbook = new ExcelJS.Workbook();
 
-    this.fileForm.fileListStr = file.name;
-
-    this.fileList = [file];
-
-    const fileType =
-      file.name
-        .substring(
-          file.name.lastIndexOf("."),
-          file.name.length
-        )
-        .toLocaleUpperCase();
+  const worksheet = workbook.addWorksheet("Template");
 
 
-    if (
-      fileType !== ".XLS" &&
-      fileType !== ".XLSX"
-    ) {
+  // =====================================================
+  // 3. ADD HEADER
+  // =====================================================
 
-      this.shareSvr.modalSvr.confirm({
+  worksheet.addRow([
+    "Groups",
+    "Sub Group",
+    "Meal Preference",
+    "FX Badge",
+    "Name",
+    "First Day at FXBL",
+    "Last Day at FXBL"
+  ]);
 
-        nzCancelText: null,
 
-        nzContent:
-          "Attachment format must be excel!",
+  // =====================================================
+  // 4. HEADER STYLE
+  // =====================================================
 
-        nzOnOk: () => {
+  const headerRow = worksheet.getRow(1);
 
-          this.fileForm.fileListStr = "";
+  headerRow.height = 25;
 
-          this.fileList = [];
+  headerRow.eachCell((cell: any) => {
 
-        },
+    cell.font = {
+      bold: true,
+      size: 11
+    };
 
-      });
+    cell.alignment = {
+      horizontal: "center",
+      vertical: "middle"
+    };
 
-    } else {
+    cell.protection = {
+      locked: true
+    };
 
-      this.addLoading = false;
+  });
+
+
+  // =====================================================
+  // 5. COLUMN WIDTH
+  // =====================================================
+
+  worksheet.getColumn(1).width = 20; // Groups
+
+  worksheet.getColumn(2).width = 20; // Sub Group
+
+  worksheet.getColumn(3).width = 25; // Meal Preference
+
+  worksheet.getColumn(4).width = 20; // FX Badge
+
+  worksheet.getColumn(5).width = 30; // Name
+
+  worksheet.getColumn(6).width = 22; // First Day at FXBL
+
+  worksheet.getColumn(7).width = 22; // Last Day at FXBL
+
+
+  // =====================================================
+  // 6. MEAL PREFERENCE DROPDOWN
+  //    C2:C500
+  // =====================================================
+
+  const mealDropdownFormula =
+    '"' + mealValues.join(",") + '"';
+
+
+  // =====================================================
+  // 7. DATA ROWS
+  // =====================================================
+
+  for (let row = 2; row <= 500; row++) {
+
+    // -----------------------------------------------
+    // UNLOCK DATA CELLS
+    // -----------------------------------------------
+
+    for (let col = 1; col <= 7; col++) {
+
+      worksheet.getCell(row, col).protection = {
+        locked: false
+      };
 
     }
 
-    return false;
+
+    // -----------------------------------------------
+    // MEAL PREFERENCE DROPDOWN
+    // -----------------------------------------------
+
+    const mealCell =
+      worksheet.getCell(row, 3);
+
+    mealCell.dataValidation = {
+
+      type: "list",
+
+      allowBlank: true,
+
+      formulae: [
+        mealDropdownFormula
+      ],
+
+      showErrorMessage: true,
+
+      errorTitle:
+        "Invalid Meal Preference",
+
+      error:
+        "Please select Meal Preference from the dropdown."
+
+    };
+
+
+    // -----------------------------------------------
+    // FIRST DATE
+    // -----------------------------------------------
+
+    const firstDateCell =
+      worksheet.getCell(row, 6);
+
+    firstDateCell.numFmt =
+      "dd-mm-yyyy";
+
+
+    firstDateCell.dataValidation = {
+
+      type: "date",
+
+      operator: "between",
+
+      allowBlank: true,
+
+      formulae: [
+        new Date(2000, 0, 1),
+        new Date(2100, 11, 31)
+      ],
+
+      showErrorMessage: true,
+
+      errorTitle:
+        "Invalid Date",
+
+      error:
+        "Please enter a valid date."
+
+    };
+
+
+    // -----------------------------------------------
+    // LAST DATE
+    // -----------------------------------------------
+
+    const lastDateCell =
+      worksheet.getCell(row, 7);
+
+    lastDateCell.numFmt =
+      "dd-mm-yyyy";
+
+
+    lastDateCell.dataValidation = {
+
+      type: "date",
+
+      operator: "between",
+
+      allowBlank: true,
+
+      formulae: [
+        new Date(2000, 0, 1),
+        new Date(2100, 11, 31)
+      ],
+
+      showErrorMessage: true,
+
+      errorTitle:
+        "Invalid Date",
+
+      error:
+        "Please enter a valid date."
+
+    };
+
+  }
+
+
+  // =====================================================
+  // 8. FREEZE HEADER
+  // =====================================================
+
+  worksheet.views = [
+    {
+      state: "frozen",
+      ySplit: 1
+    }
+  ];
+
+
+  // =====================================================
+  // 9. FILTER
+  // =====================================================
+
+  worksheet.autoFilter = {
+    from: "A1",
+    to: "G500"
   };
 
 
-  // ==========================================
-  // DOWNLOAD EXCEL TEMPLATE
-  // ==========================================
+  // =====================================================
+  // 10. PROTECT SHEET
+  // =====================================================
+  // Header = LOCKED
+  // Rows 2-500 = EDITABLE
+  //
+  // Password can be changed if required.
+  // =====================================================
 
-  DownloadExcelfile() {
+  worksheet.protect("F1Template2026", {
 
-    const headers = [
-      "Groups",
-      "Sub Group",
-      "Meal Preference",
-      "FX Badge",
-      "Name",
-      "First Day at FXBL",
-      "Last Day at FXBL"
-    ];
+    selectLockedCells: false,
 
+    selectUnlockedCells: true,
 
-    // ========================================
-    // CREATE SHEET
-    // ========================================
+    formatCells: false,
 
-    const worksheet: XLSX.WorkSheet =
-      XLSX.utils.aoa_to_sheet([
-        headers
-      ]);
+    formatColumns: false,
 
+    formatRows: false,
 
-    // ========================================
-    // COLUMN WIDTH
-    // ========================================
+    insertColumns: false,
 
-    worksheet["!cols"] = [
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 30 },
-      { wch: 22 },
-      { wch: 22 }
-    ];
+    insertRows: false,
+
+    deleteColumns: false,
+
+    deleteRows: false,
+
+    sort: false,
+
+    autoFilter: true
+
+  }).then(() => {
 
 
-    // ========================================
-    // CREATE WORKBOOK
-    // ========================================
+    // =================================================
+    // 11. GENERATE EXCEL
+    // =================================================
 
-    const workbook: XLSX.WorkBook =
-      XLSX.utils.book_new();
+    return workbook.xlsx.writeBuffer();
+
+  }).then((buffer: any) => {
 
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      "Template"
+    // =================================================
+    // 12. CREATE BLOB
+    // =================================================
+
+    const blob = new Blob(
+      [buffer],
+      {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
     );
 
 
-    // ========================================
-    // WRITE EXCEL
-    // ========================================
-
-    const excelBuffer: any =
-      XLSX.write(
-        workbook,
-        {
-          bookType: "xlsx",
-          type: "array"
-        }
-      );
-
-
-    // ========================================
-    // CREATE BLOB
-    // ========================================
-
-    const data: Blob =
-      new Blob(
-        [excelBuffer],
-        {
-          type:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8"
-        }
-      );
-
-
-    // ========================================
-    // DOWNLOAD
-    // ========================================
+    // =================================================
+    // 13. DOWNLOAD
+    // =================================================
 
     FileSaver.saveAs(
-      data,
+      blob,
       "F1Meal-info Template.xlsx"
     );
 
-  }
-
-
-  // ==========================================
-  // ADD FILE
-  // ==========================================
-
-  addFile() {
-
-    this.addLoading = true;
-
-    this.isSpinning = true;
-
-    this.sussessUpLoad = {
-      total: 0,
-      suc: 0,
-      fail: 0
-    };
-
-    this.allData = [];
-
-    this.subData = [];
-
-
-    this.fileList.forEach(
-      (file) => {
-
-        this.getFileData(
-          file,
-          (data) => {
-
-            const wb: XLSX.WorkBook =
-              XLSX.read(
-                data,
-                {
-                  type: "binary",
-                  cellDates: true
-                }
-              );
-
-
-            const wsname: string =
-              wb.SheetNames[0];
-
-
-            const ws: XLSX.WorkSheet =
-              wb.Sheets[wsname];
-
-
-            const json =
-              XLSX.utils.sheet_to_json(ws);
-
-
-            this.batchAdd(json);
-
-          }
-        );
-
-      }
-    );
-
-  }
-
-
-  // ==========================================
-  // READ FILE
-  // ==========================================
-
-  getFileData(
-    file,
-    callback: (fle: string) => void
-  ): void {
-
-    const reader =
-      new FileReader();
-
-    reader.readAsBinaryString(file);
-
-    reader.addEventListener(
-      "load",
-      () => {
-
-        callback(
-          reader.result!.toString()
-        );
-
-      }
-    );
-
-  }
-
-
-  // ==========================================
-  // BATCH ADD
-  // ==========================================
-
-  batchAdd(data: any[]) {
-
-    this.excelData = data;
-
-    this.sussessUpLoad.total =
-      this.excelData.length;
-
-
-    if (
-      this.excelData &&
-      this.excelData.length > 0
-    ) {
-
-      this.excelData.forEach(
-        (item) => {
-
-          this.validateAndProcessRow(item);
-
-        }
-      );
-
-      this.isSpinning = false;
-
-    }
-    else {
-
-      this.fileForm.fileListStr = "";
-
-      this.fileList = [];
-
-      this.isSpinning = false;
-
-      this.msgSvr.error(
-        "Excel data does not exist"
-      );
-
-    }
-
-  }
-
-
-  // ==========================================
-  // VALIDATE ROW
-  // ==========================================
-
-  validateAndProcessRow(item: any) {
-
-    const requiredKeys = [
-
-      "Groups",
-
-      "Sub Group",
-
-      "Meal Preference",
-
-      "FX Badge",
-
-      "Name",
-
-      "First Day at FXBL",
-
-      "Last Day at FXBL"
-
-    ];
-
-
-    const hasAllProps =
-      requiredKeys.every(
-        (key) =>
-          item.hasOwnProperty(key)
-      );
-
-
-    const rowRecord = {
-      ...this.templateData,
-      ...item
-    };
-
-
-    if (!hasAllProps) {
-
-      this.sussessUpLoad.fail++;
-
-      rowRecord["Wrong Reason"] =
-        "All of template content is required.";
-
-      this.allData.push(
-        rowRecord
-      );
-
-      return;
-
-    }
-
-
-    // ======================================
-    // MEAL PREFERENCE VALIDATION
-    // ======================================
-
-    const mealName =
-      item["Meal Preference"]
-        ? item["Meal Preference"]
-          .toString()
-          .trim()
-        : "";
-
-
-    const selectedMeal =
-      this.getMealPreferenceByName(
-        mealName
-      );
-
-
-    if (!selectedMeal) {
-
-      this.sussessUpLoad.fail++;
-
-      rowRecord["Wrong Reason"] =
-        "Invalid Meal Preference. Please select a value from the Excel dropdown.";
-
-      this.allData.push(
-        rowRecord
-      );
-
-      return;
-
-    }
-
-
-    // ======================================
-    // SUCCESS
-    // ======================================
-
-    this.sussessUpLoad.suc++;
-
-    this.allData.push(
-      rowRecord
-    );
-
-    this.subData.push(
-      rowRecord
-    );
-
-  }
-
-
-  // ==========================================
-  // FIND MEAL PREFERENCE BY NAME
-  // ==========================================
-
-  getMealPreferenceByName(
-    mealName: string
-  ): any {
-
-    if (!mealName) {
-      return null;
-    }
-
-
-    return this.mealPreferenceList.find(
-      (item: any) =>
-
-        String(item.label)
-          .trim()
-          .toUpperCase() ===
-
-        String(mealName)
-          .trim()
-          .toUpperCase()
-    );
-
-  }
-
-
-  // ==========================================
-  // EXPORT FAILED EXCEL
-  // ==========================================
-
-  exportFailedExcel() {
-
-    if (
-      this.allData.length > 0
-    ) {
-
-      this.apiSvr.exportHandle(
-        this.allData,
-        68
-      );
-
-    }
-    else {
-
-      this.msgSvr.error(
-        "No Data."
-      );
-
-    }
-
-  }
-
-
-  // ==========================================
-  // SUBMIT
-  // ==========================================
-
-  submit() {
-
-    if (
-      this.subData.length === 0
-    ) {
-
-      this.msgSvr.error(
-        "No valid data to submit. Please check your file."
-      );
-
-      return;
-
-    }
-
-
-    this.isSpinning = true;
-
-
-    let completedCount = 0;
-
-    let successCount = 0;
-
-    let failCount = 0;
-
-
-    const validSubData =
-      [...this.subData];
-
-
-    this.subData = [];
-
-    this.allData = [];
-
-
-    validSubData.forEach(
-      (item) => {
-
-        this.submitData(
-          item,
-          (isSuccess) => {
-
-            completedCount++;
-
-
-            if (isSuccess) {
-
-              successCount++;
-
-            }
-            else {
-
-              failCount++;
-
-            }
-
-
-            if (
-              completedCount ===
-              validSubData.length
-            ) {
-
-              this.isSpinning = false;
-
-              this.sussessUpLoad.suc =
-                successCount;
-
-              this.sussessUpLoad.fail =
-                failCount;
-
-
-              if (
-                failCount === 0
-              ) {
-
-                this.msgSvr.success(
-                  "Success."
-                );
-
-                this.ref.close(
-                  "refresh"
-                );
-
-              }
-              else {
-
-                this.msgSvr.error(
-                  `${failCount} records failed to import. Check error report.`
-                );
-
-              }
-
-            }
-
-          }
-        );
-
-      }
-    );
-
-  }
-
-
-  // ==========================================
-  // DATE FORMAT
-  // ==========================================
-
-  formatDateValue(
-    value: any
-  ): string {
-
-    if (!value) {
-      return "";
-    }
-
-
-    // ========================================
-    // JS DATE
-    // ========================================
-
-    if (
-      value instanceof Date &&
-      !isNaN(value.getTime())
-    ) {
-
-      const day =
-        String(
-          value.getDate()
-        ).padStart(2, '0');
-
-
-      const month =
-        String(
-          value.getMonth() + 1
-        ).padStart(2, '0');
-
-
-      const year =
-        value.getFullYear();
-
-
-      return `${day}-${month}-${year}`;
-
-    }
-
-
-    // ========================================
-    // STRING
-    // ========================================
-
-    if (
-      typeof value === 'string'
-    ) {
-
-      return value.trim();
-
-    }
-
-
-    // ========================================
-    // EXCEL SERIAL NUMBER
-    // ========================================
-
-    if (
-      typeof value === 'number'
-    ) {
-
-      const utcDays =
-        Math.floor(
-          value - 25569
-        );
-
-
-      const utcValue =
-        utcDays * 86400;
-
-
-      const dateInfo =
-        new Date(
-          utcValue * 1000
-        );
-
-
-      const day =
-        String(
-          dateInfo.getDate()
-        ).padStart(2, '0');
-
-
-      const month =
-        String(
-          dateInfo.getMonth() + 1
-        ).padStart(2, '0');
-
-
-      const year =
-        dateInfo.getFullYear();
-
-
-      return `${day}-${month}-${year}`;
-
-    }
-
-
-    return "";
-
-  }
-
-
-  // ==========================================
-  // SUBMIT SINGLE DATA
-  // ==========================================
-
-  submitData(
-    item: any,
-    callback: (success: boolean) => void
-  ) {
-
-    // ========================================
-    // GET MEAL NAME
-    // ========================================
-
-    const mealName =
-      item["Meal Preference"]
-        ? item["Meal Preference"]
-          .toString()
-          .trim()
-        : "";
-
-
-    // ========================================
-    // FIND MASTER ID
-    // ========================================
-
-    const selectedMeal =
-      this.getMealPreferenceByName(
-        mealName
-      );
-
-
-    if (!selectedMeal) {
-
-      item["Wrong Reason"] =
-        "Invalid Meal Preference.";
-
-      this.allData.push({
-        ...this.templateData,
-        ...item
-      });
-
-      callback(false);
-
-      return;
-
-    }
-
-
-    // ========================================
-    // NAME -> ID
-    // ========================================
-
-    const mealPreferenceId =
-      selectedMeal.value;
-
 
     console.log(
-      "IMPORT MEAL:",
-      mealName,
-      "-> ID:",
-      mealPreferenceId
+      "F1 Meal Excel Template downloaded successfully."
     );
 
+  }).catch((error: any) => {
 
-    // ========================================
-    // API PARAMS
-    // ========================================
-
-    const params = {
-
-      Groups:
-        item["Groups"]
-          ? item["Groups"].toString()
-          : "",
-
-      SubGroup:
-        item["Sub Group"]
-          ? item["Sub Group"].toString()
-          : "",
-
-      MealPreference:
-        mealPreferenceId,
-
-      FxBadge:
-        item["FX Badge"]
-          ? item["FX Badge"].toString()
-          : "",
-
-      Name:
-        item["Name"]
-          ? item["Name"].toString()
-          : "",
-
-      FirstDateFxbl:
-        this.formatDateValue(
-          item["First Day at FXBL"]
-        ),
-
-      LastDateFxbl:
-        this.formatDateValue(
-          item["Last Day at FXBL"]
-        ),
-
-      AddBy:
-        (
-          this.apiSvr.getSettingUserInfo() &&
-          this.apiSvr.getSettingUserInfo().eeid
-        ) || "",
-
-      Func:
-        "CMS-BulkF1Menu"
-
-    };
-
-
-    console.log(
-      "BULK IMPORT PARAMS:",
-      JSON.stringify(params)
+    console.error(
+      "Excel generation error:",
+      error
     );
 
+    this.msgSvr.error(
+      "Unable to generate Excel template."
+    );
 
-    // ========================================
-    // API CALL
-    // ========================================
-
-    this.apiSvr.iwxPostF1(
-      params,
-      {
-        headers: {
-
-          apiID:
-            "ffff-1789627520107-10208193125-1282",
-
-          userKey:
-            "E9785F13CCEAFB251A6AB147AFD24336"
-
-        }
-      },
-      true
-
-    )
-      .then(
-        (res: any) => {
-
-          if (
-            res &&
-            res.IsOK === '1'
-          ) {
-
-            item["Import Result"] =
-              "Success.";
-
-            this.allData.push({
-              ...this.templateData,
-              ...item
-            });
-
-            callback(true);
-
-          }
-          else {
-
-            item["Wrong Reason"] =
-              (
-                res &&
-                res.Msg
-              )
-                ? res.Msg
-                : "API Error";
-
-
-            this.allData.push({
-              ...this.templateData,
-              ...item
-            });
-
-            callback(false);
-
-          }
-
-        }
-      )
-      .catch(
-        (err) => {
-
-          console.error(
-            "Import API error:",
-            err
-          );
-
-
-          item["Wrong Reason"] =
-            "Network or Server Error";
-
-
-          this.allData.push({
-            ...this.templateData,
-            ...item
-          });
-
-
-          callback(false);
-
-        }
-      );
-
-  }
+  });
 
 }
