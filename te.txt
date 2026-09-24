@@ -10,7 +10,8 @@ DownloadExcelfile() {
       value !== null &&
       value !== undefined &&
       value !== ""
-    );
+    )
+    .map((value: any) => String(value).trim());
 
   if (mealValues.length === 0) {
 
@@ -33,305 +34,263 @@ DownloadExcelfile() {
   // 2. CREATE WORKBOOK
   // =====================================================
 
-  const workbook = new ExcelJS.Workbook();
+  XlsxPopulate.fromBlankAsync()
+    .then((workbook: any) => {
 
-  const worksheet = workbook.addWorksheet("Template");
+      const worksheet = workbook.sheet(0);
 
+      worksheet.name("Template");
 
-  // =====================================================
-  // 3. ADD HEADER
-  // =====================================================
 
-  worksheet.addRow([
-    "Groups",
-    "Sub Group",
-    "Meal Preference",
-    "FX Badge",
-    "Name",
-    "First Day at FXBL",
-    "Last Day at FXBL"
-  ]);
+      // =================================================
+      // 3. ADD HEADER
+      // =================================================
 
+      worksheet.range("A1:G1").value([[
+        "Groups",
+        "Sub Group",
+        "Meal Preference",
+        "FX Badge",
+        "Name",
+        "First Day at FXBL",
+        "Last Day at FXBL"
+      ]]);
 
-  // =====================================================
-  // 4. HEADER STYLE
-  // =====================================================
 
-  const headerRow = worksheet.getRow(1);
+      // =================================================
+      // 4. HEADER STYLE
+      // =================================================
 
-  headerRow.height = 25;
+      worksheet.range("A1:G1").style({
+        bold: true,
+        fontSize: 11,
+        horizontalAlignment: "center",
+        verticalAlignment: "center",
+        wrapText: true
+      });
 
-  headerRow.eachCell((cell: any) => {
+      worksheet.row(1).height(25);
 
-    cell.font = {
-      bold: true,
-      size: 11
-    };
 
-    cell.alignment = {
-      horizontal: "center",
-      vertical: "middle"
-    };
+      // =================================================
+      // 5. COLUMN WIDTH
+      // =================================================
 
-    cell.protection = {
-      locked: true
-    };
+      worksheet.column("A").width(20);
+      worksheet.column("B").width(20);
+      worksheet.column("C").width(25);
+      worksheet.column("D").width(20);
+      worksheet.column("E").width(30);
+      worksheet.column("F").width(22);
+      worksheet.column("G").width(22);
 
-  });
 
+      // =================================================
+      // 6. DATE FORMAT
+      // =================================================
 
-  // =====================================================
-  // 5. COLUMN WIDTH
-  // =====================================================
+      worksheet
+        .range("F2:G500")
+        .style(
+          "numberFormat",
+          "dd-mm-yyyy"
+        );
 
-  worksheet.getColumn(1).width = 20; // Groups
 
-  worksheet.getColumn(2).width = 20; // Sub Group
+      // =================================================
+      // 7. MEAL PREFERENCE DROPDOWN
+      // =================================================
 
-  worksheet.getColumn(3).width = 25; // Meal Preference
+      const masterSheet =
+        workbook.addSheet("MealMaster");
 
-  worksheet.getColumn(4).width = 20; // FX Badge
+      masterSheet
+        .cell("A1")
+        .value("Meal Preference");
 
-  worksheet.getColumn(5).width = 30; // Name
 
-  worksheet.getColumn(6).width = 22; // First Day at FXBL
+      for (let i = 0; i < mealValues.length; i++) {
 
-  worksheet.getColumn(7).width = 22; // Last Day at FXBL
+        masterSheet
+          .cell(`A${i + 2}`)
+          .value(mealValues[i]);
 
-
-  // =====================================================
-  // 6. MEAL PREFERENCE DROPDOWN
-  //    C2:C500
-  // =====================================================
-
-  const mealDropdownFormula =
-    '"' + mealValues.join(",") + '"';
-
-
-  // =====================================================
-  // 7. DATA ROWS
-  // =====================================================
-
-  for (let row = 2; row <= 500; row++) {
-
-    // -----------------------------------------------
-    // UNLOCK DATA CELLS
-    // -----------------------------------------------
-
-    for (let col = 1; col <= 7; col++) {
-
-      worksheet.getCell(row, col).protection = {
-        locked: false
-      };
-
-    }
-
-
-    // -----------------------------------------------
-    // MEAL PREFERENCE DROPDOWN
-    // -----------------------------------------------
-
-    const mealCell =
-      worksheet.getCell(row, 3);
-
-    mealCell.dataValidation = {
-
-      type: "list",
-
-      allowBlank: true,
-
-      formulae: [
-        mealDropdownFormula
-      ],
-
-      showErrorMessage: true,
-
-      errorTitle:
-        "Invalid Meal Preference",
-
-      error:
-        "Please select Meal Preference from the dropdown."
-
-    };
-
-
-    // -----------------------------------------------
-    // FIRST DATE
-    // -----------------------------------------------
-
-    const firstDateCell =
-      worksheet.getCell(row, 6);
-
-    firstDateCell.numFmt =
-      "dd-mm-yyyy";
-
-
-    firstDateCell.dataValidation = {
-
-      type: "date",
-
-      operator: "between",
-
-      allowBlank: true,
-
-      formulae: [
-        new Date(2000, 0, 1),
-        new Date(2100, 11, 31)
-      ],
-
-      showErrorMessage: true,
-
-      errorTitle:
-        "Invalid Date",
-
-      error:
-        "Please enter a valid date."
-
-    };
-
-
-    // -----------------------------------------------
-    // LAST DATE
-    // -----------------------------------------------
-
-    const lastDateCell =
-      worksheet.getCell(row, 7);
-
-    lastDateCell.numFmt =
-      "dd-mm-yyyy";
-
-
-    lastDateCell.dataValidation = {
-
-      type: "date",
-
-      operator: "between",
-
-      allowBlank: true,
-
-      formulae: [
-        new Date(2000, 0, 1),
-        new Date(2100, 11, 31)
-      ],
-
-      showErrorMessage: true,
-
-      errorTitle:
-        "Invalid Date",
-
-      error:
-        "Please enter a valid date."
-
-    };
-
-  }
-
-
-  // =====================================================
-  // 8. FREEZE HEADER
-  // =====================================================
-
-  worksheet.views = [
-    {
-      state: "frozen",
-      ySplit: 1
-    }
-  ];
-
-
-  // =====================================================
-  // 9. FILTER
-  // =====================================================
-
-  worksheet.autoFilter = {
-    from: "A1",
-    to: "G500"
-  };
-
-
-  // =====================================================
-  // 10. PROTECT SHEET
-  // =====================================================
-  // Header = LOCKED
-  // Rows 2-500 = EDITABLE
-  //
-  // Password can be changed if required.
-  // =====================================================
-
-  worksheet.protect("F1Template2026", {
-
-    selectLockedCells: false,
-
-    selectUnlockedCells: true,
-
-    formatCells: false,
-
-    formatColumns: false,
-
-    formatRows: false,
-
-    insertColumns: false,
-
-    insertRows: false,
-
-    deleteColumns: false,
-
-    deleteRows: false,
-
-    sort: false,
-
-    autoFilter: true
-
-  }).then(() => {
-
-
-    // =================================================
-    // 11. GENERATE EXCEL
-    // =================================================
-
-    return workbook.xlsx.writeBuffer();
-
-  }).then((buffer: any) => {
-
-
-    // =================================================
-    // 12. CREATE BLOB
-    // =================================================
-
-    const blob = new Blob(
-      [buffer],
-      {
-        type:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       }
-    );
 
 
-    // =================================================
-    // 13. DOWNLOAD
-    // =================================================
-
-    FileSaver.saveAs(
-      blob,
-      "F1Meal-info Template.xlsx"
-    );
+      // Hide master sheet
+      masterSheet.hidden(true);
 
 
-    console.log(
-      "F1 Meal Excel Template downloaded successfully."
-    );
+      const lastMealRow =
+        mealValues.length + 1;
 
-  }).catch((error: any) => {
 
-    console.error(
-      "Excel generation error:",
-      error
-    );
+      // =================================================
+      // 8. MEAL DROPDOWN C2:C500
+      // =================================================
 
-    this.msgSvr.error(
-      "Unable to generate Excel template."
-    );
+      worksheet
+        .range("C2:C500")
+        .dataValidation({
 
-  });
+          type: "list",
+
+          allowBlank: true,
+
+          showErrorMessage: true,
+
+          errorTitle:
+            "Invalid Meal Preference",
+
+          error:
+            "Please select Meal Preference from the dropdown.",
+
+          formula1:
+            `'MealMaster'!$A$2:$A$${lastMealRow}`
+
+        });
+
+
+      // =================================================
+      // 9. FIRST DATE VALIDATION
+      // =================================================
+
+      worksheet
+        .range("F2:F500")
+        .dataValidation({
+
+          type: "date",
+
+          operator: "between",
+
+          allowBlank: true,
+
+          showErrorMessage: true,
+
+          errorTitle:
+            "Invalid Date",
+
+          error:
+            "Please enter a valid date in DD-MM-YYYY format.",
+
+          formula1:
+            "DATE(2000,1,1)",
+
+          formula2:
+            "DATE(2100,12,31)"
+
+        });
+
+
+      // =================================================
+      // 10. LAST DATE VALIDATION
+      // =================================================
+
+      worksheet
+        .range("G2:G500")
+        .dataValidation({
+
+          type: "date",
+
+          operator: "between",
+
+          allowBlank: true,
+
+          showErrorMessage: true,
+
+          errorTitle:
+            "Invalid Date",
+
+          error:
+            "Please enter a valid date in DD-MM-YYYY format.",
+
+          formula1:
+            "DATE(2000,1,1)",
+
+          formula2:
+            "DATE(2100,12,31)"
+
+        });
+
+
+      // =================================================
+      // 11. FREEZE HEADER
+      // =================================================
+
+      worksheet.freezePanes(0, 1);
+
+
+      // =================================================
+      // 12. OUTPUT
+      // =================================================
+
+      return workbook.outputAsync();
+
+    })
+    .then((buffer: any) => {
+
+      // =================================================
+      // 13. CREATE BLOB
+      // =================================================
+
+      const blob = new Blob(
+        [buffer],
+        {
+          type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+      );
+
+
+      // =================================================
+      // 14. DOWNLOAD
+      // =================================================
+
+      FileSaver.saveAs(
+        blob,
+        "F1Meal-info Template.xlsx"
+      );
+
+
+      console.log(
+        "F1 Meal Excel Template downloaded successfully."
+      );
+
+      this.msgSvr.success(
+        "Excel template downloaded successfully."
+      );
+
+    })
+    .catch((error: any) => {
+
+      console.error(
+        "===================================="
+      );
+
+      console.error(
+        "Excel generation error:",
+        error
+      );
+
+      console.error(
+        "Error message:",
+        error && error.message
+      );
+
+      console.error(
+        "Error stack:",
+        error && error.stack
+      );
+
+      console.error(
+        "===================================="
+      );
+
+      this.msgSvr.error(
+        "Unable to generate Excel template."
+      );
+
+    });
 
 }
