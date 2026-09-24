@@ -1,651 +1,337 @@
-import { Component, OnInit } from "@angular/core";
-import { NzMessageService, NzDrawerRef } from "ng-zorro-antd";
+import { Component, OnInit } from '@angular/core';
+import * as XLSX from "xlsx";
 import { SharedModule } from "@shared";
-import { I18NService } from "@core";
+import * as FileSaver from "file-saver";
 import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
+import { NzMessageService, UploadFile, NzDrawerRef } from "ng-zorro-antd";
 
 @Component({
-  selector: 'app-F1-Details-add',
-  templateUrl: './F1-Details-add.html',
+  selector: 'app-F1-Details-import',
+  templateUrl: './F1-Details-import.html',
 })
-export class AddDetailsDrawComponent implements OnInit {
+export class F1ManageImportComponent implements OnInit {
+  fileList: UploadFile[] = [];
+  addLoading: boolean = false;
+  isSpinning: boolean = false;
+
+  sussessUpLoad = {
+    total: 0,
+    suc: 0,
+    fail: 0,
+  };
+
+  allData: any[] = [];
+  subData: any[] = [];
+  excelData: any[] = [];
+
+  fileForm = {
+    fileListStr: "",
+  };
+
+  siteOptions = [];
+
+  templateData = {
+    "Groups": '',
+    "Sub Group": '',
+    "Meal Preference": '',
+    "FX Badge": '',
+    "Name": '',
+    "First Day at FXBL": '',
+    "Last Day at FXBL": ''
+  };
 
   constructor(
-    private publicSvr: PublicNetService,
-    private msgSvr: NzMessageService,
-    private i18n: I18NService,
-    private ref: NzDrawerRef,
+    private apiSvr: PublicNetService,
     private shareSvr: SharedModule,
+    private msgSvr: NzMessageService,
+    private ref: NzDrawerRef
   ) { }
 
-  groups: any = '';
-  subGroup: any = '';
-  mealPreference: any = null;
-  fxBadge: any = '';
-  name: any = '';
+  ngOnInit() { }
 
-  firstDateFxbl: Date | null = null;
-  lastDateFxbl: Date | null = null;
+  beforeUpload = (file: UploadFile): boolean => {
+    this.fileForm.fileListStr = file.name;
+    this.fileList = [file];
 
-  option: any;
-  editData: any;
-  timer: any;
+    let fileType = file.name.substring(file.name.lastIndexOf("."), file.name.length).toLocaleUpperCase();
 
-  mealPreferenceList: any[] = [];
+    if (fileType !== ".XLS" && fileType !== ".XLSX") {
+      this.shareSvr.modalSvr.confirm({
+        nzCancelText: null,
+        nzContent: "Attachment format must be excel!",
+        nzOnOk: () => {
+          this.fileForm.fileListStr = "";
+          this.fileList = [];
+        },
+      });
+    } else {
+      this.addLoading = false;
+    }
+    return false;
+  };
 
-  ngOnInit() {
+  DownloadExcelfile() {
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet([this.templateData]);
+    const workbook: XLSX.WorkBook = {
+      Sheets: { template: worksheet },
+      SheetNames: ["Template"],
+    };
+    const excelBuffer: any = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data: Blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+    FileSaver.saveAs(data, "F1Meal-info Template.xlsx");
+  }
 
-    // ==========================================
-    // LOAD EDIT DATA
-    // ==========================================
+  addFile() {
+    this.addLoading = true;
+    this.isSpinning = true;
+    this.sussessUpLoad = { total: 0, suc: 0, fail: 0 };
+    this.allData = [];
+    this.subData = [];
 
-    if (this.editData) {
+    this.fileList.forEach((file) => {
+      this.getFileData(file, (data) => {
+        // ✅ cellDates: true — Excel date cells ah proper JS Date objects ah parse pண்ணும்
+        const wb: XLSX.WorkBook = XLSX.read(data, { type: "binary", cellDates: true });
+        const wsname: string = wb.SheetNames[0];
+        const ws: XLSX.WorkSheet = wb.Sheets[wsname];
+        const json = XLSX.utils.sheet_to_json(ws);
+        this.batchAdd(json);
+      });
+    });
+  }
 
-      this.groups = this.editData.Groups;
-      this.subGroup = this.editData.SubGroup;
+  getFileData(file, callback: (fle: string) => void): void {
+    const reader = new FileReader();
+    reader.readAsBinaryString(file);
+    reader.addEventListener("load", () => callback(reader.result!.toString()));
+  }
 
-      this.fxBadge = this.editData.FxBadge;
-      this.name = this.editData.Name;
+  batchAdd(data: any[]) {
+    this.excelData = data;
+    this.sussessUpLoad.total = this.excelData.length;
 
-      this.firstDateFxbl =
-        this.parseDate(this.editData.FirstDateFxbl);
+    if (this.excelData && this.excelData.length > 0) {
+      this.excelData.forEach((item) => {
+        this.validateAndProcessRow(item);
+      });
+      this.isSpinning = false;
+    } else {
+      this.fileForm.fileListStr = "";
+      this.fileList = [];
+      this.isSpinning = false;
+      this.msgSvr.error("Excel data does not exist");
+    }
+  }
 
-      this.lastDateFxbl =
-        this.parseDate(this.editData.LastDateFxbl);
+  validateAndProcessRow(item: any) {
+    const requiredKeys = ["Groups", "Sub Group", "Meal Preference", "FX Badge", "Name", "First Day at FXBL", "Last Day at FXBL"];
 
-      console.log(
-        "🔥 EDIT DATA:",
-        JSON.stringify(this.editData)
-      );
+    const hasAllProps = requiredKeys.every((key) => item.hasOwnProperty(key));
+
+    let rowRecord = { ...this.templateData, ...item };
+
+    if (!hasAllProps) {
+      this.sussessUpLoad.fail++;
+      rowRecord["Wrong Reason"] = "All of template content is required.";
+      this.allData.push(rowRecord);
+      return;
     }
 
-    // ==========================================
-    // LOAD MEAL PREFERENCE MASTER
-    // ==========================================
+    if (item['Phone No']) {
+      const phoneReg = /^[6789]\d{9}$/;
+      if (!phoneReg.test(item['Phone No'])) {
+        this.sussessUpLoad.fail++;
+        rowRecord["Wrong Reason"] = "Phone Number format is incorrect.";
+        this.allData.push(rowRecord);
+        return;
+      }
+    }
 
-    this.publicSvr
-      .getGuardPassCode("GuardPass-Meal Preference")
-      .subscribe((res: any) => {
+    this.sussessUpLoad.suc++;
+    this.allData.push(rowRecord);
+    this.subData.push(rowRecord);
+  }
 
-        this.mealPreferenceList = res || [];
+  exportFailedExcel() {
+    if (this.allData.length > 0) {
+      this.apiSvr.exportHandle(this.allData, 68);
+    } else {
+      this.msgSvr.error("No Data.");
+    }
+  }
 
-        console.log(
-          "🔥 MEAL PREFERENCE LIST:",
-          JSON.stringify(this.mealPreferenceList)
-        );
+  submit() {
+    if (this.subData.length === 0) {
+      this.msgSvr.error("No valid data to submit. Please check your file.");
+      return;
+    }
 
-        // ======================================
-        // EDIT MODE
-        // Convert NAME -> ID
-        // ======================================
+    this.isSpinning = true;
+    let completedCount = 0;
+    let successCount = 0;
+    let failCount = 0;
 
-        if (this.option === 'Edit' && this.editData) {
+    const validSubData = [...this.subData];
+    this.subData = [];
+    this.allData = [];
 
-          const selectedMeal =
-            this.mealPreferenceList.find(
-              (item: any) =>
-                String(item.label)
-                  .trim()
-                  .toUpperCase() ===
-                String(this.editData.MealPreference)
-                  .trim()
-                  .toUpperCase()
-            );
+    validSubData.forEach((item) => {
+      this.submitData(item, (isSuccess) => {
+        completedCount++;
+        if (isSuccess) {
+          successCount++;
+        } else {
+          failCount++;
+        }
 
-          console.log(
-            "🔥 SELECTED MEAL:",
-            selectedMeal
-          );
+        if (completedCount === validSubData.length) {
+          this.isSpinning = false;
+          this.sussessUpLoad.suc = successCount;
+          this.sussessUpLoad.fail = failCount;
 
-          if (selectedMeal) {
-
-            // IMPORTANT
-            // Dropdown internally stores ID
-            this.mealPreference =
-              Number(selectedMeal.value);
-
+          if (failCount === 0) {
+            this.msgSvr.success("Success.");
+            this.ref.close("refresh");
           } else {
-
-            this.mealPreference = null;
-
-            console.warn(
-              "⚠️ Meal Preference not found:",
-              this.editData.MealPreference
-            );
+            this.msgSvr.error(`${failCount} records failed to import. Check error report.`);
           }
-
-          console.log(
-            "🔥 FINAL MEAL PREFERENCE ID:",
-            this.mealPreference
-          );
         }
       });
+    });
   }
 
+  // ✅ Helper — Date object, string, illa Excel serial number ah safe ah 'DD-MM-YYYY' string ah maathும்
+  formatDateValue(value: any): string {
+    if (!value) return "";
 
-  // ==========================================
-  // DATE PARSER
-  // ==========================================
-
-  parseDate(value: any): Date | null {
-
-    if (!value) {
-      return null;
+    // Case 1: already a proper JS Date object (cellDates: true set pண்ணின apparam idhே varும்)
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      const day = String(value.getDate()).padStart(2, '0');
+      const month = String(value.getMonth() + 1).padStart(2, '0');
+      const year = value.getFullYear();
+      return `${day}-${month}-${year}`;
     }
 
-    if (value instanceof Date) {
-      return value;
-    }
-
+    // Case 2: already a string (manually typed in Excel, e.g. "03-09-2026")
     if (typeof value === 'string') {
-
-      const parts = value.split(/[-\/]/);
-
-      if (parts.length === 3) {
-
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const year = parseInt(parts[2], 10);
-
-        const parsed =
-          new Date(year, month, day);
-
-        if (!isNaN(parsed.getTime())) {
-          return parsed;
-        }
-      }
+      return value.trim();
     }
 
-    return null;
+    // Case 3: fallback — Excel serial number
+    if (typeof value === 'number') {
+      const utcDays = Math.floor(value - 25569);
+      const utcValue = utcDays * 86400;
+      const dateInfo = new Date(utcValue * 1000);
+      const day = String(dateInfo.getDate()).padStart(2, '0');
+      const month = String(dateInfo.getMonth() + 1).padStart(2, '0');
+      const year = dateInfo.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    return "";
   }
 
-
-  // ==========================================
-  // ADD
-  // ==========================================
-
-  add() {
-
+  submitData(item, callback: (success: boolean) => void) {
     const params = {
-
-      Groups: this.groups,
-
-      SubGroup: this.subGroup,
-
-      // ID will be sent
-      MealPreference: this.mealPreference,
-
-      FxBadge: this.fxBadge,
-
-      Name: this.name,
-
-      FirstDateFxbl:
-        this.firstDateFxbl
-          ? this.publicSvr.dateFormat(
-              this.firstDateFxbl,
-              'DD-MM-YYYY'
-            )
-          : '',
-
-      LastDateFxbl:
-        this.lastDateFxbl
-          ? this.publicSvr.dateFormat(
-              this.lastDateFxbl,
-              'DD-MM-YYYY'
-            )
-          : '',
-
-      AddBy:
-        this.publicSvr
-          .getSettingUserInfo()
-          .eeid,
-
-      Func: "CMS-InsertF1Menu"
+      Groups: item["Groups"] ? item["Groups"].toString() : "",
+      SubGroup: item["Sub Group"] ? item["Sub Group"].toString() : "",
+      MealPreference: item["Meal Preference"] ? item["Meal Preference"].toString() : "",
+      FxBadge: item["FX Badge"] ? item["FX Badge"].toString() : "",
+      Name: item["Name"] ? item["Name"].toString() : "",
+      FirstDateFxbl: this.formatDateValue(item["First Day at FXBL"]),   // ✅ fixed
+      LastDateFxbl: this.formatDateValue(item["Last Day at FXBL"]),     // ✅ fixed
+      AddBy: (this.apiSvr.getSettingUserInfo() && this.apiSvr.getSettingUserInfo().eeid) || "",   // ✅ fixed
+      Func: "CMS-BulkF1Menu",
     };
 
-
-    console.log(
-      "🔍 DEBUG - Add params:",
-      JSON.stringify(params)
-    );
-
-
-    this.publicSvr.iwxPostF1(
-      params,
-      {
-        headers: {
-          apiID:
-            "ffff-1789631992006-10208193125-1291",
-
-          userKey:
-            "E9785F13CCEAFB251A6AB147AFD24336"
-        }
-      },
-      true
-    )
-    .then((res: any) => {
-
-      console.log(
-        "🔍 DEBUG - Add server response:",
-        res
-      );
-
-      if (res.IsOK == "1") {
-
-        this.msgSvr.success("Success");
-
-        this.ref.close(true);
-
-      } else {
-
-        this.msgSvr.error(res.Msg);
+    this.apiSvr.iwxPostF1(params, {
+      headers: {
+        apiID: "ffff-1789627520107-10208193125-1282",
+        userKey: "E9785F13CCEAFB251A6AB147AFD24336",
       }
-
+    }, true).then((res: any) => {
+      if (res && res.IsOK === '1') {
+        item["Import Result"] = "Success.";
+        this.allData.push({ ...this.templateData, ...item });
+        callback(true);
+      } else {
+        item["Wrong Reason"] = (res && res.Msg) ? res.Msg : "API Error";
+        this.allData.push({ ...this.templateData, ...item });
+        callback(false);
+      }
+    }).catch(err => {
+      item["Wrong Reason"] = "Network or Server Error";
+      this.allData.push({ ...this.templateData, ...item });
+      callback(false);
     });
   }
-
-
-  // ==========================================
-  // EDIT
-  // ==========================================
-
-  edit() {
-
-    const params = {
-
-      Id: this.editData.Id,
-
-      Groups: this.groups,
-
-      SubGroup: this.subGroup,
-
-      // IMPORTANT:
-      // ID will be sent here
-      MealPreference: this.mealPreference,
-
-      FxBadge: this.fxBadge,
-
-      Name: this.name,
-
-      FirstDateFxbl:
-        this.firstDateFxbl
-          ? this.publicSvr.dateFormat(
-              this.firstDateFxbl,
-              'DD-MM-YYYY'
-            )
-          : '',
-
-      LastDateFxbl:
-        this.lastDateFxbl
-          ? this.publicSvr.dateFormat(
-              this.lastDateFxbl,
-              'DD-MM-YYYY'
-            )
-          : '',
-
-      EditBy:
-        this.publicSvr
-          .getSettingUserInfo()
-          .eeid,
-
-      Func: "CMS-UpdateF1MenuManage"
-    };
-
-
-    console.log(
-      "🔍 DEBUG - Edit params being sent:",
-      JSON.stringify(params)
-    );
-
-
-    this.publicSvr.iwxPostF1(
-      params,
-      {
-        headers: {
-          apiID:
-            "ffff-1789634002932-10208193125-1317",
-
-          userKey:
-            "E9785F13CCEAFB251A6AB147AFD24336"
-        }
-      },
-      true
-    )
-    .then((res: any) => {
-
-      console.log(
-        "🔍 DEBUG - Edit server response:",
-        res
-      );
-
-
-      if (res.IsOK == "1") {
-
-        this.msgSvr.success("Success");
-
-        this.ref.close(true);
-
-      } else {
-
-        this.msgSvr.error(res.Msg);
-      }
-
-    });
-  }
-
-
-  // ==========================================
-  // CANCEL
-  // ==========================================
-
-  cancel() {
-
-    this.ref.close();
-  }
-
 }
 
 
 
 
 
-<form
-  nz-form
-  #f="ngForm"
-  nz-row
->
-
-  <!-- ========================================= -->
-  <!-- GROUPS -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      Groups
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <input
-        nz-input
-        [(ngModel)]="groups"
-        name="groups"
-        required
-        autocomplete="off"
-      />
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- SUB GROUP -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      Sub Group
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <input
-        nz-input
-        [(ngModel)]="subGroup"
-        name="subGroup"
-        required
-        autocomplete="off"
-      />
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- MEAL PREFERENCE -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      Meal Preference
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <nz-select
-        [(ngModel)]="mealPreference"
-        name="mealPreference"
-        required
-        nzPlaceHolder="Please select"
-        style="width: 100%;"
-      >
-
-        <nz-option
-          *ngFor="let item of mealPreferenceList"
-          [nzValue]="item.value"
-          [nzLabel]="item.label"
-        >
-        </nz-option>
-
-      </nz-select>
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- FX BADGE -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      FX Badge
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <input
-        nz-input
-        [(ngModel)]="fxBadge"
-        name="fxBadge"
-        required
-        autocomplete="off"
-      />
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- NAME -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      Name
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <input
-        nz-input
-        [(ngModel)]="name"
-        name="name"
-        required
-        autocomplete="off"
-      />
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- FIRST DATE -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      First Date At FXBL
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <nz-date-picker
-        name="firstDateFxbl"
-        [(ngModel)]="firstDateFxbl"
-        nzFormat="DD-MM-YYYY"
-        nzPlaceHolder="DD-MM-YYYY"
-        nzShowToday="false"
-        style="width: 100%;"
-      >
-      </nz-date-picker>
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- LAST DATE -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="5"
-      nzRequired
-    >
-      Last Date At FXBL
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <nz-date-picker
-        name="lastDateFxbl"
-        [(ngModel)]="lastDateFxbl"
-        nzFormat="DD-MM-YYYY"
-        nzPlaceHolder="DD-MM-YYYY"
-        nzShowToday="false"
-        style="width: 100%;"
-      >
-      </nz-date-picker>
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-
-  <!-- ========================================= -->
-  <!-- REMARK -->
-  <!-- ========================================= -->
-
-  <nz-form-item nz-col [nzSpan]="24">
-
-    <nz-form-label
-      class="form-label"
-      [nzSpan]="4"
-    >
-      Remark
-    </nz-form-label>
-
-    <nz-form-control [nzSpan]="14">
-
-      <textarea
-        nz-input
-        [(ngModel)]="remark"
-        name="remark"
-        style="resize: none;"
-        rows="5"
-        placeholder="Remark"
-      >
-      </textarea>
-
-    </nz-form-control>
-
-  </nz-form-item>
-
-</form>
-
-
-<!-- ========================================= -->
-<!-- FOOTER -->
-<!-- ========================================= -->
-
-<div class="drawer-footer">
-
-  <button
-    nz-button
-    [nzType]="'default'"
-    (click)="cancel()"
-  >
-    Cancel
-  </button>
-
-
-  <!-- ADD BUTTON -->
-
-  <button
-    *ngIf="option == 'Add'"
-    nz-button
-    [nzType]="'primary'"
-    [disabled]="f.invalid"
-    (click)="add()"
-  >
-    Add
-  </button>
-
-
-  <!-- EDIT BUTTON -->
-
-  <button
-    *ngIf="option == 'Edit'"
-    nz-button
-    [nzType]="'primary'"
-    [disabled]="f.invalid"
-    (click)="edit()"
-  >
-    Edit
-  </button>
-
+<div class="import_container" style="width: 800px;margin: 0 auto;">
+    <form nz-form #JF="ngForm" se-container="1">
+        <se label="File" [labelWidth]="60">
+            <nz-input-group nzSearch [nzAddOnAfter]="afterTpl">
+                <input type="text" [(ngModel)]="fileForm.fileListStr" name="fileListStr" nz-input placeholder=""
+                    readonly />
+            </nz-input-group>
+            <ng-template #afterTpl>
+                <nz-upload [(nzFileList)]="fileList" [nzShowUploadList]="false" [nzBeforeUpload]="beforeUpload">
+                    <button class="r_t_l_0 r_b_l_0" nz-button size="small"><span>Select File</span></button>
+
+                </nz-upload>
+
+                <button class="r_t_l_0 r_b_l_0" nz-button size="small" (click)="addFile()"
+                    [disabled]="addLoading"><span>Add
+                        File</span></button>
+            </ng-template>
+            <!-- <button nz-button nzType="link" down-file [http-url]="downUrl" http-method="Get">Click here to download the template</button> -->
+            <button nz-button nzType="link" (click)="DownloadExcelfile()">Download Template</button>
+            <!-- <button nz-button nzType="link" (click)="downloadDeptInfo()">Download Excel format for system codes</button> -->
+        </se>
+    </form>
+    <div class="tips ml-lg mr-lg">
+        <!-- Note：the format of the uploaded file should be arranged according to the template. -->
+        <span>Remark:</span>
+        <ol>
+            <!-- <li>Date: DD-MM-YYYY</li> -->
+         <!-- <li> The Vendor name must be right (same as Vendor page)</li> -->
+            <!-- <li>Exit Type can only enter Resignation or Termination.</li> -->
+            <li>Mandatory fields cannot be left blank and must confirm to the content format.</li>
+
+        </ol>
+    </div>
+    <div class="d-flex align-items-center justify-content-between mt-lg ml-lg mr-lg">
+        <div class="text-md text-primary">
+            Total：{{ sussessUpLoad ? sussessUpLoad.total : "" }}
+        </div>
+        <div class="text-md text-success" style="width: auto;">
+            Success：{{ sussessUpLoad ? sussessUpLoad.suc : "" }}
+        </div>
+        <div class="text-md text-error">
+            Failure：
+            <span>{{ sussessUpLoad ? sussessUpLoad.fail : "" }}</span>
+            <button nz-button nzType="link" (click)="exportFailedExcel()"
+                *ngIf="sussessUpLoad && sussessUpLoad.fail !== 0">download</button>
+        </div>
+    </div>
+    <nz-spin style="margin-top: 20px;" [nzSpinning]="isSpinning" [nzTip]="'Loading'"></nz-spin>
 </div>
 
-
-
-
-
+<div class="drawer-footer">
+    <!-- <button nz-button nzType="primary" (click)="submit('FIH')" style="float:right"
+        [disabled]="fileList.length < 1  ||sussessUpLoad.total==0||sussessUpLoad.fail>0">
+       {{ "common.submit" | translate }}
+        FIH Submit
+    </button> -->
+    <button nz-button nzType="primary" (click)="submit()" style="float:right; margin-right: 10px;"
+        [disabled]="fileList.length < 1  ||sussessUpLoad.total==0||sussessUpLoad.fail>0">
+        <!-- Submit to iPocket only -->
+        Submit
+    </button>
+  </div>
