@@ -1,43 +1,46 @@
 DownloadExcelfile() {
 
-  // ============================================
-  // CHECK MEAL PREFERENCE MASTER
-  // ============================================
+  // =====================================================
+  // 1. CHECK MEAL PREFERENCE MASTER DATA
+  // =====================================================
 
   const mealValues = (this.mealPreferenceList || [])
     .map((item: any) => item.label)
-    .filter((value: any) => value !== null && value !== undefined && value !== "");
+    .filter((value: any) =>
+      value !== null &&
+      value !== undefined &&
+      value !== ""
+    );
 
   if (mealValues.length === 0) {
 
     this.msgSvr.warning(
-      "Meal Preference data is not loaded. Please wait and try again."
+      "Meal Preference data is not loaded. Please try again."
     );
 
-    // Reload master data
     this.loadMealPreferences();
 
     return;
   }
 
   console.log(
-    "Excel Meal Preference Values:",
+    "Meal Preference values:",
     mealValues
   );
 
 
-  // ============================================
-  // CREATE WORKBOOK
-  // ============================================
+  // =====================================================
+  // 2. CREATE WORKBOOK
+  // =====================================================
 
   const workbook = new ExcelJS.Workbook();
 
   const worksheet = workbook.addWorksheet("Template");
 
 
-  // ============================================
-  // HEADER
-  // ============================================
+  // =====================================================
+  // 3. ADD HEADER
+  // =====================================================
 
   worksheet.addRow([
     "Groups",
@@ -50,9 +53,9 @@ DownloadExcelfile() {
   ]);
 
 
-  // ============================================
-  // HEADER STYLE
-  // ============================================
+  // =====================================================
+  // 4. HEADER STYLE
+  // =====================================================
 
   const headerRow = worksheet.getRow(1);
 
@@ -70,12 +73,16 @@ DownloadExcelfile() {
       vertical: "middle"
     };
 
+    cell.protection = {
+      locked: true
+    };
+
   });
 
 
-  // ============================================
-  // COLUMN WIDTH
-  // ============================================
+  // =====================================================
+  // 5. COLUMN WIDTH
+  // =====================================================
 
   worksheet.getColumn(1).width = 20; // Groups
 
@@ -87,22 +94,45 @@ DownloadExcelfile() {
 
   worksheet.getColumn(5).width = 30; // Name
 
-  worksheet.getColumn(6).width = 22; // First Date
+  worksheet.getColumn(6).width = 22; // First Day at FXBL
 
-  worksheet.getColumn(7).width = 22; // Last Date
+  worksheet.getColumn(7).width = 22; // Last Day at FXBL
 
 
-  // ============================================
-  // MEAL PREFERENCE DROPDOWN
-  // ============================================
+  // =====================================================
+  // 6. MEAL PREFERENCE DROPDOWN
+  //    C2:C500
+  // =====================================================
 
   const mealDropdownFormula =
     '"' + mealValues.join(",") + '"';
 
 
+  // =====================================================
+  // 7. DATA ROWS
+  // =====================================================
+
   for (let row = 2; row <= 500; row++) {
 
-    const mealCell = worksheet.getCell(row, 3);
+    // -----------------------------------------------
+    // UNLOCK DATA CELLS
+    // -----------------------------------------------
+
+    for (let col = 1; col <= 7; col++) {
+
+      worksheet.getCell(row, col).protection = {
+        locked: false
+      };
+
+    }
+
+
+    // -----------------------------------------------
+    // MEAL PREFERENCE DROPDOWN
+    // -----------------------------------------------
+
+    const mealCell =
+      worksheet.getCell(row, 3);
 
     mealCell.dataValidation = {
 
@@ -116,36 +146,26 @@ DownloadExcelfile() {
 
       showErrorMessage: true,
 
-      errorTitle: "Invalid Meal Preference",
+      errorTitle:
+        "Invalid Meal Preference",
 
       error:
         "Please select Meal Preference from the dropdown."
 
     };
 
-  }
 
-
-  // ============================================
-  // DATE FORMAT
-  // ============================================
-
-  for (let row = 2; row <= 500; row++) {
+    // -----------------------------------------------
+    // FIRST DATE
+    // -----------------------------------------------
 
     const firstDateCell =
       worksheet.getCell(row, 6);
 
-    const lastDateCell =
-      worksheet.getCell(row, 7);
+    firstDateCell.numFmt =
+      "dd-mm-yyyy";
 
 
-    // Display format
-    firstDateCell.numFmt = "dd-mm-yyyy";
-
-    lastDateCell.numFmt = "dd-mm-yyyy";
-
-
-    // Date validation
     firstDateCell.dataValidation = {
 
       type: "date",
@@ -161,12 +181,24 @@ DownloadExcelfile() {
 
       showErrorMessage: true,
 
-      errorTitle: "Invalid Date",
+      errorTitle:
+        "Invalid Date",
 
       error:
-        "Please enter a valid date in DD-MM-YYYY format."
+        "Please enter a valid date."
 
     };
+
+
+    // -----------------------------------------------
+    // LAST DATE
+    // -----------------------------------------------
+
+    const lastDateCell =
+      worksheet.getCell(row, 7);
+
+    lastDateCell.numFmt =
+      "dd-mm-yyyy";
 
 
     lastDateCell.dataValidation = {
@@ -184,19 +216,20 @@ DownloadExcelfile() {
 
       showErrorMessage: true,
 
-      errorTitle: "Invalid Date",
+      errorTitle:
+        "Invalid Date",
 
       error:
-        "Please enter a valid date in DD-MM-YYYY format."
+        "Please enter a valid date."
 
     };
 
   }
 
 
-  // ============================================
-  // FREEZE HEADER
-  // ============================================
+  // =====================================================
+  // 8. FREEZE HEADER
+  // =====================================================
 
   worksheet.views = [
     {
@@ -206,9 +239,9 @@ DownloadExcelfile() {
   ];
 
 
-  // ============================================
-  // AUTO FILTER
-  // ============================================
+  // =====================================================
+  // 9. FILTER
+  // =====================================================
 
   worksheet.autoFilter = {
     from: "A1",
@@ -216,50 +249,123 @@ DownloadExcelfile() {
   };
 
 
-  // ============================================
-  // GENERATE EXCEL FILE
-  // ============================================
+  // =====================================================
+  // 10. PROTECT SHEET
+  // =====================================================
+  // Header = LOCKED
+  // Rows 2-500 = EDITABLE
+  //
+  // Password can be changed if required.
+  // =====================================================
 
-  workbook.xlsx.writeBuffer()
+  worksheet.protect("F1Template2026", {
 
-    .then((buffer: any) => {
+    selectLockedCells: false,
 
-      const blob = new Blob(
-        [buffer],
-        {
-          type:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        }
-      );
+    selectUnlockedCells: true,
+
+    formatCells: false,
+
+    formatColumns: false,
+
+    formatRows: false,
+
+    insertColumns: false,
+
+    insertRows: false,
+
+    deleteColumns: false,
+
+    deleteRows: false,
+
+    sort: false,
+
+    autoFilter: true
+
+  }).then(() => {
 
 
-      // ========================================
-      // DOWNLOAD
-      // ========================================
+    // =================================================
+    // 11. GENERATE EXCEL
+    // =================================================
 
-      FileSaver.saveAs(
-        blob,
-        "F1Meal-info Template.xlsx"
-      );
+    return workbook.xlsx.writeBuffer();
+
+  }).then((buffer: any) => {
 
 
-      console.log(
-        "F1 Meal Excel Template downloaded successfully."
-      );
+    // =================================================
+    // 12. CREATE BLOB
+    // =================================================
 
-    })
+    const blob = new Blob(
+      [buffer],
+      {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
+    );
 
-    .catch((error: any) => {
 
-      console.error(
-        "Excel generation error:",
-        error
-      );
+    // =================================================
+    // 13. DOWNLOAD
+    // =================================================
 
-      this.msgSvr.error(
-        "Unable to generate Excel template."
-      );
+    FileSaver.saveAs(
+      blob,
+      "F1Meal-info Template.xlsx"
+    );
 
-    });
+
+    console.log(
+      "F1 Meal Excel Template downloaded successfully."
+    );
+
+  }).catch((error: any) => {
+
+    console.error(
+      "Excel generation error:",
+      error
+    );
+
+    this.msgSvr.error(
+      "Unable to generate Excel template."
+    );
+
+  });
+
+}
+
+
+
+
+loadMealPreferences() {
+
+  this.apiSvr
+    .getGuardPassCode("GuardPass-Meal Preference")
+    .subscribe(
+      (res: any) => {
+
+        this.mealPreferenceList = res || [];
+
+        console.log(
+          "IMPORT - MEAL PREFERENCE LIST:",
+          JSON.stringify(this.mealPreferenceList)
+        );
+
+      },
+      (error: any) => {
+
+        console.error(
+          "Failed to load Meal Preference:",
+          error
+        );
+
+        this.msgSvr.error(
+          "Unable to load Meal Preference master data."
+        );
+
+      }
+    );
 
 }
