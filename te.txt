@@ -1,296 +1,349 @@
-DownloadExcelfile() {
+<!DOCTYPE html>
+<html lang="en">
 
-  // =====================================================
-  // 1. CHECK MEAL PREFERENCE MASTER DATA
-  // =====================================================
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  const mealValues = (this.mealPreferenceList || [])
-    .map((item: any) => item.label)
-    .filter((value: any) =>
-      value !== null &&
-      value !== undefined &&
-      value !== ""
-    )
-    .map((value: any) => String(value).trim());
+    <title>FTP Image Viewer</title>
 
-  if (mealValues.length === 0) {
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 40px;
+        }
 
-    this.msgSvr.warning(
-      "Meal Preference data is not loaded. Please try again."
-    );
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.15);
+        }
 
-    this.loadMealPreferences();
+        h1 {
+            margin-top: 0;
+        }
 
-    return;
-  }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-  console.log(
-    "Meal Preference values:",
-    mealValues
-  );
+        #imageId {
+            flex: 1;
+            padding: 12px;
+            font-size: 18px;
+            border: 1px solid #bbb;
+            border-radius: 5px;
+        }
 
+        button {
+            padding: 12px 25px;
+            font-size: 18px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-  // =====================================================
-  // 2. CREATE WORKBOOK
-  // =====================================================
+        button:hover {
+            background: #125ca3;
+        }
 
-  XlsxPopulate.fromBlankAsync()
-    .then((workbook: any) => {
+        #status {
+            margin: 15px 0;
+            font-size: 16px;
+        }
 
-      const worksheet = workbook.sheet(0);
+        #imageContainer {
+            text-align: center;
+            margin-top: 20px;
+        }
 
-      worksheet.name("Template");
+        #resultImage {
+            max-width: 100%;
+            max-height: 650px;
+            display: none;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
 
+        .error {
+            color: #d32f2f;
+        }
 
-      // =================================================
-      // 3. ADD HEADER
-      // =================================================
+        .success {
+            color: #2e7d32;
+        }
 
-      worksheet.range("A1:G1").value([[
-        "Groups",
-        "Sub Group",
-        "Meal Preference",
-        "FX Badge",
-        "Name",
-        "First Day at FXBL",
-        "Last Day at FXBL"
-      ]]);
+        .loading {
+            color: #1976d2;
+        }
+    </style>
+</head>
 
+<body>
 
-      // =================================================
-      // 4. HEADER STYLE
-      // =================================================
+<div class="container">
 
-      worksheet.range("A1:G1").style({
-        bold: true,
-        fontSize: 11,
-        horizontalAlignment: "center",
-        verticalAlignment: "center",
-        wrapText: true
-      });
+    <h1>FTP Image Viewer</h1>
 
-      worksheet.row(1).height(25);
+    <div class="search-box">
 
+        <input
+            type="text"
+            id="imageId"
+            placeholder="Enter image number, e.g. 117117"
+            autocomplete="off"
+        >
 
-      // =================================================
-      // 5. COLUMN WIDTH
-      // =================================================
+        <button onclick="getPicture()">
+            Get Pic
+        </button>
 
-      worksheet.column("A").width(20);
-      worksheet.column("B").width(20);
-      worksheet.column("C").width(25);
-      worksheet.column("D").width(20);
-      worksheet.column("E").width(30);
-      worksheet.column("F").width(22);
-      worksheet.column("G").width(22);
+    </div>
 
+    <div id="status"></div>
 
-      // =================================================
-      // 6. DATE FORMAT
-      // =================================================
+    <div id="imageContainer">
+        <img id="resultImage" alt="Retrieved image">
+    </div>
 
-      worksheet
-        .range("F2:G500")
-        .style(
-          "numberFormat",
-          "dd-mm-yyyy"
+</div>
+
+<script>
+
+async function getPicture() {
+
+    const input = document.getElementById("imageId");
+    const image = document.getElementById("resultImage");
+    const status = document.getElementById("status");
+
+    const id = input.value.trim();
+
+    // Validate
+    if (!id) {
+        status.className = "error";
+        status.textContent = "Please enter an image number.";
+        image.style.display = "none";
+        return;
+    }
+/*
+    if (!/^\d+$/.test(id)) {
+        status.className = "error";
+        status.textContent = "Please enter numbers only.";
+        image.style.display = "none";
+        return;
+    }*/
+
+    status.className = "loading";
+    status.textContent = "Searching FTP server...";
+
+    image.style.display = "none";
+
+    try {
+
+        const response = await fetch(
+            `/api/image/${encodeURIComponent(id)}`
         );
 
+        if (!response.ok) {
 
-      // =================================================
-      // 7. MEAL PREFERENCE DROPDOWN
-      // =================================================
+            let message = "Image not found.";
 
-      const masterSheet =
-        workbook.addSheet("MealMaster");
+            try {
+                const data = await response.json();
 
-      masterSheet
-        .cell("A1")
-        .value("Meal Preference");
+                if (data.error) {
+                    message = data.error;
+                }
+            } catch (e) {
+                // Ignore JSON parsing error
+            }
 
-
-      for (let i = 0; i < mealValues.length; i++) {
-
-        masterSheet
-          .cell(`A${i + 2}`)
-          .value(mealValues[i]);
-
-      }
-
-
-      // Hide master sheet
-      masterSheet.hidden(true);
-
-
-      const lastMealRow =
-        mealValues.length + 1;
-
-
-      // =================================================
-      // 8. MEAL DROPDOWN C2:C500
-      // =================================================
-
-      worksheet
-        .range("C2:C500")
-        .dataValidation({
-
-          type: "list",
-
-          allowBlank: true,
-
-          showErrorMessage: true,
-
-          errorTitle:
-            "Invalid Meal Preference",
-
-          error:
-            "Please select Meal Preference from the dropdown.",
-
-          formula1:
-            `'MealMaster'!$A$2:$A$${lastMealRow}`
-
-        });
-
-
-      // =================================================
-      // 9. FIRST DATE VALIDATION
-      // =================================================
-
-      worksheet
-        .range("F2:F500")
-        .dataValidation({
-
-          type: "date",
-
-          operator: "between",
-
-          allowBlank: true,
-
-          showErrorMessage: true,
-
-          errorTitle:
-            "Invalid Date",
-
-          error:
-            "Please enter a valid date in DD-MM-YYYY format.",
-
-          formula1:
-            "DATE(2000,1,1)",
-
-          formula2:
-            "DATE(2100,12,31)"
-
-        });
-
-
-      // =================================================
-      // 10. LAST DATE VALIDATION
-      // =================================================
-
-      worksheet
-        .range("G2:G500")
-        .dataValidation({
-
-          type: "date",
-
-          operator: "between",
-
-          allowBlank: true,
-
-          showErrorMessage: true,
-
-          errorTitle:
-            "Invalid Date",
-
-          error:
-            "Please enter a valid date in DD-MM-YYYY format.",
-
-          formula1:
-            "DATE(2000,1,1)",
-
-          formula2:
-            "DATE(2100,12,31)"
-
-        });
-
-
-      // =================================================
-      // 11. FREEZE HEADER
-      // =================================================
-
-      worksheet.freezePanes(0, 1);
-
-
-      // =================================================
-      // 12. OUTPUT
-      // =================================================
-
-      return workbook.outputAsync();
-
-    })
-    .then((buffer: any) => {
-
-      // =================================================
-      // 13. CREATE BLOB
-      // =================================================
-
-      const blob = new Blob(
-        [buffer],
-        {
-          type:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            throw new Error(message);
         }
-      );
 
+        // Convert response to image blob
+        const blob = await response.blob();
 
-      // =================================================
-      // 14. DOWNLOAD
-      // =================================================
+        const imageUrl = URL.createObjectURL(blob);
 
-      FileSaver.saveAs(
-        blob,
-        "F1Meal-info Template.xlsx"
-      );
+        image.onload = function () {
+            URL.revokeObjectURL(imageUrl);
+        };
 
+        image.src = imageUrl;
+        image.style.display = "inline-block";
 
-      console.log(
-        "F1 Meal Excel Template downloaded successfully."
-      );
+        status.className = "success";
+        status.textContent = `Image ${id} found.`;
 
-      this.msgSvr.success(
-        "Excel template downloaded successfully."
-      );
+    } catch (error) {
 
-    })
-    .catch((error: any) => {
+        image.style.display = "none";
 
-      console.error(
-        "===================================="
-      );
+        status.className = "error";
+        status.textContent = error.message;
 
-      console.error(
-        "Excel generation error:",
-        error
-      );
-
-      console.error(
-        "Error message:",
-        error && error.message
-      );
-
-      console.error(
-        "Error stack:",
-        error && error.stack
-      );
-
-      console.error(
-        "===================================="
-      );
-
-      this.msgSvr.error(
-        "Unable to generate Excel template."
-      );
-
-    });
-
+    }
 }
+
+
+// Allow pressing Enter
+document.getElementById("imageId").addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+            getPicture();
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+FTP_HOST=10.227.10.191
+FTP_PORT=21
+FTP_USER=F1MEAL
+FTP_PASSWORD=dpbg123.
+FTP_SECURE=false
+PORT=3001
+
+
+
+{
+  "name": "image-viewer-filezilla",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "basic-ftp": "^6.2.1",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.3",
+    "express": "^5.2.1"
+  }
+}
+
+
+
+const express = require("express");
+const ftp = require("basic-ftp");
+const dotenv = require("dotenv");
+const path = require("path");
+const cors = require("cors"); 
+dotenv.config();
+
+const app = express();
+const PORT = 3001;
+
+app.use(cors());   
+app.use(express.static(path.join(__dirname, "public")));
+
+// Get image from FTP
+app.get("/api/image/:id", async (req, res) => {
+    const id = req.params.id.trim();
+
+    const possibleFiles = [
+        `${id}.png`,
+        `${id}.jpeg`,
+        `${id}.jpg`
+    ];
+
+    const client = new ftp.Client();
+
+    try {
+        await client.access({
+            host: process.env.FTP_HOST,
+            port: Number(process.env.FTP_PORT || 21),
+            user: process.env.FTP_USER,
+            password: process.env.FTP_PASSWORD,
+            secure: process.env.FTP_SECURE === "true"
+        });
+
+        await client.cd("/photos");
+
+        let foundFile = null;
+        const files = await client.list();
+
+        for (const filename of possibleFiles) {
+            const exists = files.some(
+                file => file.name.toLowerCase() === filename.toLowerCase()
+            );
+
+            if (exists) {
+                foundFile = filename;
+                break;
+            }
+        }
+
+        if (!foundFile) {
+            return res.status(404).json({
+                error: `No image found for ${id}`
+            });
+        }
+
+        const chunks = [];
+
+        const writable = new (require("stream").Writable)({
+            write(chunk, encoding, callback) {
+                chunks.push(chunk);
+                callback();
+            }
+        });
+
+        await client.downloadTo(writable, foundFile);
+
+        const imageBuffer = Buffer.concat(chunks);
+
+        const extension = path.extname(foundFile).toLowerCase();
+
+        let contentType = "application/octet-stream";
+
+        if (extension === ".png") {
+            contentType = "image/png";
+        } else if (extension === ".jpg" || extension === ".jpeg") {
+            contentType = "image/jpeg";
+        }
+
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Cache-Control", "no-cache");
+
+        res.send(imageBuffer);
+
+    } catch (error) {
+        console.error("FTP error:", error);
+
+        res.status(500).json({
+            error: "Unable to retrieve image from FTP server."
+        });
+
+    } finally {
+        client.close();
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Image viewer running at http://localhost:${PORT}`);
+});
