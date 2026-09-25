@@ -1,349 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
+export let ouacServiceUrl: string;//一賬通url
+export let serviceUrl: string;//服務器url--一直調用正式url
+export let iwxServiceUrl: string;//愛萬象url,一直調用正式url
+export let iwxServiceUrlF1: string;//愛萬象url,一直調用正式url
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+export let iwxServiceUrlNew: string;//愛萬象url,區分正式和測試url
+export let toolsServiceUrl: string = "";//工具箱url,一直調用正式url
+export let toolsServiceUrlNew: string = "";//工具箱url,區分正式和測試url
+export let uploadFileServiceUrl: string = "";//上傳附件url,區分正式和測試url
+export let uploadFileServiceUrlNew: string = "";//上傳附件url,區分正式和測試url
+((doc) => {
+    urlManage();
+})(document)
 
-    <title>FTP Image Viewer</title>
+function urlManage() {
+        iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
+    iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";//正式
+    serviceUrl = "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";//正式
+    ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com?SysCode=FMS_INDIA&NewVersion=V401";//正式
+    toolsServiceUrl = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";//正式
+    uploadFileServiceUrl = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";//正式
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f4f6;
-            margin: 0;
-            padding: 40px;
+    if (window.location.host == "fms.idpbgind.efoxconn.com" || window.location.host == "10.208.193.124:8000" ||
+        window.location.host == "localhost:4205"
+        ||
+        window.location.host == "10.209.110.101:4205" || window.location.host == "10.209.110.187:4205" || window.location.host == "10.209.110.94:4205" ||
+        window.location.host == "10.208.192.44:9090" ||  window.location.host == "10.209.110.208:4205") {
+        // TEST DB ku maatha idha maathinen (previously live)
+        iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";//測試
+                iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
+        iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";//測試
+        toolsServiceUrlNew = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";//正式
+        uploadFileServiceUrlNew = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";//正式
+    } else if (window.location.host == "fms.idpbgtn.efoxconn.com") {
+        serviceUrl = "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";//正式
+        ouacServiceUrl = "https://ouac.idpbgtn.efoxconn.com?SysCode=FMS_INDIA";//正式
+        toolsServiceUrl = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";//正式
+        uploadFileServiceUrl = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";//正式
+        iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
+
+        iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";//正式
+        iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";//正式
+        toolsServiceUrlNew = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";//正式
+        uploadFileServiceUrlNew = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";//正式
+    } else {
+        iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";  //測試
+                iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
+        iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";//測試
+        toolsServiceUrlNew = "http://10.208.193.152/APIFurnace/api2/N";//測試
+        uploadFileServiceUrlNew = "http://10.208.193.124:5689/FileWebService.asmx";//測試
+
+        if (window.location.protocol == "http:") {
+            ouacServiceUrl = "http://ouac.idpbgind.efoxconn.com:8080/?SysCode=FMS_INDIA&NewVersion=V401";//一賬通多因子認證測試網址
+        } else {
+            ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com/?SysCode=FMS_INDIA&NewVersion=V401";//一賬通多因子認證正式網址 
         }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.15);
-        }
-
-        h1 {
-            margin-top: 0;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        #imageId {
-            flex: 1;
-            padding: 12px;
-            font-size: 18px;
-            border: 1px solid #bbb;
-            border-radius: 5px;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-size: 18px;
-            background: #1976d2;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #125ca3;
-        }
-
-        #status {
-            margin: 15px 0;
-            font-size: 16px;
-        }
-
-        #imageContainer {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        #resultImage {
-            max-width: 100%;
-            max-height: 650px;
-            display: none;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-
-        .error {
-            color: #d32f2f;
-        }
-
-        .success {
-            color: #2e7d32;
-        }
-
-        .loading {
-            color: #1976d2;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="container">
-
-    <h1>FTP Image Viewer</h1>
-
-    <div class="search-box">
-
-        <input
-            type="text"
-            id="imageId"
-            placeholder="Enter image number, e.g. 117117"
-            autocomplete="off"
-        >
-
-        <button onclick="getPicture()">
-            Get Pic
-        </button>
-
-    </div>
-
-    <div id="status"></div>
-
-    <div id="imageContainer">
-        <img id="resultImage" alt="Retrieved image">
-    </div>
-
-</div>
-
-<script>
-
-async function getPicture() {
-
-    const input = document.getElementById("imageId");
-    const image = document.getElementById("resultImage");
-    const status = document.getElementById("status");
-
-    const id = input.value.trim();
-
-    // Validate
-    if (!id) {
-        status.className = "error";
-        status.textContent = "Please enter an image number.";
-        image.style.display = "none";
-        return;
-    }
-/*
-    if (!/^\d+$/.test(id)) {
-        status.className = "error";
-        status.textContent = "Please enter numbers only.";
-        image.style.display = "none";
-        return;
-    }*/
-
-    status.className = "loading";
-    status.textContent = "Searching FTP server...";
-
-    image.style.display = "none";
-
-    try {
-
-        const response = await fetch(
-            `/api/image/${encodeURIComponent(id)}`
-        );
-
-        if (!response.ok) {
-
-            let message = "Image not found.";
-
-            try {
-                const data = await response.json();
-
-                if (data.error) {
-                    message = data.error;
-                }
-            } catch (e) {
-                // Ignore JSON parsing error
-            }
-
-            throw new Error(message);
-        }
-
-        // Convert response to image blob
-        const blob = await response.blob();
-
-        const imageUrl = URL.createObjectURL(blob);
-
-        image.onload = function () {
-            URL.revokeObjectURL(imageUrl);
-        };
-
-        image.src = imageUrl;
-        image.style.display = "inline-block";
-
-        status.className = "success";
-        status.textContent = `Image ${id} found.`;
-
-    } catch (error) {
-
-        image.style.display = "none";
-
-        status.className = "error";
-        status.textContent = error.message;
-
     }
 }
-
-
-// Allow pressing Enter
-document.getElementById("imageId").addEventListener(
-    "keydown",
-    function(event) {
-
-        if (event.key === "Enter") {
-            getPicture();
-        }
-
-    }
-);
-
-</script>
-
-</body>
-</html>
-
-
-
-
-
-FTP_HOST=10.227.10.191
-FTP_PORT=21
-FTP_USER=F1MEAL
-FTP_PASSWORD=dpbg123.
-FTP_SECURE=false
-PORT=3001
-
-
-
-{
-  "name": "image-viewer-filezilla",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "basic-ftp": "^6.2.1",
-    "cors": "^2.8.6",
-    "dotenv": "^18.0.3",
-    "express": "^5.2.1"
-  }
-}
-
-
-
-const express = require("express");
-const ftp = require("basic-ftp");
-const dotenv = require("dotenv");
-const path = require("path");
-const cors = require("cors"); 
-dotenv.config();
-
-const app = express();
-const PORT = 3001;
-
-app.use(cors());   
-app.use(express.static(path.join(__dirname, "public")));
-
-// Get image from FTP
-app.get("/api/image/:id", async (req, res) => {
-    const id = req.params.id.trim();
-
-    const possibleFiles = [
-        `${id}.png`,
-        `${id}.jpeg`,
-        `${id}.jpg`
-    ];
-
-    const client = new ftp.Client();
-
-    try {
-        await client.access({
-            host: process.env.FTP_HOST,
-            port: Number(process.env.FTP_PORT || 21),
-            user: process.env.FTP_USER,
-            password: process.env.FTP_PASSWORD,
-            secure: process.env.FTP_SECURE === "true"
-        });
-
-        await client.cd("/photos");
-
-        let foundFile = null;
-        const files = await client.list();
-
-        for (const filename of possibleFiles) {
-            const exists = files.some(
-                file => file.name.toLowerCase() === filename.toLowerCase()
-            );
-
-            if (exists) {
-                foundFile = filename;
-                break;
-            }
-        }
-
-        if (!foundFile) {
-            return res.status(404).json({
-                error: `No image found for ${id}`
-            });
-        }
-
-        const chunks = [];
-
-        const writable = new (require("stream").Writable)({
-            write(chunk, encoding, callback) {
-                chunks.push(chunk);
-                callback();
-            }
-        });
-
-        await client.downloadTo(writable, foundFile);
-
-        const imageBuffer = Buffer.concat(chunks);
-
-        const extension = path.extname(foundFile).toLowerCase();
-
-        let contentType = "application/octet-stream";
-
-        if (extension === ".png") {
-            contentType = "image/png";
-        } else if (extension === ".jpg" || extension === ".jpeg") {
-            contentType = "image/jpeg";
-        }
-
-        res.setHeader("Content-Type", contentType);
-        res.setHeader("Cache-Control", "no-cache");
-
-        res.send(imageBuffer);
-
-    } catch (error) {
-        console.error("FTP error:", error);
-
-        res.status(500).json({
-            error: "Unable to retrieve image from FTP server."
-        });
-
-    } finally {
-        client.close();
-    }
-});
-
-app.listen(PORT, () => {
-    console.log(`Image viewer running at http://localhost:${PORT}`);
-});
