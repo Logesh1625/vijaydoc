@@ -1,39 +1,186 @@
-private isActiveUser(item: any): boolean {
+import { Component, OnInit } from '@angular/core';
+import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
 
-  if (!item) {
-    return false;
+interface CategoryItem {
+  name: string;
+  count: number;
+  percent: number;
+  color: string;
+  icon: string;
+}
+
+interface SummaryItem {
+  label: string;
+  count: number;
+  percent: number;
+  color: string;
+}
+
+@Component({
+  selector: 'app-dashboard',
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss']
+})
+export class F1DashboardComponent implements OnInit {
+
+  selectedDate: Date = new Date();
+
+  locationList = [
+    { value: 'all', label: 'All Locations' },
+  ];
+
+  totalEmployees: number = 0;
+  mealsCollected: number = 0;
+  mealsNotCollected: number = 0;
+  noMealRequired: number = 0;
+  notCameToCollect: number = 0;
+
+  categoryList: CategoryItem[] = [
+    { name: 'Indian Veg',      count: 0, percent: 0, color: '#52c41a', icon: '🥬' },
+    { name: 'Indian Non-Veg',  count: 0, percent: 0, color: '#1890ff', icon: '🍗' },
+    { name: 'Western Veg',     count: 0, percent: 0, color: '#722ed1', icon: '🥗' },
+    { name: 'Western Non-Veg', count: 0, percent: 0, color: '#faad14', icon: '🍔' },
+    { name: 'Chinese Non-Veg', count: 0, percent: 0, color: '#f8784d', icon: '🥡' },
+    { name: 'Chinese Veg',     count: 0, percent: 0, color: '#a0c065', icon: '🍜' },
+    { name: 'Jain',            count: 0, percent: 0, color: '#13c2c2', icon: '🌿' },
+    { name: 'Vegan',           count: 0, percent: 0, color: '#eb2f96', icon: '🌱' },
+  ];
+
+  // Meal Collection Summary (legend + donut)
+  summaryList: SummaryItem[] = [];
+  donutGradient: string = 'conic-gradient(#e6ebf5 0% 100%)';
+
+  loading: boolean = false;
+
+private colorMap: { [key: string]: string } = {
+  'Indian Veg': '#52c41a',
+  'Indian Non-Veg': '#1890ff',
+  'Western Veg': '#722ed1',
+  'Western Non-Veg': '#faad14',
+  'Jain': '#13c2c2',
+  'Vegan': '#eb2f96',
+  'Chinese Veg': '#a0c065',
+  'Chinese Non-Veg': '#f8784d',
+};
+
+private iconMap: { [key: string]: string } = {
+  'Indian Veg': '🥬',
+  'Indian Non-Veg': '🍗',
+  'Western Veg': '🥗',
+  'Western Non-Veg': '🍔',
+  'Jain': '🌿',
+  'Vegan': '🌱',
+  'Chinese Veg': '🍜',
+  'Chinese Non-Veg': '🥡',
+};
+  constructor(
+    private publicSvr: PublicNetService,
+  ) { }
+
+  ngOnInit(): void {
+    this.updateSummary();             // show the zero state until data arrives
+    this.getDashboardData();
   }
 
-  var delFlag = 0;
-
-  if (
-    item.DelFlag !== undefined &&
-    item.DelFlag !== null &&
-    item.DelFlag !== ''
-  ) {
-    delFlag = item.DelFlag;
-
-  } else if (
-    item.DEL_FLAG !== undefined &&
-    item.DEL_FLAG !== null &&
-    item.DEL_FLAG !== ''
-  ) {
-    delFlag = item.DEL_FLAG;
-
-  } else if (
-    item.delFlag !== undefined &&
-    item.delFlag !== null &&
-    item.delFlag !== ''
-  ) {
-    delFlag = item.delFlag;
-
-  } else if (
-    item.del_flag !== undefined &&
-    item.del_flag !== null &&
-    item.del_flag !== ''
-  ) {
-    delFlag = item.del_flag;
+  onDateChange(date: Date): void {
+    this.selectedDate = date || new Date();   // date picker cleared -> back to today
+    this.getDashboardData();
   }
 
-  return Number(delFlag) === 0;
+  onLocationChange(location: string): void {
+    this.getDashboardData();
+  }
+
+  // DD-MM-YYYY from the LOCAL date (toISOString would shift the day in IST)
+  private formatDate(d: Date): string {
+    const dd = ('0' + d.getDate()).slice(-2);
+    const mm = ('0' + (d.getMonth() + 1)).slice(-2);
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  }
+
+  // share of total employees, rounded (used by the stat-card chips and the legend)
+  pct(n: number): number {
+    return this.totalEmployees ? Math.round((n / this.totalEmployees) * 100) : 0;
+  }
+
+  getDashboardData(): void {
+    this.loading = true;
+    const params = {
+      Date: this.formatDate(this.selectedDate),
+      Func: "CMS-GetMealDashboard"
+    };
+
+    // Same call style as the Log Report page (iwxPostF1).
+    this.publicSvr.iwxPostF1(params, {
+      headers: {
+        apiID: "ffff-1789987849667-10208193125-1519",
+        userKey: "E9785F13CCEAFB251A6AB147AFD24336"
+      }
+    }, true).then((res: any) => {
+      this.loading = false;
+      if (res.IsOK == "1") {
+        // Cursor 1 (P_CURSOR) -> res.List : one row with the 5 card values
+        const c = (res.List && res.List[0]) || {};
+        this.totalEmployees = c.TotalEmployees || 0;
+        this.mealsCollected = c.MealsCollected || 0;
+        this.mealsNotCollected = c.MealsNotCollected || 0;
+        this.noMealRequired = c.NoMealRequired || 0;
+        this.notCameToCollect = c.NotRequiredCame || 0;
+
+        // Cursor 2 (P_SUMMARY_CURSOR) -> 6 category rows
+        const cats: any[] = res.List2 || res.Summary || res.CategoryList || [];
+        if (cats.length > 0) {
+          this.categoryList = cats.map((item: any) => ({
+            name: item.Category,
+            count: item.CollectedCount || 0,
+            percent: item.Percentage || 0,
+            color: this.getColorForCategory(item.Category),
+            icon: this.getIconForCategory(item.Category)
+          }));
+        }
+
+        this.updateSummary();
+      }
+    }).catch((err) => {
+      this.loading = false;
+      console.log(err);
+    });
+  }
+
+  getColorForCategory(name: string): string {
+    return this.colorMap[name] || '#999';
+  }
+
+  getIconForCategory(name: string): string {
+    return this.iconMap[name] || '🍽️';
+  }
+
+  // Builds the legend rows and the donut ring from the card values
+  private updateSummary(): void {
+    this.summaryList = [
+      { label: 'Meals Collected',                count: this.mealsCollected,    percent: this.pct(this.mealsCollected),    color: '#1890ff' },
+      { label: 'Meals Not Collected',            count: this.mealsNotCollected, percent: this.pct(this.mealsNotCollected), color: '#b4bfd4' },
+      { label: 'No Meal Required',               count: this.noMealRequired,    percent: this.pct(this.noMealRequired),    color: '#dde3ee' },
+      { label: 'Not Required - Came to Collect', count: this.notCameToCollect,  percent: this.pct(this.notCameToCollect),  color: '#b39ddb' },
+    ];
+
+    // The ring only uses the first 3 slices (they add up to total employees);
+    // "Came to Collect" is a subset of "No Meal Required", so it stays in the legend only.
+    const ringParts = this.summaryList.slice(0, 3);
+    const sum = ringParts.reduce((s, x) => s + x.count, 0);
+
+    if (!sum) {
+      this.donutGradient = 'conic-gradient(#e6ebf5 0% 100%)';
+      return;
+    }
+
+    let acc = 0;
+    const stops = ringParts.map(x => {
+      const start = acc;
+      acc += (x.count / sum) * 100;
+      return `${x.color} ${start}% ${acc}%`;
+    });
+    this.donutGradient = `conic-gradient(${stops.join(', ')})`;
+  }
+
 }
