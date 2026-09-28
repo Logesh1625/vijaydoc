@@ -1,28 +1,23 @@
+/* ================================================================
+   MAIN WRAPPER
+   ================================================================ */
+
 .scan-wrapper {
   padding: 32px 48px;
-  max-width: 1400px;      // ✅ 900px → 1400px (wider, less side space)
+  max-width: 1400px;
   margin: 0 auto;
 }
-.card-already {
-  border-color: #faad14;
-}
 
-.banner-orange {
-  background: #fffbe6;
-  color: #ffa200;
-  border-color: #ffe58f;
-}
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+
 .header-row {
   margin-bottom: 28px;
 
   h1 {
-    font-size: 32px;       // ✅ 28px → 32px
+    font-size: 32px;
     font-weight: 600;
     margin-bottom: 6px;
     color: #1f1f1f;
@@ -30,105 +25,325 @@
 
   p {
     color: #8c8c8c;
-    font-size: 16px;       // ✅ 14px → 16px
+    font-size: 16px;
     margin: 0;
   }
 }
 
-.scan-input-card {
+
+/* ================================================================
+   SITE FILTER CARD
+   ================================================================ */
+
+.site-filter-card {
   background: #fff;
   border-radius: 10px;
-  padding: 28px;           // ✅ 20px → 28px
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 22px 28px;
+  margin-bottom: 20px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  border: 1px solid #f0f0f0;
+}
+
+
+/* ================================================================
+   SITE FILTER ROW
+   ================================================================ */
+
+.site-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  min-height: 48px;
+}
+
+
+/* ================================================================
+   SITE LABEL
+   ================================================================ */
+
+.site-filter-label {
+  display: flex;
+  align-items: center;
+
+  min-width: 90px;
+
+  color: #595959;
+
+  font-size: 16px;
+
+  font-weight: 600;
+
+  i {
+    font-size: 20px;
+
+    color: #1890ff;
+
+    margin-right: 8px;
+  }
+}
+
+
+/* ================================================================
+   SELECTED SITE INFO
+   ================================================================ */
+
+.selected-site-info {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  margin-left: 8px;
+
+  padding: 8px 14px;
+
+  border-radius: 6px;
+
+  background: #f5faff;
+
+  border: 1px solid #d6eaff;
+
+  font-size: 14px;
+
+  color: #595959;
+}
+
+
+.selected-site-label {
+  color: #8c8c8c;
+}
+
+
+.selected-site-info strong {
+  color: #1890ff;
+
+  font-weight: 600;
+}
+
+
+/* ================================================================
+   SITE WARNING
+   ================================================================ */
+
+.site-warning {
+  margin-top: 14px;
+
+  padding: 10px 14px;
+
+  border-radius: 6px;
+
+  background: #fffbe6;
+
+  border: 1px solid #ffe58f;
+
+  color: #d48806;
+
+  font-size: 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  i {
+    font-size: 18px;
+  }
+}
+
+
+/* ================================================================
+   SCAN INPUT CARD
+   ================================================================ */
+
+.scan-input-card {
+  background: #fff;
+
+  border-radius: 10px;
+
+  padding: 28px;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
   margin-bottom: 28px;
 }
 
+
+/* ================================================================
+   SCAN INPUT ROW
+   ================================================================ */
+
 .scan-input-row {
   display: flex;
+
   align-items: center;
+
   gap: 16px;
 
   .scan-icon {
-    font-size: 26px;       // ✅ 22px → 26px
+    font-size: 26px;
+
     color: #1890ff;
   }
 
   .scan-input {
     flex: 1;
-    height: 52px;          // ✅ 44px → 52px
-    font-size: 18px;       // ✅ 16px → 18px
+
+    height: 52px;
+
+    font-size: 18px;
   }
 
   button {
-    height: 52px;          // ✅ match input height
+    height: 52px;
+
     font-size: 16px;
+
     padding: 0 32px;
   }
 }
 
-// ===== Result Card =====
+
+/* ================================================================
+   RESULT CARD WRAPPER
+   ================================================================ */
+
 .result-card-wrapper {
   display: flex;
+
   justify-content: center;
 }
 
+
+/* ================================================================
+   RESULT CARD
+   ================================================================ */
+
 .result-card {
   width: 100%;
-  max-width: 800px;        // ✅ 560px → 800px (bigger card)
+
+  max-width: 800px;
+
   background: #fff;
+
   border-radius: 14px;
+
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
   border: 2px solid transparent;
+
   transition: all 0.2s ease;
 }
+
+
+/* ================================================================
+   RESULT STATUS BORDER
+   ================================================================ */
 
 .card-entitled {
   border-color: #52c41a;
 }
 
+
 .card-not-entitled {
   border-color: #ff4d4f;
 }
 
-.result-card-body {
-  display: flex;
-  align-items: center;
-  gap: 32px;               // ✅ 24px → 32px
-  padding: 36px;           // ✅ 28px → 36px
+
+.card-already {
+  border-color: #faad14;
 }
 
-// ===== Default Avatar =====
+
+/* ================================================================
+   RESULT CARD BODY
+   ================================================================ */
+
+.result-card-body {
+  display: flex;
+
+  align-items: center;
+
+  gap: 32px;
+
+  padding: 36px;
+}
+
+
+/* ================================================================
+   EMPLOYEE PHOTO
+   ================================================================ */
+
 .employee-photo {
   flex-shrink: 0;
 }
 
+
 .avatar-circle {
-  width: 130px;             // ✅ 100px → 130px
+  width: 130px;
+
   height: 130px;
+
   border-radius: 50%;
- // background: linear-gradient(135deg, #4a90e2, #357abd);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+
+  overflow: hidden;
+
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+
+  background: #f5f5f5;
 
   i {
-    font-size: 68px;        // ✅ 52px → 68px
-    color: #ffffff;
+    font-size: 68px;
+
+    color: #bfbfbf;
   }
 }
 
-// ===== Details =====
+
+/* ================================================================
+   EMPLOYEE IMAGE
+   ================================================================ */
+
+.avatar-img {
+  width: 100%;
+
+  height: 100%;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+}
+
+
+/* ================================================================
+   EMPLOYEE DETAILS
+   ================================================================ */
+
 .employee-details {
   flex: 1;
 }
 
+
 .detail-row {
   display: flex;
+
   align-items: baseline;
-  margin-bottom: 14px;      // ✅ 10px → 14px
-  font-size: 17px;          // ✅ 15px → 17px
+
+  margin-bottom: 14px;
+
+  font-size: 17px;
 
   &:last-child {
     margin-bottom: 0;
@@ -136,71 +351,311 @@
 
   .detail-label {
     color: #595959;
+
     font-weight: 500;
-    min-width: 190px;       // ✅ 150px → 190px
+
+    min-width: 190px;
   }
 
   .detail-colon {
     margin-right: 10px;
+
     color: #595959;
   }
 
   .detail-value {
     color: #1f1f1f;
+
     font-weight: 600;
+
     flex: 1;
   }
 }
 
-// ===== Status Banner =====
-// now a curved pill-style box that sits inside the card, not edge-to-edge
+
+/* ================================================================
+   STATUS BANNER
+   ================================================================ */
+
 .status-banner {
   width: 500px;
-  max-width: calc(100% - 48px);  // ✅ new: shrinks on narrow cards instead of overflowing
+
+  max-width: calc(100% - 48px);
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
   gap: 12px;
-  padding: 16px 20px;        // ✅ 20px → 16px 20px (fits the rounded box better)
-  margin: 0 auto 24px;       // ✅ 0 24px 24px → 0 auto 24px: centers the fixed-width box
-  border-radius: 10px;       // ✅ new: curved corners
-  font-size: 19px;           // ✅ 17px → 19px
+
+  padding: 16px 20px;
+
+  margin: 0 auto 24px;
+
+  border-radius: 10px;
+
+  font-size: 19px;
+
   font-weight: 700;
- 
+
   .status-icon {
-    font-size: 26px;         // ✅ 22px → 26px
+    font-size: 26px;
   }
- 
+
   .status-colon {
     margin: 0 -4px;
   }
 }
+
+
+/* ================================================================
+   GREEN STATUS
+   ================================================================ */
+
 .banner-green {
   background-color: #f6ffed;
+
   color: #52c41a;
-  border: 1px solid #b7eb8f;   // ✅ was border-top only, now a full curved border
+
+  border: 1px solid #b7eb8f;
 }
+
+
+/* ================================================================
+   RED STATUS
+   ================================================================ */
 
 .banner-red {
   background-color: #fff1f0;
+
   color: #ff4d4f;
-  border: 1px solid #ffa39e;   // ✅ was border-top only, now a full curved border
+
+  border: 1px solid #ffa39e;
 }
 
-// ===== Waiting State =====
+
+/* ================================================================
+   ORANGE / ALREADY SCANNED
+   ================================================================ */
+
+.banner-orange {
+  background: #fffbe6;
+
+  color: #ffa200;
+
+  border: 1px solid #ffe58f;
+}
+
+
+/* ================================================================
+   SITE MISMATCH MESSAGE
+   ================================================================ */
+
+.site-mismatch-message {
+  width: 500px;
+
+  max-width: calc(100% - 48px);
+
+  margin: 0 auto 24px;
+
+  padding: 12px 16px;
+
+  border-radius: 8px;
+
+  background: #fff1f0;
+
+  border: 1px solid #ffa39e;
+
+  color: #cf1322;
+
+  font-size: 14px;
+
+  font-weight: 500;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  text-align: center;
+
+  i {
+    font-size: 18px;
+  }
+}
+
+
+/* ================================================================
+   WAITING STATE
+   ================================================================ */
+
 .waiting-card {
   background: #fff;
+
   border-radius: 10px;
-  padding: 80px 24px;        // ✅ 60px → 80px
+
+  padding: 80px 24px;
+
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
   font-size: 16px;
 }
+
+
+/* ================================================================
+   PROCEED ROW
+   ================================================================ */
+
 .proceed-row {
   display: flex;
+
   justify-content: flex-end;
+
   width: 100%;
+
   margin-top: 20px;
+
   margin-bottom: 20px;
-  margin-left: -360PX;
+
+  /* IMPORTANT:
+     Do NOT use margin-left: -360px;
+  */
+}
+
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+
+@media (max-width: 900px) {
+
+  .scan-wrapper {
+    padding: 24px;
+  }
+
+
+  .site-filter-row {
+    flex-wrap: wrap;
+  }
+
+
+  .selected-site-info {
+    width: 100%;
+
+    margin-left: 0;
+  }
+
+
+  .result-card-body {
+    flex-direction: column;
+
+    align-items: center;
+
+    text-align: center;
+  }
+
+
+  .detail-row {
+    text-align: left;
+  }
+
+
+  .status-banner {
+    width: auto;
+
+    margin-left: 24px;
+
+    margin-right: 24px;
+  }
+
+
+  .site-mismatch-message {
+    width: auto;
+
+    margin-left: 24px;
+
+    margin-right: 24px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .scan-wrapper {
+    padding: 16px;
+  }
+
+
+  .header-row h1 {
+    font-size: 26px;
+  }
+
+
+  .scan-input-row {
+    flex-wrap: wrap;
+  }
+
+
+  .scan-input-row .scan-input {
+    width: 100%;
+
+    flex: none;
+  }
+
+
+  .scan-input-row button {
+    width: 100%;
+  }
+
+
+  .site-filter-row {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .site-filter-label {
+    width: 100%;
+  }
+
+
+  .site-filter-card nz-select {
+    width: 100% !important;
+  }
+
+
+  .avatar-circle {
+    width: 110px;
+
+    height: 110px;
+  }
+
+
+  .detail-row {
+    font-size: 15px;
+
+    flex-wrap: wrap;
+  }
+
+
+  .detail-label {
+    min-width: 150px !important;
+  }
+
+
+  .status-banner {
+    font-size: 16px;
+
+    padding: 13px;
+  }
+
 }
