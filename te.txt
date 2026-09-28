@@ -2,22 +2,31 @@ CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
 AS
 
 
-/* ################################################################
+/* ================================================================
    INSERT F1 MENU
-   ################################################################ */
+   ----------------------------------------------------------------
+   Site is taken from active user in C_USER_MANAGE_T.
+
+   Active user:
+       DEL_FLAG = 0
+       OR DEL_FLAG IS NULL
+
+   Deleted user:
+       DEL_FLAG = 1
+       -> cannot get site
+   ================================================================ */
 
 PROCEDURE INSERT_F1_MENU(
-    V_GROUPS            IN VARCHAR2,
-    V_MEAL_PREFERENCE   IN VARCHAR2,
-    V_FX_BADGE          IN VARCHAR2,
-    V_NAME              IN VARCHAR2,
-    V_FIRST_DATE_FXBL   IN VARCHAR2,
-    V_LAST_DATE_FXBL    IN VARCHAR2,
-    V_ADD_BY            IN VARCHAR2,
-    V_RES               OUT VARCHAR2,
-    V_RESULT            OUT VARCHAR2
-)
-IS
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
 
     V_SITE_VAL
         CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
@@ -25,23 +34,20 @@ IS
 BEGIN
 
     /* ============================================================
-       Get SITE from ACTIVE CMS USER
+       Get SITE only from ACTIVE user
        ============================================================ */
 
     SELECT MIN(U.SITE)
     INTO V_SITE_VAL
     FROM CMS.C_USER_MANAGE_T U
     WHERE UPPER(TRIM(U.EMP_ID))
-          =
-          UPPER(TRIM(V_ADD_BY))
-
+            = UPPER(TRIM(V_ADD_BY))
       AND U.SYSTEM_TYPE = 'CMS'
-
       AND NVL(U.DEL_FLAG, 0) = 0;
 
 
     /* ============================================================
-       Validate active user
+       Validate active user/site
        ============================================================ */
 
     IF V_SITE_VAL IS NULL THEN
@@ -58,7 +64,7 @@ BEGIN
 
 
     /* ============================================================
-       INSERT
+       Insert
        ============================================================ */
 
     INSERT INTO CMS.C_F1_MEAL_INFO
@@ -77,29 +83,20 @@ BEGIN
     VALUES
     (
         SEQ_C_F1_MEAL_INFO.NEXTVAL,
-
         V_GROUPS,
-
         V_SITE_VAL,
-
         V_MEAL_PREFERENCE,
-
         V_FX_BADGE,
-
         V_NAME,
-
         TO_DATE(
             V_FIRST_DATE_FXBL,
             'DD-MM-YYYY'
         ),
-
         TO_DATE(
             V_LAST_DATE_FXBL,
             'DD-MM-YYYY'
         ),
-
         V_ADD_BY,
-
         SYSDATE
     );
 
@@ -128,22 +125,23 @@ END INSERT_F1_MENU;
 
 
 
-/* ################################################################
+/* ================================================================
    BULK F1 MENU
-   ################################################################ */
+   ----------------------------------------------------------------
+   Site is taken from ACTIVE user.
+   ================================================================ */
 
 PROCEDURE BULK_F1_MENU(
-    V_GROUPS            IN VARCHAR2,
-    V_MEAL_PREFERENCE   IN VARCHAR2,
-    V_FX_BADGE          IN VARCHAR2,
-    V_NAME              IN VARCHAR2,
-    V_FIRST_DATE_FXBL   IN VARCHAR2,
-    V_LAST_DATE_FXBL    IN VARCHAR2,
-    V_ADD_BY            IN VARCHAR2,
-    V_RES               OUT VARCHAR2,
-    V_RESULT            OUT VARCHAR2
-)
-IS
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
 
     V_SITE_VAL
         CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
@@ -151,23 +149,20 @@ IS
 BEGIN
 
     /* ============================================================
-       Get active user's site
+       Get SITE only from ACTIVE user
        ============================================================ */
 
     SELECT MIN(U.SITE)
     INTO V_SITE_VAL
     FROM CMS.C_USER_MANAGE_T U
     WHERE UPPER(TRIM(U.EMP_ID))
-          =
-          UPPER(TRIM(V_ADD_BY))
-
+            = UPPER(TRIM(V_ADD_BY))
       AND U.SYSTEM_TYPE = 'CMS'
-
       AND NVL(U.DEL_FLAG, 0) = 0;
 
 
     /* ============================================================
-       Validate user
+       Validate active user/site
        ============================================================ */
 
     IF V_SITE_VAL IS NULL THEN
@@ -184,7 +179,7 @@ BEGIN
 
 
     /* ============================================================
-       INSERT
+       Insert
        ============================================================ */
 
     INSERT INTO CMS.C_F1_MEAL_INFO
@@ -203,29 +198,20 @@ BEGIN
     VALUES
     (
         SEQ_C_F1_MEAL_INFO.NEXTVAL,
-
         V_GROUPS,
-
         V_SITE_VAL,
-
         V_MEAL_PREFERENCE,
-
         V_FX_BADGE,
-
         V_NAME,
-
         TO_DATE(
             V_FIRST_DATE_FXBL,
             'DD-MM-YYYY'
         ),
-
         TO_DATE(
             V_LAST_DATE_FXBL,
             'DD-MM-YYYY'
         ),
-
         V_ADD_BY,
-
         SYSDATE
     );
 
@@ -254,23 +240,29 @@ END BULK_F1_MENU;
 
 
 
-/* ################################################################
+/* ================================================================
    GET F1 MENU MANAGEMENT
-   ################################################################ */
+   ----------------------------------------------------------------
+   Important:
+       C_F1_MEAL_INFO.DEL_FLAG = 0
+       AND
+       C_USER_MANAGE_T.DEL_FLAG = 0
+
+   Therefore deleted user cannot see F1 data.
+   ================================================================ */
 
 PROCEDURE GET_F1_MENU_MANAGE(
-    V_EMP_ID        IN VARCHAR2,
-    V_GROUPS        IN VARCHAR2,
-    V_SITE          IN VARCHAR2,
-    V_FX_BADGE      IN VARCHAR2,
-    V_ADD_BY        IN VARCHAR2,
-    L_START_PAGE    IN VARCHAR2,
-    L_PAGE_SIZE     IN VARCHAR2,
-    V_RES           OUT VARCHAR2,
-    V_RESULT        OUT VARCHAR2,
-    P_CURSOR        OUT SYS_REFCURSOR
-)
-IS
+    V_EMP_ID IN VARCHAR2,
+    V_GROUPS IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    L_START_PAGE IN VARCHAR2,
+    L_PAGE_SIZE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
 
 BEGIN
 
@@ -295,18 +287,20 @@ BEGIN
     FROM
     (
         SELECT
-
             ROWNUM AS RN,
 
-            COUNT(1) OVER() AS ROWSCOUNT,
+            COUNT(1) OVER()
+                AS ROWSCOUNT,
 
             V.ID,
 
             V.GROUPS,
 
-            V.PROPERTY_01 AS SITE,
+            V.PROPERTY_01
+                AS SITE,
 
-            BC.NAME AS MEAL_PREFERENCE,
+            BC.NAME
+                AS MEAL_PREFERENCE,
 
             V.FX_BADGE,
 
@@ -315,149 +309,185 @@ BEGIN
             TO_CHAR(
                 V.FIRST_DATE_FXBL,
                 'DD-MM-YYYY'
-            ) AS FIRST_DATE_FXBL,
+            )
+                AS FIRST_DATE_FXBL,
 
             TO_CHAR(
                 V.LAST_DATE_FXBL,
                 'DD-MM-YYYY'
-            ) AS LAST_DATE_FXBL,
+            )
+                AS LAST_DATE_FXBL,
 
             V.ADD_BY,
 
             TO_CHAR(
                 V.ADD_DATE,
                 'DD-MM-YYYY HH24:MI:SS'
-            ) AS ADD_DATE,
+            )
+                AS ADD_DATE,
 
             V.EDIT_BY,
 
             TO_CHAR(
                 V.EDIT_DATE,
                 'DD-MM-YYYY HH24:MI:SS'
-            ) AS EDIT_DATE
+            )
+                AS EDIT_DATE
 
 
         FROM CMS.C_F1_MEAL_INFO V
 
 
+        /* ========================================================
+           Meal preference
+           ======================================================== */
+
         LEFT JOIN CMS.C_BASE_CODE_T BC
 
-            ON TO_CHAR(V.MEAL_PREFERENCE)
-               =
-               TO_CHAR(BC.ID)
+            ON TO_CHAR(
+                V.MEAL_PREFERENCE
+            )
+            =
+            TO_CHAR(
+                BC.ID
+            )
 
            AND BC.TYPE_ID = 81
 
 
-        WHERE NVL(
-                  V.DEL_FLAG,
-                  0
-              ) = 0
+        WHERE
+
+            /* ====================================================
+               F1 record must be active
+               ==================================================== */
+
+            NVL(
+                V.DEL_FLAG,
+                0
+            ) = 0
 
 
-          /* ======================================================
-             GROUP FILTER
-             ====================================================== */
+            /* ====================================================
+               GROUP
+               ==================================================== */
 
-          AND
-          (
-              V_GROUPS IS NULL
+            AND
+            (
+                V_GROUPS IS NULL
 
-              OR V_GROUPS = ''
-
-              OR V.GROUPS LIKE
-                 '%' || V_GROUPS || '%'
-          )
+                OR V.GROUPS LIKE
+                   '%' || V_GROUPS || '%'
+            )
 
 
-          /* ======================================================
-             SITE FILTER
-             ====================================================== */
+            /* ====================================================
+               SITE filter
+               ==================================================== */
 
-          AND
-          (
-              V_SITE IS NULL
+            AND
+            (
+                V_SITE IS NULL
 
-              OR V_SITE = ''
+                OR V_SITE = ''
 
-              OR UPPER(
-                     TRIM(V.PROPERTY_01)
-                 )
-                 =
-                 UPPER(
-                     TRIM(V_SITE)
-                 )
-          )
-
-
-          /* ======================================================
-             FX BADGE
-             ====================================================== */
-
-          AND
-          (
-              V_FX_BADGE IS NULL
-
-              OR V_FX_BADGE = ''
-
-              OR V.FX_BADGE LIKE
-                 '%' || V_FX_BADGE || '%'
-          )
-
-
-          /* ======================================================
-             ADD BY
-             ====================================================== */
-
-          AND
-          (
-              V_ADD_BY IS NULL
-
-              OR V_ADD_BY = ''
-
-              OR UPPER(
-                     TRIM(V.ADD_BY)
-                 )
-                 =
-                 UPPER(
-                     TRIM(V_ADD_BY)
-                 )
-          )
-
-
-          /* ======================================================
-             ACTIVE USER + USER SITE AUTHORIZATION
-             ====================================================== */
-
-          AND EXISTS
-          (
-              SELECT 1
-
-              FROM CMS.C_USER_MANAGE_T U
-
-              WHERE UPPER(
-                        TRIM(U.EMP_ID)
+                OR UPPER(
+                    TRIM(
+                        V.PROPERTY_01
                     )
-                    =
-                    UPPER(
-                        TRIM(V_EMP_ID)
+                )
+                =
+                UPPER(
+                    TRIM(
+                        V_SITE
                     )
+                )
+            )
 
-                AND U.SYSTEM_TYPE = 'CMS'
 
-                AND NVL(
-                        U.DEL_FLAG,
-                        0
-                    ) = 0
+            /* ====================================================
+               FX Badge
+               ==================================================== */
 
-                AND UPPER(
-                        TRIM(U.SITE)
+            AND
+            (
+                V_FX_BADGE IS NULL
+
+                OR V_FX_BADGE = ''
+
+                OR V.FX_BADGE LIKE
+                   '%' || V_FX_BADGE || '%'
+            )
+
+
+            /* ====================================================
+               Add By
+               ==================================================== */
+
+            AND
+            (
+                V_ADD_BY IS NULL
+
+                OR V_ADD_BY = ''
+
+                OR UPPER(
+                    TRIM(
+                        V.ADD_BY
                     )
-                    =
-                    UPPER(
-                        TRIM(V.PROPERTY_01)
+                )
+                =
+                UPPER(
+                    TRIM(
+                        V_ADD_BY
                     )
-          )
+                )
+            )
+
+
+            /* ====================================================
+               IMPORTANT USER ACCESS CHECK
+               ----------------------------------------------------
+               Only ACTIVE CMS user can access data.
+               ==================================================== */
+
+            AND EXISTS
+            (
+                SELECT 1
+
+                FROM CMS.C_USER_MANAGE_T U
+
+                WHERE UPPER(
+                          TRIM(
+                              U.EMP_ID
+                          )
+                      )
+                      =
+                      UPPER(
+                          TRIM(
+                              V_EMP_ID
+                          )
+                      )
+
+                  AND U.SYSTEM_TYPE = 'CMS'
+
+                  /* Deleted user excluded */
+                  AND NVL(
+                          U.DEL_FLAG,
+                          0
+                      ) = 0
+
+                  /* Site must belong to active user */
+                  AND UPPER(
+                          TRIM(
+                              U.SITE
+                          )
+                      )
+                      =
+                      UPPER(
+                          TRIM(
+                              V.PROPERTY_01
+                          )
+                      )
+            )
 
 
         ORDER BY
@@ -468,19 +498,19 @@ BEGIN
 
     WHERE RN >
           (
-              TO_NUMBER(L_START_PAGE) - 1
+              L_START_PAGE - 1
           )
           *
-          TO_NUMBER(L_PAGE_SIZE)
+          L_PAGE_SIZE
 
       AND RN <=
           (
-              TO_NUMBER(L_START_PAGE) - 1
+              L_START_PAGE - 1
           )
           *
-          TO_NUMBER(L_PAGE_SIZE)
+          L_PAGE_SIZE
           +
-          TO_NUMBER(L_PAGE_SIZE);
+          L_PAGE_SIZE;
 
 
     V_RES := '1';
@@ -502,38 +532,36 @@ END GET_F1_MENU_MANAGE;
 
 
 
-/* ################################################################
-   UPDATE F1 MENU
-   ################################################################ */
+/* ================================================================
+   UPDATE F1 MENU MANAGEMENT
+   ================================================================ */
 
 PROCEDURE UPDATE_F1_MENU_MANAGE(
-    V_ID                IN NUMBER,
-    V_GROUPS            IN VARCHAR2,
-    V_MEAL_PREFERENCE   IN VARCHAR2,
-    V_FX_BADGE          IN VARCHAR2,
-    V_NAME              IN VARCHAR2,
-    V_FIRST_DATE_FXBL   IN VARCHAR2,
-    V_LAST_DATE_FXBL    IN VARCHAR2,
-    V_EDIT_BY           IN VARCHAR2,
-    V_RES               OUT VARCHAR2,
-    V_RESULT            OUT VARCHAR2
-)
-IS
+    V_ID IN NUMBER,
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_EDIT_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
 
 BEGIN
 
     UPDATE CMS.C_F1_MEAL_INFO
 
     SET
-
         GROUPS =
             V_GROUPS,
 
-        MEAL_PREFERENCE =
-            V_MEAL_PREFERENCE,
-
         FX_BADGE =
             V_FX_BADGE,
+
+        MEAL_PREFERENCE =
+            V_MEAL_PREFERENCE,
 
         NAME =
             V_NAME,
@@ -556,12 +584,7 @@ BEGIN
         EDIT_DATE =
             SYSDATE
 
-    WHERE ID = V_ID
-
-      AND NVL(
-            DEL_FLAG,
-            0
-          ) = 0;
+    WHERE ID = V_ID;
 
 
     IF SQL%ROWCOUNT = 0 THEN
@@ -571,8 +594,9 @@ BEGIN
         V_RES := '0';
 
         V_RESULT :=
-            'No active record found with ID = '
-            || V_ID;
+            'No record found with ID = '
+            || V_ID
+            || '. Update failed.';
 
     ELSE
 
@@ -601,36 +625,33 @@ END UPDATE_F1_MENU_MANAGE;
 
 
 
-/* ################################################################
-   DELETE F1 MENU
-   ################################################################ */
+/* ================================================================
+   DELETE F1 MENU MANAGEMENT
+   ================================================================ */
 
 PROCEDURE DELETE_F1_MENU_MANAGE(
-    L_IDS       IN VARCHAR2,
-    V_EDIT_BY   IN VARCHAR2,
-    V_RES       OUT VARCHAR2,
-    V_RESULT    OUT VARCHAR2
-)
-IS
+    L_IDS IN VARCHAR2,
+    V_EDIT_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
 
 BEGIN
 
     UPDATE CMS.C_F1_MEAL_INFO
 
     SET
-
-        DEL_FLAG =
-            1,
-
-        EDIT_BY =
-            V_EDIT_BY,
+        DEL_FLAG = 1,
 
         EDIT_DATE =
-            SYSDATE
+            SYSDATE,
+
+        EDIT_BY =
+            V_EDIT_BY
 
     WHERE INSTR(
               ',' || L_IDS || ',',
-              ',' || TO_CHAR(ID) || ','
+              ',' || ID || ','
           ) > 0;
 
 
@@ -658,17 +679,16 @@ END DELETE_F1_MENU_MANAGE;
 
 
 
-/* ################################################################
+/* ================================================================
    GET F1 MENU BY FX BADGE
-   ################################################################ */
+   ================================================================ */
 
 PROCEDURE GET_F1_MENU_BY_FXBADGE(
-    V_FX_BADGE  IN VARCHAR2,
-    V_RES       OUT VARCHAR2,
-    V_RESULT    OUT VARCHAR2,
-    P_CURSOR    OUT SYS_REFCURSOR
-)
-IS
+    V_FX_BADGE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
 
     V_COUNT NUMBER;
 
@@ -677,7 +697,7 @@ IS
 BEGIN
 
     /* ============================================================
-       Check badge
+       Check active F1 record
        ============================================================ */
 
     SELECT COUNT(1)
@@ -686,8 +706,7 @@ BEGIN
 
     FROM CMS.C_F1_MEAL_INFO
 
-    WHERE FX_BADGE =
-          V_FX_BADGE
+    WHERE FX_BADGE = V_FX_BADGE
 
       AND NVL(
             DEL_FLAG,
@@ -705,8 +724,7 @@ BEGIN
 
         OPEN P_CURSOR FOR
 
-        SELECT
-            NULL AS FX_BADGE
+        SELECT NULL AS FX_BADGE
 
         FROM DUAL
 
@@ -719,7 +737,7 @@ BEGIN
 
 
     /* ============================================================
-       Already scanned
+       Already collected today
        ============================================================ */
 
     SELECT COUNT(1)
@@ -728,12 +746,15 @@ BEGIN
 
     FROM CMS.C_F1_SCAN_LOG
 
-    WHERE FX_BADGE =
-          V_FX_BADGE
+    WHERE FX_BADGE = V_FX_BADGE
 
-      AND TRUNC(MEAL_DATE)
+      AND TRUNC(
+            MEAL_DATE
+          )
           =
-          TRUNC(SYSDATE)
+          TRUNC(
+            SYSDATE
+          )
 
       AND NVL(
             DEL_FLAG,
@@ -745,7 +766,7 @@ BEGIN
 
 
     /* ============================================================
-       Latest active meal record
+       Return latest active record
        ============================================================ */
 
     OPEN P_CURSOR FOR
@@ -756,9 +777,11 @@ BEGIN
 
         V.SUB_GROUP,
 
-        V.PROPERTY_01 AS SITE,
+        V.PROPERTY_01
+            AS SITE,
 
-        BC.NAME AS MEAL_PREFERENCE,
+        BC.NAME
+            AS MEAL_PREFERENCE,
 
         V.FX_BADGE,
 
@@ -767,18 +790,22 @@ BEGIN
         TO_CHAR(
             V.FIRST_DATE_FXBL,
             'DD-MM-YYYY'
-        ) AS FIRST_DATE_FXBL,
+        )
+            AS FIRST_DATE_FXBL,
 
         TO_CHAR(
             V.LAST_DATE_FXBL,
             'DD-MM-YYYY'
-        ) AS LAST_DATE_FXBL,
+        )
+            AS LAST_DATE_FXBL,
 
 
         CASE
 
             WHEN UPPER(
-                     TRIM(BC.NAME)
+                     TRIM(
+                         BC.NAME
+                     )
                  )
                  =
                  'NO MEAL REQUIRED'
@@ -795,11 +822,17 @@ BEGIN
                 'NOT_UPDATED'
 
 
-            WHEN TRUNC(SYSDATE)
+            WHEN TRUNC(
+                     SYSDATE
+                 )
                  NOT BETWEEN
-                 TRUNC(V.FIRST_DATE_FXBL)
+                 TRUNC(
+                     V.FIRST_DATE_FXBL
+                 )
                  AND
-                 TRUNC(V.LAST_DATE_FXBL)
+                 TRUNC(
+                     V.LAST_DATE_FXBL
+                 )
 
             THEN
                 'LAST DATE EXPIRED'
@@ -840,9 +873,13 @@ BEGIN
 
     LEFT JOIN CMS.C_BASE_CODE_T BC
 
-        ON TO_CHAR(V.MEAL_PREFERENCE)
-           =
-           TO_CHAR(BC.ID)
+        ON TO_CHAR(
+            V.MEAL_PREFERENCE
+        )
+        =
+        TO_CHAR(
+            BC.ID
+        )
 
        AND BC.TYPE_ID = 81
 
@@ -869,17 +906,16 @@ END GET_F1_MENU_BY_FXBADGE;
 
 
 
-/* ################################################################
+/* ================================================================
    INSERT MEAL SCAN LOG
-   ################################################################ */
+   ================================================================ */
 
 PROCEDURE INSERT_MEAL_SCAN_LOG(
-    V_FX_BADGE  IN VARCHAR2,
-    V_RES       OUT VARCHAR2,
-    V_RESULT    OUT VARCHAR2,
-    P_CURSOR    OUT SYS_REFCURSOR
-)
-IS
+    V_FX_BADGE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
 
     V_COUNT NUMBER;
 
@@ -913,7 +949,7 @@ IS
 BEGIN
 
     /* ============================================================
-       Check badge
+       Check active badge
        ============================================================ */
 
     SELECT COUNT(1)
@@ -939,6 +975,7 @@ BEGIN
         V_MESSAGE :=
             'FX Badge not found';
 
+
         V_GROUPS := NULL;
 
         V_SITE_VAL := NULL;
@@ -953,38 +990,27 @@ BEGIN
 
         V_LAST_DATE := NULL;
 
+
     ELSE
 
         /* ========================================================
-           Latest active record
+           Latest active meal record
            ======================================================== */
 
         SELECT
-
             GROUPS,
-
             PROPERTY_01,
-
             NAME,
-
             MEAL_PREFERENCE,
-
             FIRST_DATE_FXBL,
-
             LAST_DATE_FXBL
 
         INTO
-
             V_GROUPS,
-
             V_SITE_VAL,
-
             V_NAME,
-
             V_MEAL_PREF,
-
             V_FIRST_DATE,
-
             V_LAST_DATE
 
         FROM
@@ -1014,7 +1040,9 @@ BEGIN
            ======================================================== */
 
         SELECT NVL(
-                   MAX(BC.NAME),
+                   MAX(
+                       BC.NAME
+                   ),
                    V_MEAL_PREF
                )
 
@@ -1024,9 +1052,13 @@ BEGIN
 
         WHERE BC.TYPE_ID = 81
 
-          AND TO_CHAR(BC.ID)
+          AND TO_CHAR(
+                BC.ID
+              )
               =
-              TO_CHAR(V_MEAL_PREF);
+              TO_CHAR(
+                V_MEAL_PREF
+              );
 
 
         /* ========================================================
@@ -1034,7 +1066,9 @@ BEGIN
            ======================================================== */
 
         IF UPPER(
-               TRIM(V_MEAL_PREF_NAME)
+               TRIM(
+                   V_MEAL_PREF_NAME
+               )
            )
            =
            'NO MEAL REQUIRED'
@@ -1061,11 +1095,17 @@ BEGIN
                 'Dates not updated';
 
 
-        ELSIF TRUNC(SYSDATE)
+        ELSIF TRUNC(
+                  SYSDATE
+              )
               NOT BETWEEN
-              TRUNC(V_FIRST_DATE)
+              TRUNC(
+                  V_FIRST_DATE
+              )
               AND
-              TRUNC(V_LAST_DATE)
+              TRUNC(
+                  V_LAST_DATE
+              )
 
         THEN
 
@@ -1091,7 +1131,10 @@ BEGIN
            Already scanned
            ======================================================== */
 
-        IF V_STATUS = 'SUCCESS' THEN
+        IF V_STATUS =
+           'SUCCESS'
+
+        THEN
 
             SELECT COUNT(1)
 
@@ -1102,9 +1145,13 @@ BEGIN
             WHERE FX_BADGE =
                   V_FX_BADGE
 
-              AND TRUNC(MEAL_DATE)
+              AND TRUNC(
+                    MEAL_DATE
+                  )
                   =
-                  TRUNC(SYSDATE)
+                  TRUNC(
+                    SYSDATE
+                  )
 
               AND NVL(
                     DEL_FLAG,
@@ -1150,6 +1197,7 @@ BEGIN
         FIRST_SCANTIME,
         LAST_SCANTIME
     )
+
     VALUES
     (
         SEQ_C_F1_SCAN_LOG.NEXTVAL,
@@ -1191,22 +1239,29 @@ BEGIN
 
     SELECT
 
-        V_FX_BADGE AS FX_BADGE,
+        V_FX_BADGE
+            AS FX_BADGE,
 
-        V_NAME AS NAME,
+        V_NAME
+            AS NAME,
 
-        V_SITE_VAL AS SITE,
+        V_SITE_VAL
+            AS SITE,
 
-        V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
+        V_MEAL_PREF_NAME
+            AS MEAL_PREFERENCE,
 
         TO_CHAR(
             SYSDATE,
             'DD-MM-YYYY HH24:MI:SS'
-        ) AS SCAN_TIME,
+        )
+            AS SCAN_TIME,
 
-        V_STATUS AS STATUS,
+        V_STATUS
+            AS STATUS,
 
-        V_MESSAGE AS STATUS_MESSAGE
+        V_MESSAGE
+            AS STATUS_MESSAGE
 
     FROM DUAL;
 
@@ -1232,25 +1287,24 @@ END INSERT_MEAL_SCAN_LOG;
 
 
 
-/* ################################################################
+/* ================================================================
    GET MEAL SCAN LOG
-   ################################################################ */
+   ================================================================ */
 
 PROCEDURE GET_MEAL_SCAN_LOG(
-    V_SEARCH_TEXT       IN VARCHAR2,
-    V_STATUS_FILTER     IN VARCHAR2,
-    V_SITE              IN VARCHAR2,
-    V_RES               OUT VARCHAR2,
-    V_RESULT            OUT VARCHAR2,
-    P_CURSOR            OUT SYS_REFCURSOR,
-    P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
-)
-IS
+    V_SEARCH_TEXT IN VARCHAR2,
+    V_STATUS_FILTER IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+) IS
 
 BEGIN
 
     /* ============================================================
-       Scan records
+       Scan log
        ============================================================ */
 
     OPEN P_CURSOR FOR
@@ -1263,19 +1317,23 @@ BEGIN
 
         S.GROUPS,
 
-        S.PROPERTY_01 AS SITE,
+        S.PROPERTY_01
+            AS SITE,
 
-        BC.NAME AS MEAL_PREFERENCE,
+        BC.NAME
+            AS MEAL_PREFERENCE,
 
         TO_CHAR(
             S.FIRST_DATE_FXBL,
             'DD-MM-YYYY'
-        ) AS FIRST_DATE_FXBL,
+        )
+            AS FIRST_DATE_FXBL,
 
         TO_CHAR(
             S.LAST_DATE_FXBL,
             'DD-MM-YYYY'
-        ) AS LAST_DATE_FXBL,
+        )
+            AS LAST_DATE_FXBL,
 
         TO_CHAR(
             NVL(
@@ -1283,9 +1341,11 @@ BEGIN
                 S.FIRST_SCANTIME
             ),
             'DD-MM-YYYY HH24:MI:SS'
-        ) AS SCAN_TIME,
+        )
+            AS SCAN_TIME,
 
-        S.COLLECTED_DATA AS STATUS,
+        S.COLLECTED_DATA
+            AS STATUS,
 
         S.STATUS_MESSAGE
 
@@ -1295,9 +1355,13 @@ BEGIN
 
     LEFT JOIN CMS.C_BASE_CODE_T BC
 
-        ON TO_CHAR(S.MEAL_PREFERENCE)
-           =
-           TO_CHAR(BC.ID)
+        ON TO_CHAR(
+            S.MEAL_PREFERENCE
+        )
+        =
+        TO_CHAR(
+            BC.ID
+        )
 
        AND BC.TYPE_ID = 81
 
@@ -1314,17 +1378,25 @@ BEGIN
 
           OR V_SEARCH_TEXT = ''
 
-          OR UPPER(S.FX_BADGE)
+          OR UPPER(
+                 S.FX_BADGE
+             )
              LIKE
              '%' ||
-             UPPER(V_SEARCH_TEXT) ||
-             '%'
+             UPPER(
+                 V_SEARCH_TEXT
+             )
+             || '%'
 
-          OR UPPER(S.NAME)
+          OR UPPER(
+                 S.NAME
+             )
              LIKE
              '%' ||
-             UPPER(V_SEARCH_TEXT) ||
-             '%'
+             UPPER(
+                 V_SEARCH_TEXT
+             )
+             || '%'
       )
 
 
@@ -1350,11 +1422,15 @@ BEGIN
           OR V_SITE = 'All'
 
           OR UPPER(
-                 TRIM(S.PROPERTY_01)
+                 TRIM(
+                     S.PROPERTY_01
+                 )
              )
              =
              UPPER(
-                 TRIM(V_SITE)
+                 TRIM(
+                     V_SITE
+                 )
              )
       )
 
@@ -1371,38 +1447,51 @@ BEGIN
 
     SELECT
 
-        COUNT(1) AS TOTAL_SCANS,
+        COUNT(1)
+            AS TOTAL_SCANS,
+
 
         SUM(
             CASE
-                WHEN COLLECTED_DATA = 'SUCCESS'
+                WHEN COLLECTED_DATA =
+                     'SUCCESS'
                 THEN 1
                 ELSE 0
             END
-        ) AS SUCCESS_COUNT,
+        )
+            AS SUCCESS_COUNT,
+
 
         SUM(
             CASE
-                WHEN COLLECTED_DATA = 'ALREADY_SCANNED'
+                WHEN COLLECTED_DATA =
+                     'ALREADY_SCANNED'
                 THEN 1
                 ELSE 0
             END
-        ) AS ALREADY_SCANNED_COUNT,
+        )
+            AS ALREADY_SCANNED_COUNT,
+
 
         SUM(
             CASE
-                WHEN COLLECTED_DATA = 'INVALID'
+                WHEN COLLECTED_DATA =
+                     'INVALID'
                 THEN 1
                 ELSE 0
             END
-        ) AS INVALID_COUNT
+        )
+            AS INVALID_COUNT
+
 
     FROM CMS.C_F1_SCAN_LOG
+
 
     WHERE NVL(
               DEL_FLAG,
               0
           ) = 0
+
 
       AND
       (
@@ -1413,11 +1502,15 @@ BEGIN
           OR V_SITE = 'All'
 
           OR UPPER(
-                 TRIM(PROPERTY_01)
+                 TRIM(
+                     PROPERTY_01
+                 )
              )
              =
              UPPER(
-                 TRIM(V_SITE)
+                 TRIM(
+                     V_SITE
+                 )
              )
       );
 
@@ -1441,36 +1534,18 @@ END GET_MEAL_SCAN_LOG;
 
 
 
-/* ################################################################
+/* ================================================================
    GET MEAL DASHBOARD
-   ################################################################
-   
-   IMPORTANT LOGIC:
-
-   1. Logged-in user must exist in C_USER_MANAGE_T
-   2. SYSTEM_TYPE = CMS
-   3. DEL_FLAG = 0
-   4. Only user's assigned sites are allowed
-   5. If V_SITE is empty -> all user's sites
-   6. If V_SITE contains value -> only that site
-   7. Employee must be active on selected date
-   8. Employee record must have:
-          FIRST_DATE_FXBL <= selected date
-          LAST_DATE_FXBL  >= selected date
-   9. C_F1_MEAL_INFO DEL_FLAG = 0
-   10. Scan SUCCESS determines collected
-   ################################################################ */
+   ================================================================ */
 
 PROCEDURE GET_MEAL_DASHBOARD(
-    V_EMP_ID            IN VARCHAR2,
-    V_DATE              IN VARCHAR2,
-    V_SITE              IN VARCHAR2,
-    V_RES               OUT VARCHAR2,
-    V_RESULT            OUT VARCHAR2,
-    P_CURSOR            OUT SYS_REFCURSOR,
-    P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
-)
-IS
+    V_DATE IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+) IS
 
     V_DAY DATE;
 
@@ -1484,348 +1559,223 @@ IS
 
     V_NOT_COLLECTED NUMBER := 0;
 
-    V_USER_COUNT NUMBER := 0;
-
 BEGIN
 
-    /* ============================================================
-       DATE
-       ============================================================ */
-
-    BEGIN
-
-        V_DAY :=
+    V_DAY :=
+        NVL(
             TO_DATE(
                 V_DATE,
                 'DD-MM-YYYY'
-            );
-
-    EXCEPTION
-
-        WHEN OTHERS THEN
-
-            V_DAY :=
-                TRUNC(SYSDATE);
-
-    END;
-
-
-    V_DAY :=
-        TRUNC(V_DAY);
+            ),
+            TRUNC(
+                SYSDATE
+            )
+        );
 
 
     /* ============================================================
-       Validate active CMS user
+       Employee master
        ============================================================ */
 
-    SELECT COUNT(1)
-
-    INTO V_USER_COUNT
-
-    FROM CMS.C_USER_MANAGE_T U
-
-    WHERE UPPER(
-              TRIM(U.EMP_ID)
-          )
-          =
-          UPPER(
-              TRIM(V_EMP_ID)
-          )
-
-      AND U.SYSTEM_TYPE = 'CMS'
-
-      AND NVL(
-            U.DEL_FLAG,
-            0
-          ) = 0
-
-      AND U.SITE IS NOT NULL;
-
-
-    IF V_USER_COUNT = 0 THEN
-
-        V_RES := '0';
-
-        V_RESULT :=
-            'Active CMS user/site not found for employee: '
-            || V_EMP_ID;
-
-
-        OPEN P_CURSOR FOR
-
-        SELECT
-            0 AS TOTAL_EMPLOYEES,
-            0 AS MEALS_COLLECTED,
-            0 AS MEALS_NOT_COLLECTED,
-            0 AS NO_MEAL_REQUIRED,
-            0 AS NOT_REQUIRED_CAME
-
-        FROM DUAL;
-
-
-        OPEN P_SUMMARY_CURSOR FOR
-
-        SELECT
-            'Indian Veg' AS CATEGORY,
-            0 AS COLLECTED_COUNT,
-            0 AS PERCENTAGE
-
-        FROM DUAL
-
-        WHERE 1 = 0;
-
-
-        RETURN;
-
-    END IF;
-
-
-    /* ============================================================
-       MAIN DASHBOARD CALCULATION
-       ============================================================ */
-
-    WITH USER_SITES AS
-    (
-        /* ========================================================
-           Sites assigned to active logged-in user
-           ======================================================== */
-
-        SELECT DISTINCT
-
-            UPPER(
-                TRIM(U.SITE)
-            ) AS SITE
-
-        FROM CMS.C_USER_MANAGE_T U
-
-        WHERE UPPER(
-                  TRIM(U.EMP_ID)
-              )
-              =
-              UPPER(
-                  TRIM(V_EMP_ID)
-              )
-
-          AND U.SYSTEM_TYPE = 'CMS'
-
-          AND NVL(
-                U.DEL_FLAG,
-                0
-              ) = 0
-
-          AND U.SITE IS NOT NULL
-
-          AND
-          (
-              V_SITE IS NULL
-
-              OR TRIM(V_SITE) = ''
-
-              OR UPPER(
-                     TRIM(V_SITE)
-                 ) = 'ALL'
-
-              OR UPPER(
-                     TRIM(U.SITE)
-                 )
-                 =
-                 UPPER(
-                     TRIM(V_SITE)
-                 )
-          )
-    ),
-
-
-    /* ============================================================
-       EMPLOYEE BASE
-
-       One latest valid record per FX Badge.
-       Date is based on FIRST_DATE_FXBL / LAST_DATE_FXBL.
-       ============================================================ */
-
-    EMP_DATA AS
+    WITH EMP AS
     (
         SELECT
 
-            M.FX_BADGE,
+            FX_BADGE,
 
-            M.GROUPS,
+            MEAL_PREFERENCE,
 
-            M.PROPERTY_01 AS SITE,
+            MEAL_PREFERENCE_NAME
 
-            M.MEAL_PREFERENCE,
+        FROM
+        (
+            SELECT
 
-            BC.NAME AS MEAL_PREFERENCE_NAME,
+                M.FX_BADGE,
 
-            M.NAME,
+                M.MEAL_PREFERENCE,
 
-            M.FIRST_DATE_FXBL,
+                BC.NAME
+                    AS MEAL_PREFERENCE_NAME,
 
-            M.LAST_DATE_FXBL,
+                ROW_NUMBER() OVER
+                (
+                    PARTITION BY
+                        M.FX_BADGE
 
-            ROW_NUMBER() OVER
-            (
-                PARTITION BY
-                    M.FX_BADGE
-
-                ORDER BY
-                    M.ADD_DATE DESC,
-                    M.ID DESC
-            ) AS RN
-
-        FROM CMS.C_F1_MEAL_INFO M
-
-
-        INNER JOIN USER_SITES US
-
-            ON UPPER(
-                   TRIM(M.PROPERTY_01)
-               )
-               =
-               US.SITE
+                    ORDER BY
+                        M.ADD_DATE DESC,
+                        M.ID DESC
+                )
+                    AS RN
 
 
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-
-            ON TO_CHAR(
-                   M.MEAL_PREFERENCE
-               )
-               =
-               TO_CHAR(
-                   BC.ID
-               )
-
-           AND BC.TYPE_ID = 81
+            FROM CMS.C_F1_MEAL_INFO M
 
 
-        WHERE NVL(
-                  M.DEL_FLAG,
-                  0
-              ) = 0
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+
+                ON TO_CHAR(
+                    M.MEAL_PREFERENCE
+                )
+                =
+                TO_CHAR(
+                    BC.ID
+                )
+
+               AND BC.TYPE_ID = 81
 
 
-          /* ======================================================
-             Employee must be active for selected date
-             ====================================================== */
+            WHERE NVL(
+                      M.DEL_FLAG,
+                      0
+                  ) = 0
 
-          AND M.FIRST_DATE_FXBL IS NOT NULL
 
-          AND M.LAST_DATE_FXBL IS NOT NULL
+              AND TRUNC(
+                      M.ADD_DATE
+                  )
+                  =
+                  V_DAY
 
-          AND V_DAY
-              BETWEEN
-              TRUNC(M.FIRST_DATE_FXBL)
+
               AND
-              TRUNC(M.LAST_DATE_FXBL)
-    ),
+              (
+                  V_SITE IS NULL
 
+                  OR V_SITE = ''
 
-    EMP AS
-    (
-        SELECT *
+                  OR V_SITE = 'All'
 
-        FROM EMP_DATA
+                  OR UPPER(
+                         TRIM(
+                             M.PROPERTY_01
+                         )
+                     )
+                     =
+                     UPPER(
+                         TRIM(
+                             V_SITE
+                         )
+                     )
+              )
+
+        )
 
         WHERE RN = 1
     ),
 
 
     /* ============================================================
-       SUCCESSFULLY COLLECTED EMPLOYEES
+       Collected employees
        ============================================================ */
 
     COLLECTED AS
     (
         SELECT DISTINCT
+            FX_BADGE
 
-            S.FX_BADGE
-
-        FROM CMS.C_F1_SCAN_LOG S
-
-
-        INNER JOIN EMP E
-
-            ON E.FX_BADGE =
-               S.FX_BADGE
-
+        FROM CMS.C_F1_SCAN_LOG
 
         WHERE NVL(
-                  S.DEL_FLAG,
+                  DEL_FLAG,
                   0
               ) = 0
 
           AND TRUNC(
-                  S.MEAL_DATE
+                  MEAL_DATE
               )
               =
               V_DAY
 
-          AND S.COLLECTED_DATA =
+          AND COLLECTED_DATA =
               'SUCCESS'
+
+          AND
+          (
+              V_SITE IS NULL
+
+              OR V_SITE = ''
+
+              OR V_SITE = 'All'
+
+              OR UPPER(
+                     TRIM(
+                         PROPERTY_01
+                     )
+                 )
+                 =
+                 UPPER(
+                     TRIM(
+                         V_SITE
+                     )
+                 )
+          )
     )
 
 
     SELECT
 
-        /* ========================================================
-           TOTAL EMPLOYEES
-           ======================================================== */
+        /* Total */
+        (
+            SELECT COUNT(1)
 
-        COUNT(1) AS TOTAL_COUNT,
-
-
-        /* ========================================================
-           NO MEAL REQUIRED
-           ======================================================== */
-
-        SUM(
-            CASE
-
-                WHEN UPPER(
-                         TRIM(
-                             E.MEAL_PREFERENCE_NAME
-                         )
-                     )
-                     =
-                     'NO MEAL REQUIRED'
-
-                THEN 1
-
-                ELSE 0
-
-            END
-        ) AS NO_MEAL_COUNT,
+            FROM EMP
+        ),
 
 
-        /* ========================================================
-           COLLECTED
-           ======================================================== */
+        /* No meal */
+        (
+            SELECT COUNT(1)
 
+            FROM EMP
+
+            WHERE UPPER(
+                      TRIM(
+                          MEAL_PREFERENCE_NAME
+                      )
+                  )
+                  =
+                  'NO MEAL REQUIRED'
+        ),
+
+
+        /* Collected */
         (
             SELECT COUNT(1)
 
             FROM COLLECTED
-        ) AS COLLECTED_COUNT,
+        ),
 
 
-        /* ========================================================
-           NOT REQUIRED BUT CAME TO COLLECT
-           ======================================================== */
-
+        /* No meal but came */
         (
-            SELECT COUNT(DISTINCT S.FX_BADGE)
+            SELECT COUNT(
+                       DISTINCT
+                       S.FX_BADGE
+                   )
 
             FROM CMS.C_F1_SCAN_LOG S
 
-            INNER JOIN EMP E2
 
-                ON E2.FX_BADGE =
-                   S.FX_BADGE
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+
+                ON TO_CHAR(
+                    S.MEAL_PREFERENCE
+                )
+                =
+                TO_CHAR(
+                    BC.ID
+                )
+
+               AND BC.TYPE_ID = 81
+
 
             WHERE NVL(
                       S.DEL_FLAG,
                       0
                   ) = 0
+
 
               AND TRUNC(
                       S.MEAL_DATE
@@ -1833,14 +1783,68 @@ BEGIN
                   =
                   V_DAY
 
+
               AND UPPER(
                       TRIM(
-                          E2.MEAL_PREFERENCE_NAME
+                          BC.NAME
                       )
                   )
                   =
                   'NO MEAL REQUIRED'
-        ) AS NOT_REQUIRED_CAME_COUNT
+
+
+              AND
+              (
+                  V_SITE IS NULL
+
+                  OR V_SITE = ''
+
+                  OR V_SITE = 'All'
+
+                  OR UPPER(
+                         TRIM(
+                             S.PROPERTY_01
+                         )
+                     )
+                     =
+                     UPPER(
+                         TRIM(
+                             V_SITE
+                         )
+                     )
+              )
+        ),
+
+
+        /* Not collected */
+        (
+            SELECT COUNT(1)
+
+            FROM EMP E
+
+            WHERE NVL(
+                      UPPER(
+                          TRIM(
+                              E.MEAL_PREFERENCE_NAME
+                          )
+                      ),
+                      'X'
+                  )
+                  <>
+                  'NO MEAL REQUIRED'
+
+
+              AND NOT EXISTS
+              (
+                  SELECT 1
+
+                  FROM COLLECTED C
+
+                  WHERE C.FX_BADGE =
+                        E.FX_BADGE
+              )
+        )
+
 
     INTO
 
@@ -1850,173 +1854,16 @@ BEGIN
 
         V_COLLECTED,
 
-        V_NOT_REQ_CAME
+        V_NOT_REQ_CAME,
 
-    FROM EMP E;
+        V_NOT_COLLECTED
 
 
-    /* ============================================================
-       NOT COLLECTED
-
-       Eligible meal employees
-       MINUS
-       successfully collected employees
-       ============================================================ */
-
-    WITH USER_SITES AS
-    (
-        SELECT DISTINCT
-
-            UPPER(
-                TRIM(U.SITE)
-            ) AS SITE
-
-        FROM CMS.C_USER_MANAGE_T U
-
-        WHERE UPPER(
-                  TRIM(U.EMP_ID)
-              )
-              =
-              UPPER(
-                  TRIM(V_EMP_ID)
-              )
-
-          AND U.SYSTEM_TYPE = 'CMS'
-
-          AND NVL(
-                U.DEL_FLAG,
-                0
-              ) = 0
-
-          AND U.SITE IS NOT NULL
-
-          AND
-          (
-              V_SITE IS NULL
-
-              OR TRIM(V_SITE) = ''
-
-              OR UPPER(TRIM(V_SITE)) = 'ALL'
-
-              OR UPPER(TRIM(U.SITE))
-                 =
-                 UPPER(TRIM(V_SITE))
-          )
-    ),
-
-    EMP_DATA AS
-    (
-        SELECT
-
-            M.FX_BADGE,
-
-            BC.NAME AS MEAL_PREFERENCE_NAME,
-
-            ROW_NUMBER() OVER
-            (
-                PARTITION BY M.FX_BADGE
-
-                ORDER BY
-                    M.ADD_DATE DESC,
-                    M.ID DESC
-            ) AS RN
-
-        FROM CMS.C_F1_MEAL_INFO M
-
-        INNER JOIN USER_SITES US
-
-            ON UPPER(
-                   TRIM(M.PROPERTY_01)
-               )
-               =
-               US.SITE
-
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-
-            ON TO_CHAR(M.MEAL_PREFERENCE)
-               =
-               TO_CHAR(BC.ID)
-
-           AND BC.TYPE_ID = 81
-
-        WHERE NVL(
-                  M.DEL_FLAG,
-                  0
-              ) = 0
-
-          AND M.FIRST_DATE_FXBL IS NOT NULL
-
-          AND M.LAST_DATE_FXBL IS NOT NULL
-
-          AND V_DAY
-              BETWEEN
-              TRUNC(M.FIRST_DATE_FXBL)
-              AND
-              TRUNC(M.LAST_DATE_FXBL)
-    ),
-
-    EMP AS
-    (
-        SELECT *
-
-        FROM EMP_DATA
-
-        WHERE RN = 1
-    ),
-
-    COLLECTED AS
-    (
-        SELECT DISTINCT
-
-            S.FX_BADGE
-
-        FROM CMS.C_F1_SCAN_LOG S
-
-        WHERE NVL(
-                  S.DEL_FLAG,
-                  0
-              ) = 0
-
-          AND TRUNC(
-                  S.MEAL_DATE
-              )
-              =
-              V_DAY
-
-          AND S.COLLECTED_DATA =
-              'SUCCESS'
-    )
-
-    SELECT COUNT(1)
-
-    INTO V_NOT_COLLECTED
-
-    FROM EMP E
-
-    WHERE UPPER(
-              TRIM(
-                  NVL(
-                      E.MEAL_PREFERENCE_NAME,
-                      'X'
-                  )
-              )
-          )
-          <>
-          'NO MEAL REQUIRED'
-
-      AND NOT EXISTS
-      (
-          SELECT 1
-
-          FROM COLLECTED C
-
-          WHERE C.FX_BADGE =
-                E.FX_BADGE
-      );
+    FROM DUAL;
 
 
     /* ============================================================
-       CURSOR 1 - DASHBOARD CARDS
+       Dashboard cards
        ============================================================ */
 
     OPEN P_CURSOR FOR
@@ -2041,21 +1888,9 @@ BEGIN
     FROM DUAL;
 
 
-
-    /* ################################################################
-       CURSOR 2 - CATEGORY SUMMARY
-       ################################################################
-
-       Categories:
-          Indian Veg
-          Indian Non-Veg
-          Western Veg
-          Western Non-Veg
-          Chinese Non-Veg
-          Chinese Veg
-          Jain
-          Vegan
-       ################################################################ */
+    /* ============================================================
+       Category summary
+       ============================================================ */
 
     OPEN P_SUMMARY_CURSOR FOR
 
@@ -2091,165 +1926,50 @@ BEGIN
 
         SELECT
             5,
-            'Chinese Non-Veg'
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT
-            6,
-            'Chinese Veg'
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT
-            7,
             'Jain'
         FROM DUAL
 
         UNION ALL
 
         SELECT
-            8,
+            6,
             'Vegan'
         FROM DUAL
     ),
 
 
-    USER_SITES AS
-    (
-        SELECT DISTINCT
-
-            UPPER(
-                TRIM(U.SITE)
-            ) AS SITE
-
-        FROM CMS.C_USER_MANAGE_T U
-
-        WHERE UPPER(
-                  TRIM(U.EMP_ID)
-              )
-              =
-              UPPER(
-                  TRIM(V_EMP_ID)
-              )
-
-          AND U.SYSTEM_TYPE = 'CMS'
-
-          AND NVL(
-                U.DEL_FLAG,
-                0
-              ) = 0
-
-          AND U.SITE IS NOT NULL
-
-          AND
-          (
-              V_SITE IS NULL
-
-              OR TRIM(V_SITE) = ''
-
-              OR UPPER(TRIM(V_SITE)) = 'ALL'
-
-              OR UPPER(TRIM(U.SITE))
-                 =
-                 UPPER(TRIM(V_SITE))
-          )
-    ),
-
-
-    /* ============================================================
-       Valid employee/category base
-       ============================================================ */
-
-    EMP_DATA AS
+    CNT AS
     (
         SELECT
-
-            M.FX_BADGE,
 
             UPPER(
                 TRIM(
                     BC.NAME
                 )
-            ) AS CATEGORY,
-
-            ROW_NUMBER() OVER
-            (
-                PARTITION BY M.FX_BADGE
-
-                ORDER BY
-                    M.ADD_DATE DESC,
-                    M.ID DESC
-            ) AS RN
-
-        FROM CMS.C_F1_MEAL_INFO M
-
-        INNER JOIN USER_SITES US
-
-            ON UPPER(
-                   TRIM(M.PROPERTY_01)
-               )
-               =
-               US.SITE
-
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-
-            ON TO_CHAR(M.MEAL_PREFERENCE)
-               =
-               TO_CHAR(BC.ID)
-
-           AND BC.TYPE_ID = 81
-
-        WHERE NVL(
-                  M.DEL_FLAG,
-                  0
-              ) = 0
-
-          AND M.FIRST_DATE_FXBL IS NOT NULL
-
-          AND M.LAST_DATE_FXBL IS NOT NULL
-
-          AND V_DAY
-              BETWEEN
-              TRUNC(M.FIRST_DATE_FXBL)
-              AND
-              TRUNC(M.LAST_DATE_FXBL)
-    ),
-
-
-    EMP AS
-    (
-        SELECT *
-
-        FROM EMP_DATA
-
-        WHERE RN = 1
-    ),
-
-
-    /* ============================================================
-       Successfully collected category
-       ============================================================ */
-
-    CNT AS
-    (
-        SELECT
-
-            E.CATEGORY,
+            )
+                AS PREF,
 
             COUNT(
                 DISTINCT
                 S.FX_BADGE
-            ) AS TOTAL_COUNT
+            )
+                AS TOTAL_COUNT
+
 
         FROM CMS.C_F1_SCAN_LOG S
 
-        INNER JOIN EMP E
 
-            ON E.FX_BADGE =
-               S.FX_BADGE
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+
+            ON TO_CHAR(
+                S.MEAL_PREFERENCE
+            )
+            =
+            TO_CHAR(
+                BC.ID
+            )
+
+           AND BC.TYPE_ID = 81
 
 
         WHERE NVL(
@@ -2257,19 +1977,46 @@ BEGIN
                   0
               ) = 0
 
+
           AND TRUNC(
                   S.MEAL_DATE
               )
               =
               V_DAY
 
+
           AND S.COLLECTED_DATA =
               'SUCCESS'
 
-          AND E.CATEGORY IS NOT NULL
+
+          AND
+          (
+              V_SITE IS NULL
+
+              OR V_SITE = ''
+
+              OR V_SITE = 'All'
+
+              OR UPPER(
+                     TRIM(
+                         S.PROPERTY_01
+                     )
+                 )
+                 =
+                 UPPER(
+                     TRIM(
+                         V_SITE
+                     )
+                 )
+          )
+
 
         GROUP BY
-            E.CATEGORY
+            UPPER(
+                TRIM(
+                    BC.NAME
+                )
+            )
     )
 
 
@@ -2281,7 +2028,8 @@ BEGIN
         NVL(
             N.TOTAL_COUNT,
             0
-        ) AS COLLECTED_COUNT,
+        )
+            AS COLLECTED_COUNT,
 
 
         CASE
@@ -2300,7 +2048,8 @@ BEGIN
                 V_COLLECTED
             )
 
-        END AS PERCENTAGE
+        END
+            AS PERCENTAGE
 
 
     FROM CATS C
@@ -2308,7 +2057,7 @@ BEGIN
 
     LEFT JOIN CNT N
 
-        ON N.CATEGORY =
+        ON N.PREF =
            UPPER(
                C.CATEGORY
            )
@@ -2317,10 +2066,6 @@ BEGIN
     ORDER BY
         C.SORT_NO;
 
-
-    /* ============================================================
-       SUCCESS
-       ============================================================ */
 
     V_RES := '1';
 
