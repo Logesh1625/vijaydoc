@@ -1,171 +1,88 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { NzMessageService } from 'ng-zorro-antd';
-import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
+<div class="scan-wrapper">
 
-@Component({
-  selector: 'app-Meal-scan',
-  templateUrl: './Meal-scan.component.html',
-  styleUrls: ['./Meal-scan.component.less']
-})
-export class MealScanComponent implements OnInit {
+  <div class="header-row">
+    <div class="title-block">
+      <h1>Meal Scan</h1>
+      <p>Scan employee badge to mark meal collection</p>
+    </div>
+  </div>
 
-  @ViewChild('scanInput', { static: false }) scanInput: ElementRef;
+  <div class="scan-input-card">
+    <div class="scan-input-row">
+      <i nz-icon nzType="scan" nzTheme="outline" class="scan-icon"></i>
+      <input #scanInput nz-input [(ngModel)]="empNo" name="empNo" placeholder="Scan employee badge..."
+        (keyup.enter)="onScanEnter()" autocomplete="off" [disabled]="loading" class="scan-input" />
+      <nz-spin *ngIf="loading" nzSimple></nz-spin>
+      <button (click)="search(true)" nz-button nzType="primary" nzSize="large">Search</button>
+    </div>
+  </div>
 
-  empNo: string = '';
-  loading: boolean = false;
-  proceeding: boolean = false;
-  employeeDetail: any = null;
-  entitlementStatus: string = '';
+<div class="result-card-wrapper" *ngIf="employeeDetail">
+  <div class="result-card"
+       [ngClass]="entitlementStatus === 'ENTITLED' ? 'card-entitled' :
+                  (entitlementStatus === 'ALREADY_SCANNED' ? 'card-already' : 'card-not-entitled')">
 
-  employeePhotoUrl: SafeUrl | null = null;
-  photoLoading: boolean = false;
+     <div class="result-card-body">
+        <div class="employee-photo">
+          <div class="avatar-circle">
+            <nz-spin *ngIf="photoLoading"></nz-spin>
+            <img *ngIf="employeePhotoUrl && !photoLoading" [src]="employeePhotoUrl" class="avatar-img"
+              alt="Employee photo" />
+            <i *ngIf="!employeePhotoUrl && !photoLoading" nz-icon nzType="user" nzTheme="outline"></i>
+          </div>
+        </div>
 
-  private readonly PHOTO_API_BASE = 'http://10.209.110.187:3000/api/image';
+        <div class="employee-details">
+          <div class="detail-row">
+            <span class="detail-label">Employee Name</span>
+            <span class="detail-colon">:</span>
+            <span class="detail-value">{{ employeeDetail.Name || 'Not Updated' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">FX Badge</span>
+            <span class="detail-colon">:</span>
+            <span class="detail-value">{{ employeeDetail.FxBadge }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Meal Preference</span>
+            <span class="detail-colon">:</span>
+            <span class="detail-value">{{ employeeDetail.MealPreference || 'Not Updated' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">First Day at Factory</span>
+            <span class="detail-colon">:</span>
+            <span class="detail-value">{{ employeeDetail.FirstDateFxbl || 'Not Updated' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Last Day at Factory</span>
+            <span class="detail-colon">:</span>
+            <span class="detail-value">{{ employeeDetail.LastDateFxbl || 'Not Updated' }}</span>
+          </div>
+        </div>
+      </div>
 
-  constructor(
-    private publicSvr: PublicNetService,
-    private msgSvr: NzMessageService,
-    private http: HttpClient,
-    private sanitizer: DomSanitizer,
-  ) { }
 
-  ngOnInit(): void {
-    this.focusInput();
-  }
+    <div class="status-banner"
+         [ngClass]="entitlementStatus === 'ENTITLED' ? 'banner-green' :
+                    (entitlementStatus === 'ALREADY_SCANNED' ? 'banner-orange' : 'banner-red')">
+      <i nz-icon
+         [nzType]="entitlementStatus === 'ENTITLED' ? 'check-circle' :
+                   (entitlementStatus === 'ALREADY_SCANNED' ? 'exclamation-circle' : 'close-circle')"
+         nzTheme="fill"
+         class="status-icon"></i>
+      <span class="status-label">Status</span>
+      <span class="status-colon">:</span>
+      <span class="status-text">
+        {{ entitlementStatus === 'ENTITLED' ? 'ENTITLED FOR MEAL' :
+           (entitlementStatus === 'ALREADY_SCANNED' ? 'ALREADY COLLECTED' : 'NOT ENTITLED') }}
+      </span>
+    </div>
 
-  focusInput() {
-    setTimeout(() => {
-      if (this.scanInput) {
-        this.scanInput.nativeElement.focus();
-      }
-    }, 100);
-  }
+  </div>
+</div>
 
-  onScanEnter() {
-    this.search();
-  }
+  <div class="waiting-card" *ngIf="!employeeDetail && !loading">
+    <nz-empty nzNotFoundContent="Scan an employee badge to begin"></nz-empty>
+  </div>
 
-  search(fromButton?: boolean) {
-    if (!this.empNo || this.empNo.trim() === '') {
-      this.msgSvr.error('Please scan or enter an FX Badge.');
-      return;
-    }
-
-    this.loading = true;
-    this.employeeDetail = null;
-    this.entitlementStatus = '';
-    this.employeePhotoUrl = null;
-
-    const params = {
-      FxBadge: this.empNo.trim(),
-      Func: "CMS-GetF1MenuByFxbadge"
-    };
-
-    this.publicSvr.iwxPostF1(params, {
-      headers: {
-        apiID: "ffff-1789807467770-10208193125-1466",
-        userKey: "E9785F13CCEAFB251A6AB147AFD24336"
-      }
-    }, true).then((res: any) => {
-      this.loading = false;
-
-      if (res.IsOK == "1" && res.List && res.List.length > 0) {
-        const data = res.List[0];
-        this.employeeDetail = {
-          FxBadge: data.FxBadge,
-          Name: data.Name,
-          MealPreference: data.MealPreference,
-          FirstDateFxbl: data.FirstDateFxbl,
-          LastDateFxbl: data.LastDateFxbl,
-        };
-        this.entitlementStatus = data.EntitlementStatus;
-        this.fetchEmployeePhoto(data.FxBadge);
-        this.proceed();
-      } else {
-        this.employeeDetail = {
-          FxBadge: this.empNo.trim(),
-          Name: '',
-          MealPreference: '',
-          FirstDateFxbl: '',
-          LastDateFxbl: '',
-        };
-        this.entitlementStatus = 'NOT_UPDATED';
-        this.fetchEmployeePhoto(this.empNo.trim());
-        this.proceed();
-      }
-    }).catch((err) => {
-      this.loading = false;
-      this.msgSvr.error('Failed to fetch employee details.');
-    });
-  }
-
-  fetchEmployeePhoto(fxBadge: string) {
-    this.photoLoading = true;
-    this.http.get(`${this.PHOTO_API_BASE}/${fxBadge}`, { responseType: 'blob' })
-      .subscribe({
-        next: (blob) => {
-          const objectUrl = URL.createObjectURL(blob);
-          this.employeePhotoUrl = this.sanitizer.bypassSecurityTrustUrl(objectUrl);
-          this.photoLoading = false;
-        },
-        error: () => {
-          this.employeePhotoUrl = null;
-          this.photoLoading = false;
-        }
-      });
-  }
-
-  proceed() {
-  if (!this.employeeDetail) return;
-
-  this.proceeding = true;
-
-  const params = {
-    FxBadge: this.employeeDetail.FxBadge,
-    Func: "CMS-InsertMealScanLog"
-  };
-
-  this.publicSvr.iwxPostF1(params, {
-    headers: {
-      apiID: "ffff-1789818962176-10208193125-1483",
-      userKey: "E9785F13CCEAFB251A6AB147AFD24336"
-    }
-  }, true).then((res: any) => {
-    this.proceeding = false;
-
-    if (res.IsOK == "1" && res.List && res.List.length > 0) {
-      const logResult = res.List[0];
-
-      if (logResult.Status === 'SUCCESS') {
-        this.msgSvr.success('Meal collection recorded successfully!');
-      } else if (logResult.Status === 'ALREADY_SCANNED') {
-        this.entitlementStatus = 'ALREADY_SCANNED';
-        this.msgSvr.error(logResult.StatusMessage || 'Meal already collected today');
-      } else {
-        this.msgSvr.error(logResult.StatusMessage || 'Invalid scan.');
-      }
-      this.clearInputOnly();
-    } else {
-      this.msgSvr.error(res.Msg || 'Failed to log scan.');
-    }
-  }).catch((err) => {
-    this.proceeding = false;
-    this.msgSvr.error('Failed to log scan. Please try again.');
-  });
-}
-
-  clearInputOnly() {
-    this.empNo = '';
-    this.focusInput();
-  }
-
-  cancelScan() {
-    this.employeeDetail = null;
-    this.entitlementStatus = '';
-    this.empNo = '';
-    this.employeePhotoUrl = null;
-    this.focusInput();
-  }
-}
+</div>
