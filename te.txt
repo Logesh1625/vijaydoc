@@ -81,13 +81,20 @@ export class FoodTimePriceComponent implements OnInit {
 
   total = 0;
 
-  /** Default site (first site of the logged-in user), used by the Add drawer */
+  /**
+   * Default active site.
+   */
   site = '';
 
-  /** All sites that belong to the logged-in user */
+  /**
+   * Active sites belonging to logged-in user.
+   */
   siteList: string[] = [];
 
-  /** Site chosen in the dropdown. '' = All My Sites */
+  /**
+   * Selected site.
+   * Empty string = All active sites.
+   */
   selectedSite = '';
 
   groups = '';
@@ -107,6 +114,7 @@ export class FoodTimePriceComponent implements OnInit {
   };
 
   columns: STColumn[] = [
+
     {
       title: '',
       type: 'checkbox',
@@ -200,7 +208,9 @@ export class FoodTimePriceComponent implements OnInit {
     }
   ];
 
+
   ngOnInit(): void {
+
     const form = [
       {
         key: 'Groups',
@@ -219,7 +229,8 @@ export class FoodTimePriceComponent implements OnInit {
       }
     ];
 
-    this.sfSchema = this.publicSvr.jointSchema(form);
+    this.sfSchema =
+      this.publicSvr.jointSchema(form);
 
     console.log(
       'Current user from SettingsService:',
@@ -229,13 +240,14 @@ export class FoodTimePriceComponent implements OnInit {
     this.loadLoggedInUserSite();
   }
 
-  /**
-   * Do not call search() from ngAfterViewInit().
-   * Search will be called after the user's sites are loaded.
-   */
 
+  /**
+   * Load only active sites of logged-in user.
+   */
   private loadLoggedInUserSite(): void {
-    const userInfo = this.publicSvr.getSettingUserInfo();
+
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
 
     console.log(
       'Logged-in user information:',
@@ -243,6 +255,7 @@ export class FoodTimePriceComponent implements OnInit {
     );
 
     if (!userInfo || !userInfo.eeid) {
+
       this.msgSvr.error(
         'Logged-in user EEID is missing'
       );
@@ -257,47 +270,72 @@ export class FoodTimePriceComponent implements OnInit {
 
     this.publicSvr.getSitebasedUser().subscribe(
       (userList: any[]) => {
+
         console.log(
           'CMS-Get_user_manage user list:',
           userList
         );
 
-        if (!userList || userList.length === 0) {
+        if (
+          !userList ||
+          userList.length === 0
+        ) {
+
           this.msgSvr.error(
-            'No user data returned from CMS-Get_user_manage'
+            'No active user data returned from CMS-Get_user_manage'
           );
 
           return;
         }
 
-        // A user can have more than one site
-        this.siteList = this.extractAllSites(
-          userList,
-          userInfo.eeid
-        );
+        /*
+         * Extract only active user sites.
+         */
+        this.siteList =
+          this.extractAllSites(
+            userList,
+            userInfo.eeid
+          );
 
         console.log(
-          'Resolved logged-in user sites:',
+          'Resolved active logged-in user sites:',
           this.siteList
         );
 
-        if (this.siteList.length === 0) {
+        if (
+          this.siteList.length === 0
+        ) {
+
           this.msgSvr.error(
-            'Logged-in user site is missing'
+            'No active site found for logged-in user'
           );
+
+          this.source = [];
+          this.total = 0;
 
           return;
         }
 
-        this.site = this.siteList[0];
+        /*
+         * Default active site.
+         */
+        this.site =
+          this.siteList[0];
 
-        // Default: show data of all my sites
+        /*
+         * Empty = All active sites.
+         */
         this.selectedSite = '';
 
-        // Call F1 API only after sites are available
+        /*
+         * Load F1 data only after
+         * active sites are available.
+         */
         this.search(true);
+
       },
       error => {
+
         console.error(
           'CMS-Get_user_manage error:',
           error
@@ -306,45 +344,117 @@ export class FoodTimePriceComponent implements OnInit {
         this.msgSvr.error(
           'Unable to load logged-in user information'
         );
+
       }
     );
   }
 
+
+  /**
+   * Get employee ID from API response.
+   */
   private getItemEeid(item: any): string {
+
     return String(
       item.Eeid ||
       item.EEID ||
       item.EeidNo ||
       item.EmpId ||
+      item.EMP_ID ||
       item.EmployeeId ||
       item.EmployeeCode ||
       item.eeid ||
       ''
     )
-    .trim()
-    .toUpperCase();
+      .trim()
+      .toUpperCase();
   }
 
+
   /**
-   * Returns every unique site of the logged-in employee.
+   * Check whether user is active.
+   *
+   * DEL_FLAG:
+   * 0 / NULL = active
+   * 1 = deleted
+   */
+  private isActiveUser(item: any): boolean {
+
+    if (!item) {
+      return false;
+    }
+
+    const delFlag =
+      item.DelFlag ??
+      item.DEL_FLAG ??
+      item.delFlag ??
+      item.del_flag ??
+      0;
+
+    return Number(delFlag) === 0;
+  }
+
+
+  /**
+   * Return every unique ACTIVE site
+   * belonging to logged-in employee.
    */
   private extractAllSites(
     userList: any[],
     eeid: string
   ): string[] {
-    const loginEeid = String(eeid)
-      .trim()
-      .toUpperCase();
 
-    const sites = userList
-      .filter(item => item && this.getItemEeid(item) === loginEeid)
-      .map(item => this.extractSite(item))
-      .filter(site => !!site);
+    const loginEeid =
+      String(eeid)
+        .trim()
+        .toUpperCase();
 
-    return Array.from(new Set(sites));
+    const sites =
+      userList
+
+        .filter(item => {
+
+          if (!item) {
+            return false;
+          }
+
+          const itemEeid =
+            this.getItemEeid(item);
+
+          /*
+           * Employee must match.
+           */
+          if (itemEeid !== loginEeid) {
+            return false;
+          }
+
+          /*
+           * Deleted users must be excluded.
+           */
+          if (!this.isActiveUser(item)) {
+            return false;
+          }
+
+          return true;
+        })
+
+        .map(item =>
+          this.extractSite(item)
+        )
+
+        .filter(site => !!site);
+
+    return Array.from(
+      new Set(sites)
+    );
   }
 
+
+  /**
+   * Extract site value from API response.
+   */
   private extractSite(user: any): string {
+
     if (!user) {
       return '';
     }
@@ -366,7 +476,12 @@ export class FoodTimePriceComponent implements OnInit {
     return String(site).trim();
   }
 
+
+  /**
+   * Search / reload grid.
+   */
   search(first?: boolean): void {
+
     this.checkedTableData = [];
 
     if (first) {
@@ -378,73 +493,160 @@ export class FoodTimePriceComponent implements OnInit {
     this.searchHandle(false);
   }
 
-  searchHandle(isExport?: boolean): void {
-    const userInfo = this.publicSvr.getSettingUserInfo();
 
-    if (!userInfo || !userInfo.eeid) {
+  /**
+   * Search API.
+   */
+  searchHandle(
+    isExport?: boolean
+  ): void {
+
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
+
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
+
       this.loading = false;
       this.exportLoading = false;
-      this.msgSvr.error('Logged-in user EEID is missing');
+
+      this.msgSvr.error(
+        'Logged-in user EEID is missing'
+      );
+
       return;
     }
 
-    if (!this.siteList || this.siteList.length === 0) {
+    /*
+     * No active sites = no data.
+     */
+    if (
+      !this.siteList ||
+      this.siteList.length === 0
+    ) {
+
       this.loading = false;
       this.exportLoading = false;
-      this.msgSvr.error('Logged-in user site is missing');
+
+      this.source = [];
+      this.total = 0;
+
+      this.msgSvr.error(
+        'No active site found for logged-in user'
+      );
+
       return;
     }
+
 
     const params: any = {
-      Groups: this.groups || '',
-      FxBadge: this.fxBadge || '',
-      EmpId: userInfo.eeid,
-      SystemName: 'CMS',
-      Site: this.selectedSite || '',
-      StartPage: isExport ? 1 : this.pi,
-      PageSize: isExport ? 999999999999999 : this.ps,
-      Func: 'CMS-GetF1MenuManage'
+
+      Groups:
+        this.groups || '',
+
+      FxBadge:
+        this.fxBadge || '',
+
+      /*
+       * Logged-in employee.
+       */
+      EmpId:
+        userInfo.eeid,
+
+      SystemName:
+        'CMS',
+
+      /*
+       * Empty = All active sites.
+       */
+      Site:
+        this.selectedSite || '',
+
+      StartPage:
+        isExport
+          ? 1
+          : this.pi,
+
+      PageSize:
+        isExport
+          ? 999999999999999
+          : this.ps,
+
+      Func:
+        'CMS-GetF1MenuManage'
     };
+
 
     const formValues =
       this.sf && this.sf.value
         ? this.sf.value
         : {};
 
-    const finalParams: any = deepMerge(
-      params,
-      formValues
-    );
 
-    // Site always comes from the dropdown ('' = all my sites)
-    finalParams.Site = this.selectedSite || '';
+    const finalParams: any =
+      deepMerge(
+        params,
+        formValues
+      );
+
+
+    /*
+     * Site must always come
+     * from site dropdown.
+     */
+    finalParams.Site =
+      this.selectedSite || '';
+
+
+    /*
+     * EmpId must always be
+     * logged-in employee.
+     */
+    finalParams.EmpId =
+      userInfo.eeid;
+
 
     console.log(
       'F1 Menu Manage final params:',
       finalParams
     );
 
+
     this.publicSvr.iwxPostF1(
       finalParams,
       {
         headers: {
-          apiID: 'ffff-1789633596388-10208193125-1306',
-          userKey: 'E9785F13CCEAFB251A6AB147AFD24336'
+          apiID:
+            'ffff-1789633596388-10208193125-1306',
+
+          userKey:
+            'E9785F13CCEAFB251A6AB147AFD24336'
         }
       },
       true
     )
+
     .then((res: any) => {
+
       this.loading = false;
       this.exportLoading = false;
+
 
       console.log(
         'F1 Menu Manage response:',
         res
       );
 
-      if (!res || String(res.IsOK) !== '1') {
+
+      if (
+        !res ||
+        String(res.IsOK) !== '1'
+      ) {
+
         if (!isExport) {
+
           this.source = [];
           this.total = 0;
         }
@@ -458,22 +660,36 @@ export class FoodTimePriceComponent implements OnInit {
         return;
       }
 
-      const list = Array.isArray(res.List)
-        ? res.List
-        : [];
+
+      const list =
+        Array.isArray(res.List)
+          ? res.List
+          : [];
+
 
       if (isExport) {
+
         this.exportExcel(list);
+
         return;
       }
 
-      this.source = list;
 
-      this.total = list.length > 0
-        ? Number(list[0].Rowscount || 0)
-        : 0;
+      this.source =
+        list;
+
+
+      this.total =
+        list.length > 0
+          ? Number(
+              list[0].Rowscount || 0
+            )
+          : 0;
+
     })
+
     .catch(error => {
+
       this.loading = false;
       this.exportLoading = false;
 
@@ -485,38 +701,81 @@ export class FoodTimePriceComponent implements OnInit {
       this.msgSvr.error(
         'F1 Menu Manage API failed'
       );
+
     });
   }
 
-  private exportExcel(list: any[]): void {
-    if (!list || list.length === 0) {
-      this.msgSvr.error('No Data!');
+
+  /**
+   * Export Excel.
+   */
+  private exportExcel(
+    list: any[]
+  ): void {
+
+    if (
+      !list ||
+      list.length === 0
+    ) {
+
+      this.msgSvr.error(
+        'No Data!'
+      );
+
       return;
     }
 
-    const allData = list.map(item => {
-      return {
-        Item: item.Rn,
-        Group: item.Groups,
-        Site: item.Site,
-        FxBadge: item.FxBadge,
-        Name: item.Name,
-        MealPreference: item.MealPreference,
-        FirstDateFxbl: item.FirstDateFxbl,
-        LastDateFxbl: item.LastDateFxbl,
-        AddBy: item.AddBy,
-        AddDate: item.AddDate,
-        LastEditBy: item.EditBy,
-        LastEditDate: item.EditDate
-      };
-    });
+
+    const allData =
+      list.map(item => {
+
+        return {
+
+          Item:
+            item.Rn,
+
+          Group:
+            item.Groups,
+
+          Site:
+            item.Site,
+
+          FxBadge:
+            item.FxBadge,
+
+          Name:
+            item.Name,
+
+          MealPreference:
+            item.MealPreference,
+
+          FirstDateFxbl:
+            item.FirstDateFxbl,
+
+          LastDateFxbl:
+            item.LastDateFxbl,
+
+          AddBy:
+            item.AddBy,
+
+          AddDate:
+            item.AddDate,
+
+          LastEditBy:
+            item.EditBy,
+
+          LastEditDate:
+            item.EditDate
+        };
+      });
+
 
     const fileName =
       'F1_Meal_Management_' +
       new Date().getTime() +
       '.xlsx';
 
-    // second argument = number of columns (was 12 for 11 fields, now 13 for 12 fields)
+
     this.publicSvr.exportHandle(
       allData,
       13,
@@ -524,12 +783,27 @@ export class FoodTimePriceComponent implements OnInit {
     );
   }
 
+
+  /**
+   * Add.
+   */
   add(): void {
-    this.openDrawer('Add');
+
+    this.openDrawer(
+      'Add'
+    );
   }
 
+
+  /**
+   * Edit.
+   */
   update(): void {
-    if (this.checkedTableData.length !== 1) {
+
+    if (
+      this.checkedTableData.length !== 1
+    ) {
+
       this.shareSvr.showMsg(
         'error',
         this.i18n.fanyi(
@@ -540,27 +814,44 @@ export class FoodTimePriceComponent implements OnInit {
       return;
     }
 
-    this.openDrawer('Edit');
+    this.openDrawer(
+      'Edit'
+    );
   }
 
+
+  /**
+   * Bulk import.
+   */
   importbulk(): void {
+
     this.shareSvr.openDrawer(
       'Import',
       F1ManageImportComponent,
       {},
       result => {
+
         if (result) {
+
           this.search(true);
         }
       }
     );
   }
 
-  openDrawer(name: string): void {
+
+  /**
+   * Open Add / Edit drawer.
+   */
+  openDrawer(
+    name: string
+  ): void {
+
     if (
       name === 'Edit' &&
       this.checkedTableData.length !== 1
     ) {
+
       this.shareSvr.showMsg(
         'error',
         this.i18n.fanyi(
@@ -570,31 +861,60 @@ export class FoodTimePriceComponent implements OnInit {
 
       return;
     }
+
 
     console.log(
       'Selected row:',
       this.checkedTableData[0]
     );
 
+
     this.shareSvr.openDrawer(
       name,
       AddDetailsDrawComponent,
       {
-        option: name,
-        editData: this.checkedTableData[0],
-        site: this.selectedSite || this.site,
-        siteList: this.siteList
+
+        option:
+          name,
+
+        editData:
+          this.checkedTableData[0],
+
+        /*
+         * Send active selected site.
+         */
+        site:
+          this.selectedSite ||
+          this.site,
+
+        /*
+         * Send only active sites.
+         */
+        siteList:
+          this.siteList
+
       },
+
       result => {
+
         if (result) {
+
           this.search(true);
         }
       }
     );
   }
 
+
+  /**
+   * Delete selected F1 records.
+   */
   delete(): void {
-    if (this.checkedTableData.length === 0) {
+
+    if (
+      this.checkedTableData.length === 0
+    ) {
+
       this.shareSvr.showMsg(
         'error',
         this.i18n.fanyi(
@@ -605,10 +925,14 @@ export class FoodTimePriceComponent implements OnInit {
       return;
     }
 
+
     this.delIdx = 0;
 
+
     this.shareSvr.modalSvr.confirm({
-      nzTitle: 'Prompt',
+
+      nzTitle:
+        'Prompt',
 
       nzContent:
         'Are you sure you want to delete the selected ' +
@@ -616,25 +940,42 @@ export class FoodTimePriceComponent implements OnInit {
         ' data?',
 
       nzOnOk: () => {
+
         this.delHandle();
       }
     });
   }
 
+
+  /**
+   * Delete F1 records.
+   */
   delHandle(): void {
+
     const ids: any[] = [];
 
-    this.checkedTableData.forEach(item => {
-      if (
-        item &&
-        item.Id !== undefined &&
-        item.Id !== null
-      ) {
-        ids.push(item.Id);
-      }
-    });
 
-    if (ids.length === 0) {
+    this.checkedTableData.forEach(
+      item => {
+
+        if (
+          item &&
+          item.Id !== undefined &&
+          item.Id !== null
+        ) {
+
+          ids.push(
+            item.Id
+          );
+        }
+      }
+    );
+
+
+    if (
+      ids.length === 0
+    ) {
+
       this.msgSvr.error(
         'Selected records do not contain Id'
       );
@@ -642,42 +983,71 @@ export class FoodTimePriceComponent implements OnInit {
       return;
     }
 
-    const userInfo = this.publicSvr.getSettingUserInfo();
+
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
+
 
     const params = {
-      Ids: ids.join(',') + ',',
-      EditBy: userInfo.eeid,
-      Func: 'CMS-DeleteF1MenuManage'
+
+      Ids:
+        ids.join(',') + ',',
+
+      EditBy:
+        userInfo.eeid,
+
+      Func:
+        'CMS-DeleteF1MenuManage'
     };
+
 
     console.log(
       'Delete params:',
       params
     );
 
+
     this.publicSvr.iwxPostF1(
       params,
       {
         headers: {
-          apiID: 'ffff-1789634776545-10208193125-1341',
-          userKey: 'E9785F13CCEAFB251A6AB147AFD24336'
+
+          apiID:
+            'ffff-1789634776545-10208193125-1341',
+
+          userKey:
+            'E9785F13CCEAFB251A6AB147AFD24336'
         }
       },
       true
     )
+
     .then((res: any) => {
-      if (res && String(res.IsOK) === '1') {
-        this.msgSvr.success('Success');
+
+      if (
+        res &&
+        String(res.IsOK) === '1'
+      ) {
+
+        this.msgSvr.success(
+          'Success'
+        );
+
         this.search(true);
+
       } else {
+
         this.msgSvr.error(
           res && res.Msg
             ? res.Msg
             : 'Delete failed'
         );
       }
+
     })
+
     .catch(error => {
+
       console.error(
         'Delete API error:',
         error
@@ -689,33 +1059,73 @@ export class FoodTimePriceComponent implements OnInit {
     });
   }
 
+
+  /**
+   * Export.
+   */
   exportData(): void {
-    if (!this.siteList || this.siteList.length === 0) {
+
+    if (
+      !this.siteList ||
+      this.siteList.length === 0
+    ) {
+
       this.msgSvr.error(
-        'Logged-in user site is missing'
+        'No active site found for logged-in user'
       );
 
       return;
     }
 
+
     this.exportLoading = true;
 
-    this.searchHandle(true);
+    this.searchHandle(
+      true
+    );
   }
 
-  change(ret: STChange): void {
-    if (ret.type === 'checkbox') {
-      this.checkedTableData = ret.checkbox || [];
+
+  /**
+   * Table change.
+   */
+  change(
+    ret: STChange
+  ): void {
+
+    if (
+      ret.type === 'checkbox'
+    ) {
+
+      this.checkedTableData =
+        ret.checkbox || [];
     }
 
-    if (ret.type === 'pi') {
-      this.pi = ret.pi;
-      this.search(false);
+
+    if (
+      ret.type === 'pi'
+    ) {
+
+      this.pi =
+        ret.pi;
+
+      this.search(
+        false
+      );
     }
 
-    if (ret.type === 'ps') {
-      this.ps = ret.ps;
-      this.search(true);
+
+    if (
+      ret.type === 'ps'
+    ) {
+
+      this.ps =
+        ret.ps;
+
+      this.search(
+        true
+      );
     }
   }
+
 }
