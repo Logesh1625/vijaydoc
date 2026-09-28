@@ -54,7 +54,7 @@ AS
 
 
     /* ============================================================
-       UPDATE F1 MENU
+       UPDATE F1 MENU MANAGEMENT
        ============================================================ */
 
     PROCEDURE UPDATE_F1_MENU_MANAGE(
@@ -72,7 +72,7 @@ AS
 
 
     /* ============================================================
-       DELETE F1 MENU
+       DELETE F1 MENU MANAGEMENT
        ============================================================ */
 
     PROCEDURE DELETE_F1_MENU_MANAGE(
@@ -125,12 +125,21 @@ AS
     /* ============================================================
        GET MEAL DASHBOARD
 
-       IMPORTANT:
-       V_EMP_ID is used to identify logged-in CMS user.
+       V_EMP_ID
+       ------------------------------------------------------------
+       Logged-in CMS employee ID.
 
-       V_SITE:
-          NULL / '' / ALL = all sites belonging to user
-          specific value  = only that site
+       V_DATE
+       ------------------------------------------------------------
+       Dashboard date.
+
+       V_SITE
+       ------------------------------------------------------------
+       NULL / '' / 'All'
+           = all sites assigned to logged-in user
+
+       Specific site
+           = only that site
        ============================================================ */
 
     PROCEDURE GET_MEAL_DASHBOARD(
@@ -145,3 +154,4 @@ AS
 
 
 END F1_MEAL_MANAGEMENT;
+/
