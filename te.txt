@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
+import { PublicNetService } from 'src/app/routes/a_Public_net/Public_net.service';
 
 interface CategoryItem {
   name: string;
@@ -25,162 +25,1284 @@ export class F1DashboardComponent implements OnInit {
 
   selectedDate: Date = new Date();
 
-  locationList = [
-    { value: 'all', label: 'All Locations' },
+  /* ============================================================
+     SITE
+     ============================================================ */
+
+  siteList: string[] = [];
+
+  selectedSite: string = '';
+
+  site: string = '';
+
+  locationList: any[] = [
+    {
+      value: '',
+      label: 'All My Sites'
+    }
   ];
+
+
+  /* ============================================================
+     DASHBOARD CARDS
+     ============================================================ */
 
   totalEmployees: number = 0;
+
   mealsCollected: number = 0;
+
   mealsNotCollected: number = 0;
+
   noMealRequired: number = 0;
+
   notCameToCollect: number = 0;
 
+
+  /* ============================================================
+     CATEGORY
+     ============================================================ */
+
   categoryList: CategoryItem[] = [
-    { name: 'Indian Veg',      count: 0, percent: 0, color: '#52c41a', icon: '🥬' },
-    { name: 'Indian Non-Veg',  count: 0, percent: 0, color: '#1890ff', icon: '🍗' },
-    { name: 'Western Veg',     count: 0, percent: 0, color: '#722ed1', icon: '🥗' },
-    { name: 'Western Non-Veg', count: 0, percent: 0, color: '#faad14', icon: '🍔' },
-    { name: 'Chinese Non-Veg', count: 0, percent: 0, color: '#f8784d', icon: '🥡' },
-    { name: 'Chinese Veg',     count: 0, percent: 0, color: '#a0c065', icon: '🍜' },
-    { name: 'Jain',            count: 0, percent: 0, color: '#13c2c2', icon: '🌿' },
-    { name: 'Vegan',           count: 0, percent: 0, color: '#eb2f96', icon: '🌱' },
+
+    {
+      name: 'Indian Veg',
+      count: 0,
+      percent: 0,
+      color: '#52c41a',
+      icon: '🥬'
+    },
+
+    {
+      name: 'Indian Non-Veg',
+      count: 0,
+      percent: 0,
+      color: '#1890ff',
+      icon: '🍗'
+    },
+
+    {
+      name: 'Western Veg',
+      count: 0,
+      percent: 0,
+      color: '#722ed1',
+      icon: '🥗'
+    },
+
+    {
+      name: 'Western Non-Veg',
+      count: 0,
+      percent: 0,
+      color: '#faad14',
+      icon: '🍔'
+    },
+
+    {
+      name: 'Chinese Non-Veg',
+      count: 0,
+      percent: 0,
+      color: '#f8784d',
+      icon: '🥡'
+    },
+
+    {
+      name: 'Chinese Veg',
+      count: 0,
+      percent: 0,
+      color: '#a0c065',
+      icon: '🍜'
+    },
+
+    {
+      name: 'Jain',
+      count: 0,
+      percent: 0,
+      color: '#13c2c2',
+      icon: '🌿'
+    },
+
+    {
+      name: 'Vegan',
+      count: 0,
+      percent: 0,
+      color: '#eb2f96',
+      icon: '🌱'
+    }
+
   ];
 
-  // Meal Collection Summary (legend + donut)
+
+  /* ============================================================
+     SUMMARY
+     ============================================================ */
+
   summaryList: SummaryItem[] = [];
-  donutGradient: string = 'conic-gradient(#e6ebf5 0% 100%)';
+
+  donutGradient: string =
+    'conic-gradient(#e6ebf5 0% 100%)';
+
 
   loading: boolean = false;
 
-private colorMap: { [key: string]: string } = {
-  'Indian Veg': '#52c41a',
-  'Indian Non-Veg': '#1890ff',
-  'Western Veg': '#722ed1',
-  'Western Non-Veg': '#faad14',
-  'Jain': '#13c2c2',
-  'Vegan': '#eb2f96',
-  'Chinese Veg': '#a0c065',
-  'Chinese Non-Veg': '#f8784d',
-};
 
-private iconMap: { [key: string]: string } = {
-  'Indian Veg': '🥬',
-  'Indian Non-Veg': '🍗',
-  'Western Veg': '🥗',
-  'Western Non-Veg': '🍔',
-  'Jain': '🌿',
-  'Vegan': '🌱',
-  'Chinese Veg': '🍜',
-  'Chinese Non-Veg': '🥡',
-};
+  /* ============================================================
+     COLOR MAP
+     ============================================================ */
+
+  private colorMap: {
+    [key: string]: string
+  } = {
+
+    'Indian Veg': '#52c41a',
+
+    'Indian Non-Veg': '#1890ff',
+
+    'Western Veg': '#722ed1',
+
+    'Western Non-Veg': '#faad14',
+
+    'Jain': '#13c2c2',
+
+    'Vegan': '#eb2f96',
+
+    'Chinese Veg': '#a0c065',
+
+    'Chinese Non-Veg': '#f8784d'
+
+  };
+
+
+  /* ============================================================
+     ICON MAP
+     ============================================================ */
+
+  private iconMap: {
+    [key: string]: string
+  } = {
+
+    'Indian Veg': '🥬',
+
+    'Indian Non-Veg': '🍗',
+
+    'Western Veg': '🥗',
+
+    'Western Non-Veg': '🍔',
+
+    'Jain': '🌿',
+
+    'Vegan': '🌱',
+
+    'Chinese Veg': '🍜',
+
+    'Chinese Non-Veg': '🥡'
+
+  };
+
+
   constructor(
-    private publicSvr: PublicNetService,
-  ) { }
+    private publicSvr: PublicNetService
+  ) {}
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
 
   ngOnInit(): void {
-    this.updateSummary();             // show the zero state until data arrives
-    this.getDashboardData();
+
+    /*
+     * Show zero state initially.
+     */
+    this.updateSummary();
+
+    /*
+     * First load logged-in user's active sites.
+     */
+    this.loadLoggedInUserSite();
+
   }
 
-  onDateChange(date: Date): void {
-    this.selectedDate = date || new Date();   // date picker cleared -> back to today
-    this.getDashboardData();
-  }
 
-  onLocationChange(location: string): void {
-    this.getDashboardData();
-  }
+  /* ============================================================
+     LOAD LOGGED-IN USER SITE
+     ============================================================ */
 
-  // DD-MM-YYYY from the LOCAL date (toISOString would shift the day in IST)
-  private formatDate(d: Date): string {
-    const dd = ('0' + d.getDate()).slice(-2);
-    const mm = ('0' + (d.getMonth() + 1)).slice(-2);
-    return `${dd}-${mm}-${d.getFullYear()}`;
-  }
+  private loadLoggedInUserSite(): void {
 
-  // share of total employees, rounded (used by the stat-card chips and the legend)
-  pct(n: number): number {
-    return this.totalEmployees ? Math.round((n / this.totalEmployees) * 100) : 0;
-  }
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
 
-  getDashboardData(): void {
-    this.loading = true;
-    const params = {
-      Date: this.formatDate(this.selectedDate),
-      Func: "CMS-GetMealDashboard"
-    };
 
-    // Same call style as the Log Report page (iwxPostF1).
-    this.publicSvr.iwxPostF1(params, {
-      headers: {
-        apiID: "ffff-1789987849667-10208193125-1519",
-        userKey: "E9785F13CCEAFB251A6AB147AFD24336"
-      }
-    }, true).then((res: any) => {
-      this.loading = false;
-      if (res.IsOK == "1") {
-        // Cursor 1 (P_CURSOR) -> res.List : one row with the 5 card values
-        const c = (res.List && res.List[0]) || {};
-        this.totalEmployees = c.TotalEmployees || 0;
-        this.mealsCollected = c.MealsCollected || 0;
-        this.mealsNotCollected = c.MealsNotCollected || 0;
-        this.noMealRequired = c.NoMealRequired || 0;
-        this.notCameToCollect = c.NotRequiredCame || 0;
+    console.log(
+      'Dashboard logged-in user:',
+      userInfo
+    );
 
-        // Cursor 2 (P_SUMMARY_CURSOR) -> 6 category rows
-        const cats: any[] = res.List2 || res.Summary || res.CategoryList || [];
-        if (cats.length > 0) {
-          this.categoryList = cats.map((item: any) => ({
-            name: item.Category,
-            count: item.CollectedCount || 0,
-            percent: item.Percentage || 0,
-            color: this.getColorForCategory(item.Category),
-            icon: this.getIconForCategory(item.Category)
-          }));
-        }
 
-        this.updateSummary();
-      }
-    }).catch((err) => {
-      this.loading = false;
-      console.log(err);
-    });
-  }
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
 
-  getColorForCategory(name: string): string {
-    return this.colorMap[name] || '#999';
-  }
+      this.resetDashboard();
 
-  getIconForCategory(name: string): string {
-    return this.iconMap[name] || '🍽️';
-  }
+      console.error(
+        'Logged-in user EEID is missing'
+      );
 
-  // Builds the legend rows and the donut ring from the card values
-  private updateSummary(): void {
-    this.summaryList = [
-      { label: 'Meals Collected',                count: this.mealsCollected,    percent: this.pct(this.mealsCollected),    color: '#1890ff' },
-      { label: 'Meals Not Collected',            count: this.mealsNotCollected, percent: this.pct(this.mealsNotCollected), color: '#b4bfd4' },
-      { label: 'No Meal Required',               count: this.noMealRequired,    percent: this.pct(this.noMealRequired),    color: '#dde3ee' },
-      { label: 'Not Required - Came to Collect', count: this.notCameToCollect,  percent: this.pct(this.notCameToCollect),  color: '#b39ddb' },
-    ];
-
-    // The ring only uses the first 3 slices (they add up to total employees);
-    // "Came to Collect" is a subset of "No Meal Required", so it stays in the legend only.
-    const ringParts = this.summaryList.slice(0, 3);
-    const sum = ringParts.reduce((s, x) => s + x.count, 0);
-
-    if (!sum) {
-      this.donutGradient = 'conic-gradient(#e6ebf5 0% 100%)';
       return;
     }
 
+
+    /*
+     * Get user/site information.
+     *
+     * Backend CMS-Get_user_manage should already
+     * exclude DEL_FLAG = 1.
+     */
+    this.publicSvr
+      .getSitebasedUser()
+      .subscribe(
+
+        (userList: any[]) => {
+
+          console.log(
+            'Dashboard CMS-Get_user_manage:',
+            userList
+          );
+
+
+          if (
+            !userList ||
+            userList.length === 0
+          ) {
+
+            this.resetDashboard();
+
+            console.error(
+              'No active user/site data'
+            );
+
+            return;
+          }
+
+
+          /*
+           * Extract only active sites
+           * belonging to logged-in employee.
+           */
+          this.siteList =
+            this.extractAllSites(
+              userList,
+              userInfo.eeid
+            );
+
+
+          console.log(
+            'Dashboard active site list:',
+            this.siteList
+          );
+
+
+          if (
+            this.siteList.length === 0
+          ) {
+
+            this.resetDashboard();
+
+            console.error(
+              'No active site found'
+            );
+
+            return;
+          }
+
+
+          /*
+           * Default site.
+           */
+          this.site =
+            this.siteList[0];
+
+
+          /*
+           * Empty = All My Sites.
+           */
+          this.selectedSite = '';
+
+
+          /*
+           * Build dropdown.
+           */
+          this.buildLocationList();
+
+
+          /*
+           * Load dashboard.
+           */
+          this.getDashboardData();
+
+        },
+
+        error => {
+
+          console.error(
+            'CMS-Get_user_manage error:',
+            error
+          );
+
+          this.resetDashboard();
+
+        }
+
+      );
+
+  }
+
+
+  /* ============================================================
+     GET EMPLOYEE ID
+     ============================================================ */
+
+  private getItemEeid(
+    item: any
+  ): string {
+
+    if (!item) {
+      return '';
+    }
+
+
+    return String(
+
+      item.Eeid ||
+
+      item.EEID ||
+
+      item.EeidNo ||
+
+      item.EmpId ||
+
+      item.EMP_ID ||
+
+      item.EmployeeId ||
+
+      item.EmployeeCode ||
+
+      item.eeid ||
+
+      ''
+
+    )
+      .trim()
+      .toUpperCase();
+
+  }
+
+
+  /* ============================================================
+     ACTIVE USER CHECK
+     ============================================================ */
+
+  private isActiveUser(
+    item: any
+  ): boolean {
+
+    if (!item) {
+      return false;
+    }
+
+
+    /*
+     * Compatible with old TypeScript.
+     *
+     * 0 / NULL = active
+     * 1 = deleted
+     */
+
+    var delFlag = 0;
+
+
+    if (
+      item.DelFlag !== undefined &&
+      item.DelFlag !== null &&
+      item.DelFlag !== ''
+    ) {
+
+      delFlag =
+        item.DelFlag;
+
+    }
+
+    else if (
+      item.DEL_FLAG !== undefined &&
+      item.DEL_FLAG !== null &&
+      item.DEL_FLAG !== ''
+    ) {
+
+      delFlag =
+        item.DEL_FLAG;
+
+    }
+
+    else if (
+      item.delFlag !== undefined &&
+      item.delFlag !== null &&
+      item.delFlag !== ''
+    ) {
+
+      delFlag =
+        item.delFlag;
+
+    }
+
+    else if (
+      item.del_flag !== undefined &&
+      item.del_flag !== null &&
+      item.del_flag !== ''
+    ) {
+
+      delFlag =
+        item.del_flag;
+
+    }
+
+
+    return Number(delFlag) === 0;
+
+  }
+
+
+  /* ============================================================
+     EXTRACT ALL ACTIVE SITES
+     ============================================================ */
+
+  private extractAllSites(
+    userList: any[],
+    eeid: string
+  ): string[] {
+
+    const loginEeid =
+      String(eeid)
+        .trim()
+        .toUpperCase();
+
+
+    const sites =
+      userList
+
+        .filter(item => {
+
+          if (!item) {
+            return false;
+          }
+
+
+          /*
+           * Employee must match.
+           */
+          if (
+            this.getItemEeid(item)
+            !==
+            loginEeid
+          ) {
+
+            return false;
+          }
+
+
+          /*
+           * Deleted user must not be used.
+           */
+          if (
+            !this.isActiveUser(item)
+          ) {
+
+            return false;
+          }
+
+
+          return true;
+
+        })
+
+
+        .map(item =>
+          this.extractSite(item)
+        )
+
+
+        .filter(
+          site => !!site
+        );
+
+
+    return Array.from(
+      new Set(sites)
+    );
+
+  }
+
+
+  /* ============================================================
+     EXTRACT SITE
+     ============================================================ */
+
+  private extractSite(
+    user: any
+  ): string {
+
+    if (!user) {
+      return '';
+    }
+
+
+    const site =
+      user.Site ||
+
+      user.site ||
+
+      user.SITE ||
+
+      user.SiteName ||
+
+      user.siteName ||
+
+      user.WorkSite ||
+
+      user.Worksite ||
+
+      user.BasicCode ||
+
+      user.Basiccode ||
+
+      user.Location ||
+
+      user.location ||
+
+      '';
+
+
+    return String(site)
+      .trim();
+
+  }
+
+
+  /* ============================================================
+     BUILD SITE DROPDOWN
+     ============================================================ */
+
+  private buildLocationList(): void {
+
+    this.locationList = [
+
+      {
+        value: '',
+        label: 'All My Sites'
+      }
+
+    ];
+
+
+    this.siteList.forEach(
+      site => {
+
+        this.locationList.push({
+
+          value: site,
+
+          label: site
+
+        });
+
+      }
+    );
+
+
+    console.log(
+      'Dashboard location list:',
+      this.locationList
+    );
+
+  }
+
+
+  /* ============================================================
+     DATE CHANGE
+     ============================================================ */
+
+  onDateChange(
+    date: Date
+  ): void {
+
+    this.selectedDate =
+      date || new Date();
+
+
+    this.getDashboardData();
+
+  }
+
+
+  /* ============================================================
+     SITE CHANGE
+     ============================================================ */
+
+  onLocationChange(
+    location: string
+  ): void {
+
+    /*
+     * Only allow sites belonging
+     * to logged-in user.
+     */
+    if (
+      location &&
+      this.siteList.indexOf(location) === -1
+    ) {
+
+      console.warn(
+        'Invalid site selected:',
+        location
+      );
+
+      this.selectedSite = '';
+
+    }
+
+    else {
+
+      this.selectedSite =
+        location || '';
+
+    }
+
+
+    console.log(
+      'Dashboard selected site:',
+      this.selectedSite
+    );
+
+
+    this.getDashboardData();
+
+  }
+
+
+  /* ============================================================
+     FORMAT DATE
+     ============================================================ */
+
+  private formatDate(
+    d: Date
+  ): string {
+
+    const dd =
+      ('0' + d.getDate())
+        .slice(-2);
+
+
+    const mm =
+      ('0' + (d.getMonth() + 1))
+        .slice(-2);
+
+
+    return (
+      dd +
+      '-' +
+      mm +
+      '-' +
+      d.getFullYear()
+    );
+
+  }
+
+
+  /* ============================================================
+     PERCENTAGE
+     ============================================================ */
+
+  pct(
+    n: number
+  ): number {
+
+    return this.totalEmployees
+
+      ? Math.round(
+          (
+            n /
+            this.totalEmployees
+          ) *
+          100
+        )
+
+      : 0;
+
+  }
+
+
+  /* ============================================================
+     GET DASHBOARD DATA
+     ============================================================ */
+
+  getDashboardData(): void {
+
+    const userInfo =
+      this.publicSvr
+        .getSettingUserInfo();
+
+
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
+
+      this.resetDashboard();
+
+      return;
+    }
+
+
+    /*
+     * Do not call dashboard if
+     * logged-in user has no active site.
+     */
+    if (
+      !this.siteList ||
+      this.siteList.length === 0
+    ) {
+
+      this.resetDashboard();
+
+      return;
+    }
+
+
+    /*
+     * Validate selected site.
+     */
+    if (
+      this.selectedSite &&
+      this.siteList.indexOf(
+        this.selectedSite
+      ) === -1
+    ) {
+
+      this.selectedSite = '';
+
+    }
+
+
+    this.loading = true;
+
+
+    const params: any = {
+
+      Date:
+        this.formatDate(
+          this.selectedDate
+        ),
+
+      /*
+       * Empty = All My Sites.
+       */
+      Site:
+        this.selectedSite || '',
+
+      /*
+       * Send logged-in employee.
+       * Backend should use this for authorization.
+       */
+      EmpId:
+        userInfo.eeid,
+
+      SystemName:
+        'CMS',
+
+      Func:
+        'CMS-GetMealDashboard'
+
+    };
+
+
+    console.log(
+      'F1 Dashboard params:',
+      params
+    );
+
+
+    this.publicSvr
+      .iwxPostF1(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              'ffff-1789987849667-10208193125-1519',
+
+            userKey:
+              'E9785F13CCEAFB251A6AB147AFD24336'
+
+          }
+
+        },
+
+        true
+
+      )
+
+
+      .then(
+        (res: any) => {
+
+          this.loading = false;
+
+
+          console.log(
+            'F1 Dashboard response:',
+            res
+          );
+
+
+          if (
+            !res ||
+            String(res.IsOK) !== '1'
+          ) {
+
+            this.resetDashboard();
+
+            return;
+          }
+
+
+          /* ======================================================
+             CURSOR 1
+             Dashboard cards
+             ====================================================== */
+
+          const c =
+            (
+              res.List &&
+              res.List.length > 0
+            )
+
+              ? res.List[0]
+
+              : {};
+
+
+          this.totalEmployees =
+            Number(
+              c.TotalEmployees || 0
+            );
+
+
+          this.mealsCollected =
+            Number(
+              c.MealsCollected || 0
+            );
+
+
+          this.mealsNotCollected =
+            Number(
+              c.MealsNotCollected || 0
+            );
+
+
+          this.noMealRequired =
+            Number(
+              c.NoMealRequired || 0
+            );
+
+
+          this.notCameToCollect =
+            Number(
+              c.NotRequiredCame || 0
+            );
+
+
+          /* ======================================================
+             CURSOR 2
+             Category summary
+             ====================================================== */
+
+          const cats: any[] =
+
+            res.List2 ||
+
+            res.Summary ||
+
+            res.CategoryList ||
+
+            [];
+
+
+          if (
+            cats.length > 0
+          ) {
+
+            this.categoryList =
+              cats.map(
+                (item: any) => {
+
+                  return {
+
+                    name:
+                      item.Category,
+
+                    count:
+                      Number(
+                        item.CollectedCount || 0
+                      ),
+
+                    percent:
+                      Number(
+                        item.Percentage || 0
+                      ),
+
+                    color:
+                      this.getColorForCategory(
+                        item.Category
+                      ),
+
+                    icon:
+                      this.getIconForCategory(
+                        item.Category
+                      )
+
+                  };
+
+                }
+              );
+
+          }
+
+          else {
+
+            /*
+             * Reset category values
+             * when API returns no rows.
+             */
+            this.resetCategories();
+
+          }
+
+
+          this.updateSummary();
+
+        }
+
+      )
+
+
+      .catch(
+        err => {
+
+          this.loading = false;
+
+          console.error(
+            'F1 Dashboard API error:',
+            err
+          );
+
+          this.resetDashboard();
+
+        }
+      );
+
+  }
+
+
+  /* ============================================================
+     RESET DASHBOARD
+     ============================================================ */
+
+  private resetDashboard(): void {
+
+    this.loading = false;
+
+
+    this.totalEmployees = 0;
+
+    this.mealsCollected = 0;
+
+    this.mealsNotCollected = 0;
+
+    this.noMealRequired = 0;
+
+    this.notCameToCollect = 0;
+
+
+    this.resetCategories();
+
+    this.updateSummary();
+
+  }
+
+
+  /* ============================================================
+     RESET CATEGORY
+     ============================================================ */
+
+  private resetCategories(): void {
+
+    this.categoryList = [
+
+      {
+        name: 'Indian Veg',
+        count: 0,
+        percent: 0,
+        color: '#52c41a',
+        icon: '🥬'
+      },
+
+      {
+        name: 'Indian Non-Veg',
+        count: 0,
+        percent: 0,
+        color: '#1890ff',
+        icon: '🍗'
+      },
+
+      {
+        name: 'Western Veg',
+        count: 0,
+        percent: 0,
+        color: '#722ed1',
+        icon: '🥗'
+      },
+
+      {
+        name: 'Western Non-Veg',
+        count: 0,
+        percent: 0,
+        color: '#faad14',
+        icon: '🍔'
+      },
+
+      {
+        name: 'Chinese Non-Veg',
+        count: 0,
+        percent: 0,
+        color: '#f8784d',
+        icon: '🥡'
+      },
+
+      {
+        name: 'Chinese Veg',
+        count: 0,
+        percent: 0,
+        color: '#a0c065',
+        icon: '🍜'
+      },
+
+      {
+        name: 'Jain',
+        count: 0,
+        percent: 0,
+        color: '#13c2c2',
+        icon: '🌿'
+      },
+
+      {
+        name: 'Vegan',
+        count: 0,
+        percent: 0,
+        color: '#eb2f96',
+        icon: '🌱'
+      }
+
+    ];
+
+  }
+
+
+  /* ============================================================
+     COLOR
+     ============================================================ */
+
+  getColorForCategory(
+    name: string
+  ): string {
+
+    return (
+      this.colorMap[name]
+      ||
+      '#999'
+    );
+
+  }
+
+
+  /* ============================================================
+     ICON
+     ============================================================ */
+
+  getIconForCategory(
+    name: string
+  ): string {
+
+    return (
+      this.iconMap[name]
+      ||
+      '🍽️'
+    );
+
+  }
+
+
+  /* ============================================================
+     UPDATE SUMMARY
+     ============================================================ */
+
+  private updateSummary(): void {
+
+    this.summaryList = [
+
+      {
+        label:
+          'Meals Collected',
+
+        count:
+          this.mealsCollected,
+
+        percent:
+          this.pct(
+            this.mealsCollected
+          ),
+
+        color:
+          '#1890ff'
+      },
+
+
+      {
+        label:
+          'Meals Not Collected',
+
+        count:
+          this.mealsNotCollected,
+
+        percent:
+          this.pct(
+            this.mealsNotCollected
+          ),
+
+        color:
+          '#b4bfd4'
+      },
+
+
+      {
+        label:
+          'No Meal Required',
+
+        count:
+          this.noMealRequired,
+
+        percent:
+          this.pct(
+            this.noMealRequired
+          ),
+
+        color:
+          '#dde3ee'
+      },
+
+
+      {
+        label:
+          'Not Required - Came to Collect',
+
+        count:
+          this.notCameToCollect,
+
+        percent:
+          this.pct(
+            this.notCameToCollect
+          ),
+
+        color:
+          '#b39ddb'
+      }
+
+    ];
+
+
+    /*
+     * First 3 slices are used
+     * for donut.
+     *
+     * Not Required - Came to Collect
+     * is a subset.
+     */
+
+    const ringParts =
+      this.summaryList.slice(
+        0,
+        3
+      );
+
+
+    const sum =
+      ringParts.reduce(
+        (s, x) =>
+          s + x.count,
+        0
+      );
+
+
+    if (!sum) {
+
+      this.donutGradient =
+        'conic-gradient(#e6ebf5 0% 100%)';
+
+      return;
+
+    }
+
+
     let acc = 0;
-    const stops = ringParts.map(x => {
-      const start = acc;
-      acc += (x.count / sum) * 100;
-      return `${x.color} ${start}% ${acc}%`;
-    });
-    this.donutGradient = `conic-gradient(${stops.join(', ')})`;
+
+
+    const stops =
+      ringParts.map(
+        x => {
+
+          const start =
+            acc;
+
+
+          acc +=
+            (
+              x.count /
+              sum
+            ) *
+            100;
+
+
+          return (
+            x.color +
+            ' ' +
+            start +
+            '%' +
+            ' ' +
+            acc +
+            '%'
+          );
+
+        }
+      );
+
+
+    this.donutGradient =
+      'conic-gradient(' +
+      stops.join(', ') +
+      ')';
+
   }
 
 }
