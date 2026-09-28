@@ -1,203 +1,1150 @@
 
-Claude finished the response
-Deciding where scan and dashboard site filters should come from.
-Purinjuthu. Neenga solradhu: record-a add panna employee-oda site-a eduthu PROPERTY_01-la store pannanum. Check results-um OK:
+/* ================================================================
+   PACKAGE BODY
+   ================================================================ */
+CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
+AS
 
-C_F1_MEAL_INFO.PROPERTY_01: USED_ROWS = 0, so safe-a use pannalaam.
-C_F1_SCAN_LOG: PROPERTY_01 to PROPERTY_04 irukku.
-Design ippadi vachirukken:
+/* ============================================================
+   INSERT F1 MENU
+   SITE is taken from C_USER_MANAGE_T using ADD_BY (EMP_ID)
+   and stored in PROPERTY_01
+   ============================================================ */
+PROCEDURE INSERT_F1_MENU(
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
 
-Add / Edit / Bulk: frontend employee site-a V_SITE-aa anuppum, procedure PROPERTY_01-la save pannum.
-Scan log: scanner app-la matrum vendaam. Badge-oda meal record-la irukkira site-a scan log PROPERTY_01-ku copy pannum.
-Get / Dashboard / Scan log: site filter irukkum. Get-la V_ADD_BY filter-um irukku.
-Created a file, ran a command, shared files
-Spec-um body-um oru file-la irukku. Munna spec run pannunga, appuram body.
+    V_SITE_VAL CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
 
-Enna maathirukken
-Procedure	Maatram
-INSERT_F1_MENU, BULK_F1_MENU	V_SITE param add, PROPERTY_01-la save aagum
-UPDATE_F1_MENU_MANAGE	V_SITE param add. Value kudukala-naa pazhaiya site apdiyae irukkum (NVL)
-GET_F1_MENU_MANAGE	V_SITE and V_ADD_BY filter add. Cursor-la PROPERTY_01 AS SITE varum, so frontend-la Site field-ae kedaikkum. Paging-ku munnadi ORDER BY ADD_DATE DESC add pannirukken
-GET_F1_MENU_BY_FXBADGE	SITE return aagum
-INSERT_MEAL_SCAN_LOG	Signature maaralai. Badge-oda meal record-la irukkira site-a scan log PROPERTY_01-ku copy pannum
-GET_MEAL_SCAN_LOG, GET_MEAL_DASHBOARD	Optional V_SITE filter add
-Frontend-la seyya vendiyadhu
-F1-Details-add.ts: getUserBaseInfo block-a remove pannitu, site: any; declare pannunga. Adhu parent-la irundhu openDrawer() vazhiya varum. add()-lum edit()-lum params-la Site: this.site add pannunga. Munnadi sonna maadhiri thaan.
-Bulk import component (F1-Details-import): andha file-a naan paakala. Andha payload-lum Site: <logged-in user site> add pannanum. Illana bulk-la add pannina records-ku site NULL-aa irukkum.
-API config: CMS-InsertF1Menu, CMS-UpdateF1MenuManage, CMS-GetF1MenuManage (and bulk, dashboard, scan log) mapping-la Site to V_SITE, AddBy to V_ADD_BY map pannanum. Illana proc-ku value pogaadhu.
-Kavanikkanum
-Pazhaiya records-ku PROPERTY_01 NULL. Ippo V_SITE kuduthu filter pannina andha records varaadhu. Employee-oda site kedaikkira table therinjaa (getSitebasedUser edhu table-la irundhu varudhu-nu sollunga), adhai vachi backfill UPDATE ezhudhi tharen.
-Spec signature maariyirukku, so GET_F1_MENU_MANAGE, GET_MEAL_SCAN_LOG, GET_MEAL_DASHBOARD call panra ella idathulayum (web API and mobile scanner app) param add pannanum. Illana PLS-00306 error varum.
-Check panna
-sql
-SELECT ID, FX_BADGE, NAME, PROPERTY_01 AS SITE, ADD_BY
-FROM CMS.C_F1_MEAL_INFO
-WHERE NVL(DEL_FLAG, 0) = 0
-ORDER BY ADD_DATE DESC;
-Frontend-la Add panna appuram indha query-la SITE column-la employee-oda site vandhirukkanum.
-
-
-F1 meal management property01
-Code·SQL 
-
-CREATE OR REPLACE PACKAGE BODY CMS.VENDOR_STAFF_MANAGE_PK AS -- Package body PROCEDURE INSERT_VENDOR_MANAGE( V_SITE IN VARCHAR2, V_FOOD_VENDOR IN VARCHAR2, V_VENDOR_LEGAL_PERSON IN VARCHAR2, V_VENDOR_SUPERVISOR IN VARCHAR2, V_PHONE_NO IN VARCHAR2, V_ACTUAL_SERVICE_PEOPLE IN VARCHAR2, V_STA
-
-pasted
-
-FOR EXAMPLE FOR SITE VALUE
-
-Preparing precise text replacements to apply the procedure edits.
-Idhu ivlo simple-aa mudiyum. Neenga kaatuna VENDOR_STAFF_MANAGE_PK-la site DB-laye C_USER_MANAGE_T (EMP_ID, SITE, SYSTEM_TYPE = 'CMS') vazhiya edukkuraanga. Adhe pattern-a F1 package-kum use pannaa, frontend-la irundhu site anuppa vendiya avasiyam illa. Adhanaala package-a adhukku yetha maadhiri maathikkaren.
-
-Ran a command, shared files
-Neenga kaatuna vendor package pattern-a apdiyae follow pannitten. Same file-a update pannirukken (spec + body).
-
-Enna maathirukken
-Insert / Bulk (INSERT_F1_MENU, BULK_F1_MENU)
-
-V_SITE parameter remove pannirukken. Ippo V_ADD_BY (employee id) vachi DB-laye site edukkum:
-sql
-SELECT MIN(U.SITE) INTO V_SITE_VAL
-FROM CMS.C_USER_MANAGE_T U
-WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_ADD_BY))
-  AND U.SYSTEM_TYPE = 'CMS';
-Adhai PROPERTY_01-la save pannum. Oru employee-ku rendu site irundhaa MIN oru site-a edukkum.
-
-Update (UPDATE_F1_MENU_MANAGE)
-
-V_SITE remove pannirukken. Record add pannappo pota site apdiyae irukkum.
-Get (GET_F1_MENU_MANAGE)
-
-Vendor package maadhiri V_EMP_ID first parameter-aa vandhirukku. Login pannina employee-oda site(s)-la irukkira records mattum kaattum:
-sql
-AND EXISTS (
-    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-    WHERE U.EMP_ID = V_EMP_ID
-      AND U.SYSTEM_TYPE = 'CMS'
-      AND U.SITE = V.PROPERTY_01
-)
-Vendor example-la JOIN use pannirukkanga. Naan EXISTS use pannirukken, so oru user-ku same site rendu vaati irundha rows duplicate aagaadhu.
-
-Maaralai: GET_F1_MENU_BY_FXBADGE, INSERT_MEAL_SCAN_LOG (badge record-la irundhu site copy aagum), GET_MEAL_SCAN_LOG, GET_MEAL_DASHBOARD munnadi maadhiriye irukku.
-
-Frontend-la ippo seyya vendiyadhu
-F1-Details-add.ts: add()-la irukkira getUserBaseInfo / siteValue block-a remove pannunga. Site anuppa vendaam, DB paathukkum. Munnadi sonna site: any; and Site: this.site changes-um ippo thevai illa.
-Bulk import: Site anuppa vendaam, AddBy mattum poidhaa podhum.
-food-time-price.component.ts: already EmpId and Site anuppudhu, so code maatra vendaam. API config-la EmpId to V_EMP_ID map pannunga (vendor API-la ippadi thaan irukkum). Filter form-la AddBy add pannina, adhai V_ADD_BY-ku map pannunga.
-Kavanikka vendiyadhu
-GET_F1_MENU_MANAGE-la V_EMP_ID kattaayam. Null-aa kudutha edhuvum varaadhu.
-Pazhaiya records-ku PROPERTY_01 NULL, so ippo grid-la theriyaadhu. Backfill-ku indha query run pannunga. Adhu ADD_BY-oda site-a pazhaiya rows-ku set pannum:
-sql
-UPDATE CMS.C_F1_MEAL_INFO M
-SET M.PROPERTY_01 = (
-    SELECT MIN(U.SITE)
-    FROM CMS.C_USER_MANAGE_T U
-    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(M.ADD_BY))
-      AND U.SYSTEM_TYPE = 'CMS'
-)
-WHERE M.PROPERTY_01 IS NULL;
--- check panna appuram COMMIT
-Munnadi SELECT maathi run panni result paarunga, appuram thaan UPDATE + COMMIT pannunga.
-
-Test panna:
-sql
-SELECT EMP_ID, SITE, SYSTEM_TYPE
-FROM CMS.C_USER_MANAGE_T
-WHERE EMP_ID = 'HH0023768';
-Idhula site varudhaa nu paarunga. Illana insert-la PROPERTY_01 NULL-aa pogum.
-
-
-F1 meal management property01
-Code·SQL 
-1790567056664_image.png
-Idhu code-la thappu illa. Andha SELECT ... INTO V_SITE_VAL ... V_ADD_BY snippet procedure-kulla irukka vendiyadhu, adhula V_ADD_BY oru parameter. SQL editor-la thaniya run pannina V_ADD_BY yaar-nu Oracle-ku theriyaadhu, adhaan ORA-00904: "V_ADD_BY": invalid identifier. INTO clause-um SQL-la illa, PL/SQL-la mattum thaan.
-
-SQL editor-la check panna (real employee id-a podunga)
-sql
-SELECT MIN(U.SITE) AS SITE
-FROM CMS.C_USER_MANAGE_T U
-WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM('HH0023768'))
-  AND U.SYSTEM_TYPE = 'CMS';
-Idhu site value kudutha lookup sariyaa work aagudhu. NULL vandhaa, indha employee-ku SYSTEM_TYPE = 'CMS' row illa. Adha paakka:
-
-sql
-SELECT EMP_ID, SITE, SYSTEM_TYPE
-FROM CMS.C_USER_MANAGE_T
-WHERE UPPER(TRIM(EMP_ID)) = UPPER(TRIM('HH0023768'));
-Procedure-a test panna (package compile aana appuram)
-sql
-DECLARE
-    V_RES    VARCHAR2(10);
-    V_RESULT VARCHAR2(4000);
 BEGIN
-    CMS.F1_MEAL_MANAGEMENT.INSERT_F1_MENU(
-        V_GROUPS          => 'TEST',
-        V_MEAL_PREFERENCE => '146',
-        V_FX_BADGE        => 'TEST001',
-        V_NAME            => 'Test User',
-        V_FIRST_DATE_FXBL => '01-10-2026',
-        V_LAST_DATE_FXBL  => '31-10-2026',
-        V_ADD_BY          => 'HH0023768',
-        V_RES             => V_RES,
-        V_RESULT          => V_RESULT
+
+    /* Site of the employee who is adding (from user master) */
+    SELECT MIN(U.SITE)
+    INTO V_SITE_VAL
+    FROM CMS.C_USER_MANAGE_T U
+    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_ADD_BY))
+      AND U.SYSTEM_TYPE = 'CMS';
+
+    INSERT INTO CMS.C_F1_MEAL_INFO (
+        ID,
+        GROUPS,
+        PROPERTY_01,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        ADD_BY,
+        ADD_DATE
+    )
+    VALUES (
+        SEQ_C_F1_MEAL_INFO.NEXTVAL,
+        V_GROUPS,
+        V_SITE_VAL,
+        V_MEAL_PREFERENCE,
+        V_FX_BADGE,
+        V_NAME,
+        TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
+        TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
+        V_ADD_BY,
+        SYSDATE
     );
-    DBMS_OUTPUT.PUT_LINE(V_RES || ' | ' || V_RESULT);
-END;
-/
 
-SELECT ID, FX_BADGE, PROPERTY_01 AS SITE, ADD_BY
-FROM CMS.C_F1_MEAL_INFO
-WHERE FX_BADGE = 'TEST001';
-SITE column-la employee-oda site vandhaa work aagudhu.
+    COMMIT;
 
-Test row-a cleanup panna:
+    V_RES := '1';
+    V_RESULT := 'Success';
 
-sql
-DELETE FROM CMS.C_F1_MEAL_INFO WHERE FX_BADGE = 'TEST001';
-COMMIT;
-Production DB-na test data insert pannuradhukku munnadi oru dhadava confirm pannikonga.
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
 
-Deciding how to handle site selection and unused templates.
-Rendu files-um full-aa ready pannitten. HTML-la sf-template="Factory" and vendor templates remove pannirukken. Adhu form schema-la use aagala, adhula [(ngModel)] rendu vaati irundhudhu. Site dropdown-a form-ku mela thaniya vachirukken.
-
-Created 2 files, shared files
-TS file-um HTML file-um ready.
-
-Enna maathirukken
-TS
-
-siteList (user-oda ella sites), selectedSite ('' = All My Sites) variables add pannirukken.
-loadLoggedInUserSite() ippo extractAllSites() use pannudhu. Munnadi find oru row mattum eduthudhu, ippo ella rows-um eduthu unique site list-a create pannudhu. Idhaala HH0023768-ku 69941, 95326 rendum varum.
-searchHandle(): Site: this.selectedSite || '' anuppudhu. Munnadi finalParams.Site = this.site nu force pannina line-a maathirukken.
-AddBy filter form-la add pannirukken.
-Site column table-layum Excel export-layum add pannirukken. exportHandle second arg 12 irundhadhu 13 aakkirukken (fields 11 irundhadhu 12 aachu). Adhu column count-nu naan assume pannirukken, Excel-la column layout thappa vandha idha check pannunga.
-Drawer-ku site and siteList rendum pass aagudhu.
-HTML
-
-Site dropdown add pannirukken. Maatha (ngModelChange)="search(true)" iruppadhaala select panna udane grid refresh aagum.
-Factory and vendor templates remove pannirukken.
-Kavanikka vendiyadhu
-getSitebasedUser() rendu site rows-um return pannuthaannu confirm pannanum. Browser console-la 'CMS-Get_user_manage user list:' log paarunga. HH0023768-ku rendu row vandhaa dropdown-la rendu site theriyum. Oru row mattum vandhaa dropdown-la ondru mattum irukkum. Appo vera API vendum, console output anuppunga.
-Backend GET_F1_MENU_MANAGE-la V_EMP_ID and V_SITE param-kku API config-la mapping irukkanum. EmpId to V_EMP_ID, Site to V_SITE, AddBy to V_ADD_BY. Illana filter work aagaadhu.
-Add drawer-la site: any; siteList: any[] = []; declare pannanum. add() params-la Site: this.site add pannanum. Insert proc-la V_SITE param-um vendum, adhu innum package-la add aagala. Drawer file and package regenerate pannanuma? Sollunga, rendaiyum tharen.
-Component class file name food-time-price.component.ts nu present aachu. Ungal project-la already irukkura file name-la replace pannunga.
-
-Food time price.component
-TS 
-
-Food time price.component
-Code·HTML 
-1790569392997_image.png
-1790569426212_image.png
-user manage la user ku del flag onnu irunthulum.data show ahguthu a;ppidi haga kudathu
-
-Patching backend and frontend checks to exclude deleted users.
-Idhu real bug. Rendu row-um DEL_FLAG = 1 (delete aana user), aana data varudhu. Reason: naan ezhudhuna lookup, C_USER_MANAGE_T-la DEL_FLAG check pannala. Neenga kaatuna vendor package-lum DEL_FLAG check illa, adha copy pannitten. Fix pannaren.
-
-Ran a command
+END INSERT_F1_MENU;
 
 
-You are out of free messages until 1:50 PM
+/* ============================================================
+   BULK F1 MENU
+   ============================================================ */
+PROCEDURE BULK_F1_MENU(
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
+
+    V_SITE_VAL CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
+
+BEGIN
+
+    /* Site of the employee who is adding (from user master) */
+    SELECT MIN(U.SITE)
+    INTO V_SITE_VAL
+    FROM CMS.C_USER_MANAGE_T U
+    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_ADD_BY))
+      AND U.SYSTEM_TYPE = 'CMS';
+
+    INSERT INTO CMS.C_F1_MEAL_INFO (
+        ID,
+        GROUPS,
+        PROPERTY_01,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        ADD_BY,
+        ADD_DATE
+    )
+    VALUES (
+        SEQ_C_F1_MEAL_INFO.NEXTVAL,
+        V_GROUPS,
+        V_SITE_VAL,
+        V_MEAL_PREFERENCE,
+        V_FX_BADGE,
+        V_NAME,
+        TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
+        TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
+        V_ADD_BY,
+        SYSDATE
+    );
+
+    COMMIT;
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END BULK_F1_MENU;
 
 
-Claude is AI and can make mistakes. Please double-check response
+/* ============================================================
+   GET F1 MENU MANAGEMENT
+
+   MEAL_PREFERENCE:
+       C_F1_MEAL_INFO.MEAL_PREFERENCE = Base Code ID
+       C_BASE_CODE_T.ID = Primary Key
+       C_BASE_CODE_T.TYPE_ID = 81
+       C_BASE_CODE_T.NAME = Display value
+
+   Shows only records whose SITE belongs to V_EMP_ID (C_USER_MANAGE_T).
+   Filters: GROUPS, SITE (PROPERTY_01), FX_BADGE, ADD_BY
+   ============================================================ */
+PROCEDURE GET_F1_MENU_MANAGE(
+    V_EMP_ID IN VARCHAR2,
+    V_GROUPS IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    L_START_PAGE IN VARCHAR2,
+    L_PAGE_SIZE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
+BEGIN
+
+    OPEN P_CURSOR FOR
+
+    SELECT
+        RN,
+        ROWSCOUNT,
+        ID,
+        GROUPS,
+        SITE,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        ADD_BY,
+        ADD_DATE,
+        EDIT_BY,
+        EDIT_DATE
+    FROM
+    (
+        SELECT
+            ROWNUM AS RN,
+            COUNT(1) OVER() AS ROWSCOUNT,
+
+            V.ID,
+            V.GROUPS,
+            V.PROPERTY_01 AS SITE,
+
+            /* ID -> NAME */
+            BC.NAME AS MEAL_PREFERENCE,
+
+            V.FX_BADGE,
+            V.NAME,
+
+            TO_CHAR(
+                V.FIRST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ) AS FIRST_DATE_FXBL,
+
+            TO_CHAR(
+                V.LAST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ) AS LAST_DATE_FXBL,
+
+            V.ADD_BY,
+
+            TO_CHAR(
+                V.ADD_DATE,
+                'DD-MM-YYYY HH24:MI:SS'
+            ) AS ADD_DATE,
+
+            V.EDIT_BY,
+
+            TO_CHAR(
+                V.EDIT_DATE,
+                'DD-MM-YYYY HH24:MI:SS'
+            ) AS EDIT_DATE
+
+        FROM CMS.C_F1_MEAL_INFO V
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+            ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
+           AND BC.TYPE_ID = 81
+
+        WHERE NVL(V.DEL_FLAG, 0) = 0
+
+          AND (
+                V_GROUPS IS NULL
+                OR V.GROUPS LIKE '%' || V_GROUPS || '%'
+              )
+
+          AND (
+                V_SITE IS NULL
+                OR UPPER(TRIM(V.PROPERTY_01)) = UPPER(TRIM(V_SITE))
+              )
+
+          AND (
+                V_FX_BADGE IS NULL
+                OR V.FX_BADGE LIKE '%' || V_FX_BADGE || '%'
+              )
+
+          AND (
+                V_ADD_BY IS NULL
+                OR UPPER(TRIM(V.ADD_BY)) = UPPER(TRIM(V_ADD_BY))
+              )
+
+          AND EXISTS (
+                SELECT 1
+                FROM CMS.C_USER_MANAGE_T U
+                WHERE U.EMP_ID = V_EMP_ID
+                  AND U.SYSTEM_TYPE = 'CMS'
+                  AND U.SITE = V.PROPERTY_01
+              )
+
+        ORDER BY V.ADD_DATE DESC, V.ID DESC
+    )
+
+    WHERE RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+
+      AND RN <=
+          (L_START_PAGE - 1) * L_PAGE_SIZE
+          + L_PAGE_SIZE;
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END GET_F1_MENU_MANAGE;
+
+
+/* ============================================================
+   UPDATE F1 MENU MANAGEMENT
+
+   DB still stores MEAL_PREFERENCE ID.
+   ============================================================ */
+PROCEDURE UPDATE_F1_MENU_MANAGE(
+    V_ID IN NUMBER,
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_EDIT_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
+BEGIN
+
+    UPDATE CMS.C_F1_MEAL_INFO
+    SET
+        GROUPS = V_GROUPS,
+        FX_BADGE = V_FX_BADGE,
+        MEAL_PREFERENCE = V_MEAL_PREFERENCE,
+        NAME = V_NAME,
+        FIRST_DATE_FXBL =
+            TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
+        LAST_DATE_FXBL =
+            TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
+        EDIT_BY = V_EDIT_BY,
+        EDIT_DATE = SYSDATE
+    WHERE ID = V_ID;
+
+    IF SQL%ROWCOUNT = 0 THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+        V_RESULT :=
+            'No record found with ID = ' ||
+            V_ID ||
+            '. Update failed.';
+
+    ELSE
+
+        COMMIT;
+
+        V_RES := '1';
+        V_RESULT := 'Success';
+
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END UPDATE_F1_MENU_MANAGE;
+
+
+/* ============================================================
+   DELETE F1 MENU MANAGEMENT
+   ============================================================ */
+PROCEDURE DELETE_F1_MENU_MANAGE(
+    L_IDS IN VARCHAR2,
+    V_EDIT_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+) IS
+BEGIN
+
+    UPDATE CMS.C_F1_MEAL_INFO
+    SET
+        DEL_FLAG = 1,
+        EDIT_DATE = SYSDATE,
+        EDIT_BY = V_EDIT_BY
+    WHERE INSTR(',' || L_IDS || ',', ',' || ID || ',') > 0;
+
+    COMMIT;
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END DELETE_F1_MENU_MANAGE;
+
+
+/* ============================================================
+   GET F1 MENU BY FX BADGE
+
+   MEAL_PREFERENCE returned as NAME.
+   SITE returned from PROPERTY_01.
+
+   Entitlement also checks Base Code NAME.
+   ============================================================ */
+PROCEDURE GET_F1_MENU_BY_FXBADGE(
+    V_FX_BADGE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
+
+    V_COUNT NUMBER;
+    V_ALREADY NUMBER;
+
+BEGIN
+
+    /* Check FX Badge */
+    SELECT COUNT(1)
+    INTO V_COUNT
+    FROM CMS.C_F1_MEAL_INFO
+    WHERE FX_BADGE = V_FX_BADGE
+      AND NVL(DEL_FLAG, 0) = 0;
+
+
+    IF V_COUNT = 0 THEN
+
+        V_RES := '0';
+        V_RESULT := 'No record found for this FX Badge.';
+
+        OPEN P_CURSOR FOR
+        SELECT NULL AS FX_BADGE
+        FROM DUAL
+        WHERE 1 = 0;
+
+        RETURN;
+
+    END IF;
+
+
+    /* Already collected today */
+    SELECT COUNT(1)
+    INTO V_ALREADY
+    FROM CMS.C_F1_SCAN_LOG
+    WHERE FX_BADGE = V_FX_BADGE
+      AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
+      AND NVL(DEL_FLAG, 0) = 0
+      AND COLLECTED_DATA = 'SUCCESS';
+
+
+    OPEN P_CURSOR FOR
+
+    SELECT
+        V.GROUPS,
+        V.SUB_GROUP,
+        V.PROPERTY_01 AS SITE,
+
+        /* ID -> NAME */
+        BC.NAME AS MEAL_PREFERENCE,
+
+        V.FX_BADGE,
+        V.NAME,
+
+        TO_CHAR(
+            V.FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS FIRST_DATE_FXBL,
+
+        TO_CHAR(
+            V.LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS LAST_DATE_FXBL,
+
+        CASE
+
+            WHEN UPPER(TRIM(BC.NAME)) =
+                 'NO MEAL REQUIRED'
+            THEN 'NOT_ENTITLED'
+
+            WHEN V.FIRST_DATE_FXBL IS NULL
+              OR V.LAST_DATE_FXBL IS NULL
+            THEN 'NOT_UPDATED'
+
+            WHEN TRUNC(SYSDATE) NOT BETWEEN
+                 TRUNC(V.FIRST_DATE_FXBL)
+                 AND TRUNC(V.LAST_DATE_FXBL)
+            THEN 'LAST DATE EXPIRED'
+
+            WHEN V_ALREADY > 0
+            THEN 'ALREADY_SCANNED'
+
+            ELSE 'ENTITLED'
+
+        END AS ENTITLEMENT_STATUS
+
+    FROM
+    (
+        SELECT *
+        FROM CMS.C_F1_MEAL_INFO
+        WHERE FX_BADGE = V_FX_BADGE
+          AND NVL(DEL_FLAG, 0) = 0
+        ORDER BY ADD_DATE DESC, ID DESC
+    ) V
+
+    LEFT JOIN CMS.C_BASE_CODE_T BC
+        ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
+       AND BC.TYPE_ID = 81
+
+    WHERE ROWNUM = 1;
+
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END GET_F1_MENU_BY_FXBADGE;
+
+
+/* ============================================================
+   INSERT MEAL SCAN LOG
+
+   Signature unchanged. SITE is copied from the badge's latest
+   C_F1_MEAL_INFO record (PROPERTY_01) into
+   C_F1_SCAN_LOG.PROPERTY_01.
+
+   DB stores MEAL_PREFERENCE ID.
+   Logic uses Base Code NAME.
+   ============================================================ */
+PROCEDURE INSERT_MEAL_SCAN_LOG(
+    V_FX_BADGE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
+
+    V_COUNT NUMBER;
+    V_ALREADY_COUNT NUMBER;
+
+    V_GROUPS
+        CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
+
+    V_SITE_VAL
+        CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
+
+    V_NAME
+        CMS.C_F1_MEAL_INFO.NAME%TYPE;
+
+    V_MEAL_PREF
+        CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
+
+    V_MEAL_PREF_NAME
+        CMS.C_BASE_CODE_T.NAME%TYPE;
+
+    V_FIRST_DATE
+        CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
+
+    V_LAST_DATE
+        CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
+
+    V_STATUS VARCHAR2(50);
+    V_MESSAGE VARCHAR2(200);
+
+BEGIN
+
+    /* Check FX Badge */
+    SELECT COUNT(1)
+    INTO V_COUNT
+    FROM CMS.C_F1_MEAL_INFO
+    WHERE FX_BADGE = V_FX_BADGE
+      AND NVL(DEL_FLAG, 0) = 0;
+
+
+    IF V_COUNT = 0 THEN
+
+        V_STATUS := 'INVALID';
+        V_MESSAGE := 'FX Badge not found';
+
+        V_GROUPS := NULL;
+        V_SITE_VAL := NULL;
+        V_NAME := NULL;
+        V_MEAL_PREF := NULL;
+        V_MEAL_PREF_NAME := NULL;
+        V_FIRST_DATE := NULL;
+        V_LAST_DATE := NULL;
+
+    ELSE
+
+        /* Get latest record */
+        SELECT
+            GROUPS,
+            PROPERTY_01,
+            NAME,
+            MEAL_PREFERENCE,
+            FIRST_DATE_FXBL,
+            LAST_DATE_FXBL
+        INTO
+            V_GROUPS,
+            V_SITE_VAL,
+            V_NAME,
+            V_MEAL_PREF,
+            V_FIRST_DATE,
+            V_LAST_DATE
+        FROM
+        (
+            SELECT *
+            FROM CMS.C_F1_MEAL_INFO
+            WHERE FX_BADGE = V_FX_BADGE
+              AND NVL(DEL_FLAG, 0) = 0
+            ORDER BY ADD_DATE DESC, ID DESC
+        )
+        WHERE ROWNUM = 1;
+
+
+        /* Get Meal Preference NAME */
+        SELECT NVL(MAX(BC.NAME), V_MEAL_PREF)
+        INTO V_MEAL_PREF_NAME
+        FROM CMS.C_BASE_CODE_T BC
+        WHERE BC.TYPE_ID = 81
+          AND TO_CHAR(BC.ID) = TO_CHAR(V_MEAL_PREF);
+
+
+        /* Entitlement */
+        IF UPPER(TRIM(V_MEAL_PREF_NAME)) =
+           'NO MEAL REQUIRED' THEN
+
+            V_STATUS := 'INVALID';
+
+            V_MESSAGE :=
+                'NO MEAL REQUIRED BUT COME TO COLLECT';
+
+        ELSIF V_FIRST_DATE IS NULL
+           OR V_LAST_DATE IS NULL THEN
+
+            V_STATUS := 'INVALID';
+
+            V_MESSAGE := 'Dates not updated';
+
+        ELSIF TRUNC(SYSDATE) NOT BETWEEN
+              TRUNC(V_FIRST_DATE)
+              AND TRUNC(V_LAST_DATE) THEN
+
+            V_STATUS := 'INVALID';
+
+            V_MESSAGE := 'LAST DATE EXPIRED';
+
+        ELSE
+
+            V_STATUS := 'SUCCESS';
+
+            V_MESSAGE := 'Entitled for meal';
+
+        END IF;
+
+
+        /* Already scanned today */
+        IF V_STATUS = 'SUCCESS' THEN
+
+            SELECT COUNT(1)
+            INTO V_ALREADY_COUNT
+            FROM CMS.C_F1_SCAN_LOG
+            WHERE FX_BADGE = V_FX_BADGE
+              AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
+              AND NVL(DEL_FLAG, 0) = 0
+              AND COLLECTED_DATA = 'SUCCESS';
+
+
+            IF V_ALREADY_COUNT > 0 THEN
+
+                V_STATUS := 'ALREADY_SCANNED';
+
+                V_MESSAGE :=
+                    'Meal already collected today';
+
+            END IF;
+
+        END IF;
+
+    END IF;
+
+
+    /* Insert scan log */
+    INSERT INTO CMS.C_F1_SCAN_LOG (
+        ID,
+        GROUPS,
+        PROPERTY_01,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        COLLECTED_DATA,
+        STATUS_MESSAGE,
+        MEAL_DATE,
+        FIRST_SCANTIME,
+        LAST_SCANTIME
+    )
+    VALUES (
+        SEQ_C_F1_SCAN_LOG.NEXTVAL,
+        V_GROUPS,
+        V_SITE_VAL,
+        V_MEAL_PREF,
+        V_FX_BADGE,
+        V_NAME,
+        V_FIRST_DATE,
+        V_LAST_DATE,
+        V_STATUS,
+        V_MESSAGE,
+        SYSDATE,
+        SYSDATE,
+        SYSDATE
+    );
+
+
+    COMMIT;
+
+
+    /* Return NAME instead of ID */
+    OPEN P_CURSOR FOR
+
+    SELECT
+        V_FX_BADGE AS FX_BADGE,
+        V_NAME AS NAME,
+        V_SITE_VAL AS SITE,
+        V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
+        TO_CHAR(
+            SYSDATE,
+            'DD-MM-YYYY HH24:MI:SS'
+        ) AS SCAN_TIME,
+        V_STATUS AS STATUS,
+        V_MESSAGE AS STATUS_MESSAGE
+    FROM DUAL;
+
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END INSERT_MEAL_SCAN_LOG;
+
+
+/* ============================================================
+   GET MEAL SCAN LOG
+   Optional SITE filter (C_F1_SCAN_LOG.PROPERTY_01)
+   ============================================================ */
+PROCEDURE GET_MEAL_SCAN_LOG(
+    V_SEARCH_TEXT IN VARCHAR2,
+    V_STATUS_FILTER IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+) IS
+BEGIN
+
+    /* Scan Log */
+    OPEN P_CURSOR FOR
+
+    SELECT
+        S.FX_BADGE,
+        S.NAME,
+        S.GROUPS,
+        S.PROPERTY_01 AS SITE,
+
+        /* ID -> NAME */
+        BC.NAME AS MEAL_PREFERENCE,
+
+        TO_CHAR(
+            S.FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS FIRST_DATE_FXBL,
+
+        TO_CHAR(
+            S.LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ) AS LAST_DATE_FXBL,
+
+        TO_CHAR(
+            NVL(S.LAST_SCANTIME, S.FIRST_SCANTIME),
+            'DD-MM-YYYY HH24:MI:SS'
+        ) AS SCAN_TIME,
+
+        S.COLLECTED_DATA AS STATUS,
+        S.STATUS_MESSAGE
+
+    FROM CMS.C_F1_SCAN_LOG S
+
+    LEFT JOIN CMS.C_BASE_CODE_T BC
+        ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
+       AND BC.TYPE_ID = 81
+
+    WHERE NVL(S.DEL_FLAG, 0) = 0
+
+      AND (
+            V_SEARCH_TEXT IS NULL
+            OR V_SEARCH_TEXT = ''
+            OR UPPER(S.FX_BADGE)
+               LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
+            OR UPPER(S.NAME)
+               LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
+          )
+
+      AND (
+            V_STATUS_FILTER IS NULL
+            OR V_STATUS_FILTER = 'All'
+            OR S.COLLECTED_DATA = V_STATUS_FILTER
+          )
+
+      AND (
+            V_SITE IS NULL
+            OR V_SITE = 'All'
+            OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE))
+          )
+
+    ORDER BY S.MEAL_DATE DESC;
+
+
+    /* Summary */
+    OPEN P_SUMMARY_CURSOR FOR
+
+    SELECT
+        COUNT(1) AS TOTAL_SCANS,
+
+        SUM(
+            CASE
+                WHEN COLLECTED_DATA = 'SUCCESS'
+                THEN 1
+                ELSE 0
+            END
+        ) AS SUCCESS_COUNT,
+
+        SUM(
+            CASE
+                WHEN COLLECTED_DATA = 'ALREADY_SCANNED'
+                THEN 1
+                ELSE 0
+            END
+        ) AS ALREADY_SCANNED_COUNT,
+
+        SUM(
+            CASE
+                WHEN COLLECTED_DATA = 'INVALID'
+                THEN 1
+                ELSE 0
+            END
+        ) AS INVALID_COUNT
+
+    FROM CMS.C_F1_SCAN_LOG
+
+    WHERE NVL(DEL_FLAG, 0) = 0
+
+      AND (
+            V_SITE IS NULL
+            OR V_SITE = 'All'
+            OR UPPER(TRIM(PROPERTY_01)) = UPPER(TRIM(V_SITE))
+          );
+
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END GET_MEAL_SCAN_LOG;
+
+
+/* ============================================================
+   GET MEAL DASHBOARD
+   Optional SITE filter on meal info and scan log
+   ============================================================ */
+PROCEDURE GET_MEAL_DASHBOARD(
+    V_DATE IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+) IS
+
+    V_DAY DATE;
+
+    V_TOTAL NUMBER := 0;
+    V_NO_MEAL NUMBER := 0;
+    V_COLLECTED NUMBER := 0;
+    V_NOT_REQ_CAME NUMBER := 0;
+    V_NOT_COLLECTED NUMBER := 0;
+
+BEGIN
+
+    V_DAY :=
+        NVL(
+            TO_DATE(V_DATE, 'DD-MM-YYYY'),
+            TRUNC(SYSDATE)
+        );
+
+
+    /* ========================================================
+       EMP
+       Latest record per badge on selected date
+       ======================================================== */
+    WITH EMP AS
+    (
+        SELECT
+            FX_BADGE,
+            MEAL_PREFERENCE,
+            MEAL_PREFERENCE_NAME
+        FROM
+        (
+            SELECT
+                M.FX_BADGE,
+                M.MEAL_PREFERENCE,
+                BC.NAME AS MEAL_PREFERENCE_NAME,
+
+                ROW_NUMBER() OVER (
+                    PARTITION BY M.FX_BADGE
+                    ORDER BY M.ADD_DATE DESC, M.ID DESC
+                ) AS RN
+
+            FROM CMS.C_F1_MEAL_INFO M
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+                ON TO_CHAR(M.MEAL_PREFERENCE)
+                   = TO_CHAR(BC.ID)
+               AND BC.TYPE_ID = 81
+
+            WHERE NVL(M.DEL_FLAG, 0) = 0
+              AND TRUNC(M.ADD_DATE) = V_DAY
+              AND (
+                    V_SITE IS NULL
+                    OR V_SITE = 'All'
+                    OR UPPER(TRIM(M.PROPERTY_01)) = UPPER(TRIM(V_SITE))
+                  )
+        )
+        WHERE RN = 1
+    ),
+
+    /* ========================================================
+       Collected employees
+       ======================================================== */
+    COLLECTED AS
+    (
+        SELECT DISTINCT FX_BADGE
+        FROM CMS.C_F1_SCAN_LOG
+        WHERE NVL(DEL_FLAG, 0) = 0
+          AND TRUNC(MEAL_DATE) = V_DAY
+          AND COLLECTED_DATA = 'SUCCESS'
+          AND (
+                V_SITE IS NULL
+                OR V_SITE = 'All'
+                OR UPPER(TRIM(PROPERTY_01)) = UPPER(TRIM(V_SITE))
+              )
+    )
+
+    SELECT
+
+        /* Total employees */
+        (
+            SELECT COUNT(1)
+            FROM EMP
+        ),
+
+        /* No Meal Required */
+        (
+            SELECT COUNT(1)
+            FROM EMP
+            WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME))
+                  = 'NO MEAL REQUIRED'
+        ),
+
+        /* Meals collected */
+        (
+            SELECT COUNT(1)
+            FROM COLLECTED
+        ),
+
+        /* No Meal Required but came */
+        (
+            SELECT COUNT(DISTINCT S.FX_BADGE)
+
+            FROM CMS.C_F1_SCAN_LOG S
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+                ON TO_CHAR(S.MEAL_PREFERENCE)
+                   = TO_CHAR(BC.ID)
+               AND BC.TYPE_ID = 81
+
+            WHERE NVL(S.DEL_FLAG, 0) = 0
+              AND TRUNC(S.MEAL_DATE) = V_DAY
+
+              AND UPPER(TRIM(BC.NAME))
+                  = 'NO MEAL REQUIRED'
+
+              AND (
+                    V_SITE IS NULL
+                    OR V_SITE = 'All'
+                    OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE))
+                  )
+        ),
+
+        /* Entitled but not collected */
+        (
+            SELECT COUNT(1)
+            FROM EMP E
+
+            WHERE NVL(
+                    UPPER(TRIM(E.MEAL_PREFERENCE_NAME)),
+                    'X'
+                  ) <> 'NO MEAL REQUIRED'
+
+              AND NOT EXISTS
+              (
+                  SELECT 1
+                  FROM COLLECTED C
+                  WHERE C.FX_BADGE = E.FX_BADGE
+              )
+        )
+
+    INTO
+        V_TOTAL,
+        V_NO_MEAL,
+        V_COLLECTED,
+        V_NOT_REQ_CAME,
+        V_NOT_COLLECTED
+
+    FROM DUAL;
+
+
+    /* ========================================================
+       Dashboard Cards
+       ======================================================== */
+    OPEN P_CURSOR FOR
+
+    SELECT
+        V_TOTAL AS TOTAL_EMPLOYEES,
+        V_COLLECTED AS MEALS_COLLECTED,
+        V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
+        V_NO_MEAL AS NO_MEAL_REQUIRED,
+        V_NOT_REQ_CAME AS NOT_REQUIRED_CAME
+
+    FROM DUAL;
+
+
+    /* ========================================================
+       Category-wise collected meals
+       ======================================================== */
+    OPEN P_SUMMARY_CURSOR FOR
+
+    WITH CATS AS
+    (
+        SELECT 1 AS SORT_NO,
+               'Indian Veg' AS CATEGORY
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 2,
+               'Indian Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 3,
+               'Western Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 4,
+               'Western Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 5,
+               'Jain'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT 6,
+               'Vegan'
+        FROM DUAL
+    ),
+
+    CNT AS
+    (
+        SELECT
+            UPPER(TRIM(BC.NAME)) AS PREF,
+
+            COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+            ON TO_CHAR(S.MEAL_PREFERENCE)
+               = TO_CHAR(BC.ID)
+           AND BC.TYPE_ID = 81
+
+        WHERE NVL(S.DEL_FLAG, 0) = 0
+          AND TRUNC(S.MEAL_DATE) = V_DAY
+          AND S.COLLECTED_DATA = 'SUCCESS'
+          AND (
+                V_SITE IS NULL
+                OR V_SITE = 'All'
+                OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE))
+              )
+
+        GROUP BY UPPER(TRIM(BC.NAME))
+    )
+
+    SELECT
+        C.CATEGORY,
+
+        NVL(
+            N.TOTAL_COUNT,
+            0
+        ) AS COLLECTED_COUNT,
+
+        CASE
+
+            WHEN V_COLLECTED = 0
+            THEN 0
+
+            ELSE ROUND(
+                NVL(N.TOTAL_COUNT, 0)
+                * 100
+                / V_COLLECTED
+            )
+
+        END AS PERCENTAGE
+
+    FROM CATS C
+
+    LEFT JOIN CNT N
+        ON N.PREF = UPPER(C.CATEGORY)
+
+    ORDER BY C.SORT_NO;
+
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+
+END GET_MEAL_DASHBOARD;
+
+
+END F1_MEAL_MANAGEMENT;
