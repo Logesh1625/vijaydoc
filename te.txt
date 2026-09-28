@@ -1,661 +1,2791 @@
-/* ================================================================
-   MAIN WRAPPER
-   ================================================================ */
-
-.scan-wrapper {
-  padding: 32px 48px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 
 /* ================================================================
-   HEADER
+   F1 MEAL MANAGEMENT
+   PACKAGE BODY
+
+   SITE STORAGE:
+       CMS.C_F1_MEAL_INFO.PROPERTY_01
+       CMS.C_F1_SCAN_LOG.PROPERTY_01
+
+   USER MASTER:
+       CMS.C_USER_MANAGE_T
+
+   ACTIVE USER:
+       NVL(DEL_FLAG, 0) = 0
+
+   SYSTEM:
+       SYSTEM_TYPE = 'CMS'
+
    ================================================================ */
 
-.header-row {
-  margin-bottom: 28px;
-
-  h1 {
-    font-size: 32px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #1f1f1f;
-  }
-
-  p {
-    color: #8c8c8c;
-    font-size: 16px;
-    margin: 0;
-  }
-}
+CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
+AS
 
 
 /* ================================================================
-   SITE FILTER CARD
+   INSERT F1 MENU
+   ----------------------------------------------------------------
+   Site is automatically taken from C_USER_MANAGE_T using V_ADD_BY.
+
+   Only active CMS user is allowed.
+
+   DEL_FLAG:
+       0 / NULL = ACTIVE
+       1         = DELETED
    ================================================================ */
 
-.site-filter-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 22px 28px;
-  margin-bottom: 20px;
+PROCEDURE INSERT_F1_MENU(
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+)
+IS
 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    V_SITE_VAL
+        CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
 
-  border: 1px solid #f0f0f0;
-}
+BEGIN
+
+    /* ============================================================
+       GET ACTIVE USER SITE
+       ============================================================ */
+
+    SELECT MIN(U.SITE)
+
+    INTO V_SITE_VAL
+
+    FROM CMS.C_USER_MANAGE_T U
+
+    WHERE UPPER(
+              TRIM(U.EMP_ID)
+          )
+          =
+          UPPER(
+              TRIM(V_ADD_BY)
+          )
+
+      AND U.SYSTEM_TYPE = 'CMS'
+
+      AND NVL(
+              U.DEL_FLAG,
+              0
+          ) = 0
+
+      AND U.SITE IS NOT NULL;
+
+
+    /* ============================================================
+       ACTIVE USER / SITE VALIDATION
+       ============================================================ */
+
+    IF V_SITE_VAL IS NULL THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Active CMS user/site not found for employee: '
+            || V_ADD_BY;
+
+        RETURN;
+
+    END IF;
+
+
+    /* ============================================================
+       INSERT
+       ============================================================ */
+
+    INSERT INTO CMS.C_F1_MEAL_INFO
+    (
+        ID,
+        GROUPS,
+        PROPERTY_01,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        ADD_BY,
+        ADD_DATE
+    )
+
+    VALUES
+    (
+        SEQ_C_F1_MEAL_INFO.NEXTVAL,
+
+        V_GROUPS,
+
+        V_SITE_VAL,
+
+        V_MEAL_PREFERENCE,
+
+        V_FX_BADGE,
+
+        V_NAME,
+
+        TO_DATE(
+            V_FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ),
+
+        TO_DATE(
+            V_LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ),
+
+        V_ADD_BY,
+
+        SYSDATE
+    );
+
+
+    COMMIT;
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END INSERT_F1_MENU;
+
 
 
 /* ================================================================
-   SITE FILTER ROW
+   BULK F1 MENU
+   ----------------------------------------------------------------
+   Site is automatically taken from active CMS user.
    ================================================================ */
 
-.site-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 18px;
+PROCEDURE BULK_F1_MENU(
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+)
+IS
 
-  min-height: 48px;
-}
+    V_SITE_VAL
+        CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
+
+BEGIN
+
+    /* ============================================================
+       GET ACTIVE USER SITE
+       ============================================================ */
+
+    SELECT MIN(U.SITE)
+
+    INTO V_SITE_VAL
+
+    FROM CMS.C_USER_MANAGE_T U
+
+    WHERE UPPER(
+              TRIM(U.EMP_ID)
+          )
+          =
+          UPPER(
+              TRIM(V_ADD_BY)
+          )
+
+      AND U.SYSTEM_TYPE = 'CMS'
+
+      AND NVL(
+              U.DEL_FLAG,
+              0
+          ) = 0
+
+      AND U.SITE IS NOT NULL;
+
+
+    /* ============================================================
+       VALIDATION
+       ============================================================ */
+
+    IF V_SITE_VAL IS NULL THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Active CMS user/site not found for employee: '
+            || V_ADD_BY;
+
+        RETURN;
+
+    END IF;
+
+
+    /* ============================================================
+       INSERT
+       ============================================================ */
+
+    INSERT INTO CMS.C_F1_MEAL_INFO
+    (
+        ID,
+        GROUPS,
+        PROPERTY_01,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        ADD_BY,
+        ADD_DATE
+    )
+
+    VALUES
+    (
+        SEQ_C_F1_MEAL_INFO.NEXTVAL,
+
+        V_GROUPS,
+
+        V_SITE_VAL,
+
+        V_MEAL_PREFERENCE,
+
+        V_FX_BADGE,
+
+        V_NAME,
+
+        TO_DATE(
+            V_FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ),
+
+        TO_DATE(
+            V_LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        ),
+
+        V_ADD_BY,
+
+        SYSDATE
+    );
+
+
+    COMMIT;
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END BULK_F1_MENU;
+
 
 
 /* ================================================================
-   SITE LABEL
+   GET F1 MENU MANAGEMENT
+   ----------------------------------------------------------------
+   Shows only:
+       - Active F1 records
+       - Active CMS user
+       - User's own active sites
+
+   V_SITE:
+       NULL / '' = all user's active sites
+       value     = selected site
    ================================================================ */
 
-.site-filter-label {
-  display: flex;
-  align-items: center;
+PROCEDURE GET_F1_MENU_MANAGE(
+    V_EMP_ID IN VARCHAR2,
+    V_GROUPS IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_ADD_BY IN VARCHAR2,
+    L_START_PAGE IN VARCHAR2,
+    L_PAGE_SIZE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+)
+IS
 
-  min-width: 90px;
+BEGIN
 
-  color: #595959;
+    OPEN P_CURSOR FOR
 
-  font-size: 16px;
+    SELECT
 
-  font-weight: 600;
+        RN,
 
-  i {
-    font-size: 20px;
+        ROWSCOUNT,
 
-    color: #1890ff;
+        ID,
 
-    margin-right: 8px;
-  }
-}
+        GROUPS,
+
+        SITE,
+
+        MEAL_PREFERENCE,
+
+        FX_BADGE,
+
+        NAME,
+
+        FIRST_DATE_FXBL,
+
+        LAST_DATE_FXBL,
+
+        ADD_BY,
+
+        ADD_DATE,
+
+        EDIT_BY,
+
+        EDIT_DATE
+
+    FROM
+    (
+        SELECT
+
+            ROWNUM AS RN,
+
+            COUNT(1) OVER()
+                AS ROWSCOUNT,
+
+            V.ID,
+
+            V.GROUPS,
+
+            V.PROPERTY_01
+                AS SITE,
+
+            BC.NAME
+                AS MEAL_PREFERENCE,
+
+            V.FX_BADGE,
+
+            V.NAME,
+
+            TO_CHAR(
+                V.FIRST_DATE_FXBL,
+                'DD-MM-YYYY'
+            )
+                AS FIRST_DATE_FXBL,
+
+            TO_CHAR(
+                V.LAST_DATE_FXBL,
+                'DD-MM-YYYY'
+            )
+                AS LAST_DATE_FXBL,
+
+            V.ADD_BY,
+
+            TO_CHAR(
+                V.ADD_DATE,
+                'DD-MM-YYYY HH24:MI:SS'
+            )
+                AS ADD_DATE,
+
+            V.EDIT_BY,
+
+            TO_CHAR(
+                V.EDIT_DATE,
+                'DD-MM-YYYY HH24:MI:SS'
+            )
+                AS EDIT_DATE
+
+
+        FROM CMS.C_F1_MEAL_INFO V
+
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+
+            ON TO_CHAR(
+                V.MEAL_PREFERENCE
+            )
+            =
+            TO_CHAR(
+                BC.ID
+            )
+
+           AND BC.TYPE_ID = 81
+
+
+        WHERE
+
+            /* ====================================================
+               F1 RECORD ACTIVE
+               ==================================================== */
+
+            NVL(
+                V.DEL_FLAG,
+                0
+            ) = 0
+
+
+            /* ====================================================
+               GROUP FILTER
+               ==================================================== */
+
+            AND
+            (
+                V_GROUPS IS NULL
+
+                OR V_GROUPS = ''
+
+                OR V.GROUPS LIKE
+                   '%' ||
+                   V_GROUPS ||
+                   '%'
+            )
+
+
+            /* ====================================================
+               SITE FILTER
+               ==================================================== */
+
+            AND
+            (
+                V_SITE IS NULL
+
+                OR V_SITE = ''
+
+                OR V_SITE = 'All'
+
+                OR UPPER(
+                       TRIM(
+                           V.PROPERTY_01
+                       )
+                   )
+                   =
+                   UPPER(
+                       TRIM(
+                           V_SITE
+                       )
+                   )
+            )
+
+
+            /* ====================================================
+               FX BADGE FILTER
+               ==================================================== */
+
+            AND
+            (
+                V_FX_BADGE IS NULL
+
+                OR V_FX_BADGE = ''
+
+                OR V.FX_BADGE LIKE
+                   '%' ||
+                   V_FX_BADGE ||
+                   '%'
+            )
+
+
+            /* ====================================================
+               ADD BY FILTER
+               ==================================================== */
+
+            AND
+            (
+                V_ADD_BY IS NULL
+
+                OR V_ADD_BY = ''
+
+                OR UPPER(
+                       TRIM(
+                           V.ADD_BY
+                       )
+                   )
+                   =
+                   UPPER(
+                       TRIM(
+                           V_ADD_BY
+                       )
+                   )
+            )
+
+
+            /* ====================================================
+               USER SITE SECURITY
+
+               Only active CMS user's site is allowed.
+               ==================================================== */
+
+            AND EXISTS
+            (
+                SELECT 1
+
+                FROM CMS.C_USER_MANAGE_T U
+
+                WHERE UPPER(
+                          TRIM(
+                              U.EMP_ID
+                          )
+                      )
+                      =
+                      UPPER(
+                          TRIM(
+                              V_EMP_ID
+                          )
+                      )
+
+                  AND U.SYSTEM_TYPE = 'CMS'
+
+                  AND NVL(
+                          U.DEL_FLAG,
+                          0
+                      ) = 0
+
+                  AND U.SITE IS NOT NULL
+
+                  AND UPPER(
+                          TRIM(
+                              U.SITE
+                          )
+                      )
+                      =
+                      UPPER(
+                          TRIM(
+                              V.PROPERTY_01
+                          )
+                      )
+            )
+
+
+        ORDER BY
+
+            V.ADD_DATE DESC,
+
+            V.ID DESC
+
+    )
+
+    WHERE RN >
+          (
+              TO_NUMBER(
+                  L_START_PAGE
+              ) - 1
+          )
+          *
+          TO_NUMBER(
+              L_PAGE_SIZE
+          )
+
+      AND RN <=
+          (
+              TO_NUMBER(
+                  L_START_PAGE
+              ) - 1
+          )
+          *
+          TO_NUMBER(
+              L_PAGE_SIZE
+          )
+          +
+          TO_NUMBER(
+              L_PAGE_SIZE
+          );
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END GET_F1_MENU_MANAGE;
+
 
 
 /* ================================================================
-   SELECTED SITE INFO
+   UPDATE F1 MENU MANAGEMENT
    ================================================================ */
 
-.selected-site-info {
-  display: flex;
+PROCEDURE UPDATE_F1_MENU_MANAGE(
+    V_ID IN NUMBER,
+    V_GROUPS IN VARCHAR2,
+    V_MEAL_PREFERENCE IN VARCHAR2,
+    V_FX_BADGE IN VARCHAR2,
+    V_NAME IN VARCHAR2,
+    V_FIRST_DATE_FXBL IN VARCHAR2,
+    V_LAST_DATE_FXBL IN VARCHAR2,
+    V_EDIT_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+)
+IS
 
-  align-items: center;
+BEGIN
 
-  gap: 7px;
+    UPDATE CMS.C_F1_MEAL_INFO
 
-  margin-left: 8px;
+    SET
 
-  padding: 8px 14px;
+        GROUPS =
+            V_GROUPS,
 
-  border-radius: 6px;
+        FX_BADGE =
+            V_FX_BADGE,
 
-  background: #f5faff;
+        MEAL_PREFERENCE =
+            V_MEAL_PREFERENCE,
 
-  border: 1px solid #d6eaff;
+        NAME =
+            V_NAME,
 
-  font-size: 14px;
+        FIRST_DATE_FXBL =
+            TO_DATE(
+                V_FIRST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ),
 
-  color: #595959;
-}
+        LAST_DATE_FXBL =
+            TO_DATE(
+                V_LAST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ),
+
+        EDIT_BY =
+            V_EDIT_BY,
+
+        EDIT_DATE =
+            SYSDATE
+
+    WHERE ID = V_ID
+
+      AND NVL(
+              DEL_FLAG,
+              0
+          ) = 0;
 
 
-.selected-site-label {
-  color: #8c8c8c;
-}
+    IF SQL%ROWCOUNT = 0 THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Active record not found with ID = '
+            || V_ID
+            || '. Update failed.';
+
+    ELSE
+
+        COMMIT;
+
+        V_RES := '1';
+
+        V_RESULT := 'Success';
+
+    END IF;
 
 
-.selected-site-info strong {
-  color: #1890ff;
+EXCEPTION
 
-  font-weight: 600;
-}
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END UPDATE_F1_MENU_MANAGE;
+
 
 
 /* ================================================================
-   SITE WARNING
+   DELETE F1 MENU MANAGEMENT
    ================================================================ */
 
-.site-warning {
-  margin-top: 14px;
+PROCEDURE DELETE_F1_MENU_MANAGE(
+    L_IDS IN VARCHAR2,
+    V_EDIT_BY IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2
+)
+IS
 
-  padding: 10px 14px;
+BEGIN
 
-  border-radius: 6px;
+    UPDATE CMS.C_F1_MEAL_INFO
 
-  background: #fffbe6;
+    SET
 
-  border: 1px solid #ffe58f;
+        DEL_FLAG = 1,
 
-  color: #d48806;
+        EDIT_DATE = SYSDATE,
 
-  font-size: 14px;
+        EDIT_BY = V_EDIT_BY
 
-  display: flex;
+    WHERE INSTR(
+              ',' ||
+              L_IDS ||
+              ',',
 
-  align-items: center;
+              ',' ||
+              ID ||
+              ','
+          ) > 0
 
-  gap: 8px;
+      AND NVL(
+              DEL_FLAG,
+              0
+          ) = 0;
 
-  i {
-    font-size: 18px;
-  }
-}
+
+    COMMIT;
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END DELETE_F1_MENU_MANAGE;
+
 
 
 /* ================================================================
-   SCAN INPUT CARD
+   GET F1 MENU BY FX BADGE
    ================================================================ */
 
-.scan-input-card {
-  background: #fff;
+PROCEDURE GET_F1_MENU_BY_FXBADGE(
+    V_FX_BADGE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+)
+IS
 
-  border-radius: 10px;
+    V_COUNT NUMBER;
 
-  padding: 28px;
+    V_ALREADY NUMBER;
 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+BEGIN
 
-  margin-bottom: 28px;
-}
+    /* ============================================================
+       CHECK ACTIVE BADGE
+       ============================================================ */
+
+    SELECT COUNT(1)
+
+    INTO V_COUNT
+
+    FROM CMS.C_F1_MEAL_INFO
+
+    WHERE FX_BADGE =
+          V_FX_BADGE
+
+      AND NVL(
+              DEL_FLAG,
+              0
+          ) = 0;
+
+
+    IF V_COUNT = 0 THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'No active record found for this FX Badge.';
+
+
+        OPEN P_CURSOR FOR
+
+        SELECT
+            NULL AS FX_BADGE
+
+        FROM DUAL
+
+        WHERE 1 = 0;
+
+
+        RETURN;
+
+    END IF;
+
+
+    /* ============================================================
+       CHECK ALREADY SCANNED TODAY
+       ============================================================ */
+
+    SELECT COUNT(1)
+
+    INTO V_ALREADY
+
+    FROM CMS.C_F1_SCAN_LOG
+
+    WHERE FX_BADGE =
+          V_FX_BADGE
+
+      AND TRUNC(
+              MEAL_DATE
+          )
+          =
+          TRUNC(
+              SYSDATE
+          )
+
+      AND NVL(
+              DEL_FLAG,
+              0
+          ) = 0
+
+      AND COLLECTED_DATA =
+          'SUCCESS';
+
+
+    /* ============================================================
+       RETURN LATEST ACTIVE RECORD
+       ============================================================ */
+
+    OPEN P_CURSOR FOR
+
+    SELECT
+
+        V.GROUPS,
+
+        V.SUB_GROUP,
+
+        V.PROPERTY_01
+            AS SITE,
+
+        BC.NAME
+            AS MEAL_PREFERENCE,
+
+        V.FX_BADGE,
+
+        V.NAME,
+
+        TO_CHAR(
+            V.FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        )
+            AS FIRST_DATE_FXBL,
+
+        TO_CHAR(
+            V.LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        )
+            AS LAST_DATE_FXBL,
+
+
+        CASE
+
+            WHEN UPPER(
+                     TRIM(
+                         BC.NAME
+                     )
+                 )
+                 =
+                 'NO MEAL REQUIRED'
+
+            THEN
+                'NOT_ENTITLED'
+
+
+            WHEN V.FIRST_DATE_FXBL IS NULL
+
+              OR V.LAST_DATE_FXBL IS NULL
+
+            THEN
+                'NOT_UPDATED'
+
+
+            WHEN TRUNC(
+                     SYSDATE
+                 )
+                 NOT BETWEEN
+                 TRUNC(
+                     V.FIRST_DATE_FXBL
+                 )
+                 AND
+                 TRUNC(
+                     V.LAST_DATE_FXBL
+                 )
+
+            THEN
+                'LAST DATE EXPIRED'
+
+
+            WHEN V_ALREADY > 0
+
+            THEN
+                'ALREADY_SCANNED'
+
+
+            ELSE
+                'ENTITLED'
+
+        END AS ENTITLEMENT_STATUS
+
+
+    FROM
+    (
+        SELECT *
+
+        FROM CMS.C_F1_MEAL_INFO
+
+        WHERE FX_BADGE =
+              V_FX_BADGE
+
+          AND NVL(
+                  DEL_FLAG,
+                  0
+              ) = 0
+
+        ORDER BY
+            ADD_DATE DESC,
+            ID DESC
+
+    ) V
+
+
+    LEFT JOIN CMS.C_BASE_CODE_T BC
+
+        ON TO_CHAR(
+            V.MEAL_PREFERENCE
+        )
+        =
+        TO_CHAR(
+            BC.ID
+        )
+
+       AND BC.TYPE_ID = 81
+
+
+    WHERE ROWNUM = 1;
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END GET_F1_MENU_BY_FXBADGE;
+
 
 
 /* ================================================================
-   SCAN INPUT ROW
+   INSERT MEAL SCAN LOG
+   ----------------------------------------------------------------
+   Site is copied from F1 meal record PROPERTY_01.
    ================================================================ */
 
-.scan-input-row {
-  display: flex;
+PROCEDURE INSERT_MEAL_SCAN_LOG(
+    V_FX_BADGE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+)
+IS
 
-  align-items: center;
+    V_COUNT NUMBER;
 
-  gap: 16px;
+    V_ALREADY_COUNT NUMBER;
 
-  .scan-icon {
-    font-size: 26px;
+    V_GROUPS
+        CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
 
-    color: #1890ff;
-  }
+    V_SITE_VAL
+        CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
 
-  .scan-input {
-    flex: 1;
+    V_NAME
+        CMS.C_F1_MEAL_INFO.NAME%TYPE;
 
-    height: 52px;
+    V_MEAL_PREF
+        CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
 
-    font-size: 18px;
-  }
+    V_MEAL_PREF_NAME
+        CMS.C_BASE_CODE_T.NAME%TYPE;
 
-  button {
-    height: 52px;
+    V_FIRST_DATE
+        CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
 
-    font-size: 16px;
+    V_LAST_DATE
+        CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
 
-    padding: 0 32px;
-  }
-}
+    V_STATUS VARCHAR2(50);
+
+    V_MESSAGE VARCHAR2(200);
+
+BEGIN
+
+    /* ============================================================
+       CHECK ACTIVE BADGE
+       ============================================================ */
+
+    SELECT COUNT(1)
+
+    INTO V_COUNT
+
+    FROM CMS.C_F1_MEAL_INFO
+
+    WHERE FX_BADGE =
+          V_FX_BADGE
+
+      AND NVL(
+              DEL_FLAG,
+              0
+          ) = 0;
+
+
+    IF V_COUNT = 0 THEN
+
+        V_STATUS :=
+            'INVALID';
+
+        V_MESSAGE :=
+            'FX Badge not found';
+
+
+        V_GROUPS := NULL;
+
+        V_SITE_VAL := NULL;
+
+        V_NAME := NULL;
+
+        V_MEAL_PREF := NULL;
+
+        V_MEAL_PREF_NAME := NULL;
+
+        V_FIRST_DATE := NULL;
+
+        V_LAST_DATE := NULL;
+
+
+    ELSE
+
+        /* ========================================================
+           GET LATEST ACTIVE RECORD
+           ======================================================== */
+
+        SELECT
+
+            GROUPS,
+
+            PROPERTY_01,
+
+            NAME,
+
+            MEAL_PREFERENCE,
+
+            FIRST_DATE_FXBL,
+
+            LAST_DATE_FXBL
+
+        INTO
+
+            V_GROUPS,
+
+            V_SITE_VAL,
+
+            V_NAME,
+
+            V_MEAL_PREF,
+
+            V_FIRST_DATE,
+
+            V_LAST_DATE
+
+        FROM
+        (
+            SELECT *
+
+            FROM CMS.C_F1_MEAL_INFO
+
+            WHERE FX_BADGE =
+                  V_FX_BADGE
+
+              AND NVL(
+                      DEL_FLAG,
+                      0
+                  ) = 0
+
+            ORDER BY
+                ADD_DATE DESC,
+                ID DESC
+
+        )
+
+        WHERE ROWNUM = 1;
+
+
+        /* ========================================================
+           MEAL PREFERENCE NAME
+           ======================================================== */
+
+        SELECT NVL(
+                   MAX(
+                       BC.NAME
+                   ),
+                   V_MEAL_PREF
+               )
+
+        INTO V_MEAL_PREF_NAME
+
+        FROM CMS.C_BASE_CODE_T BC
+
+        WHERE BC.TYPE_ID = 81
+
+          AND TO_CHAR(
+                  BC.ID
+              )
+              =
+              TO_CHAR(
+                  V_MEAL_PREF
+              );
+
+
+        /* ========================================================
+           ENTITLEMENT
+           ======================================================== */
+
+        IF UPPER(
+               TRIM(
+                   V_MEAL_PREF_NAME
+               )
+           )
+           =
+           'NO MEAL REQUIRED'
+
+        THEN
+
+            V_STATUS :=
+                'INVALID';
+
+            V_MESSAGE :=
+                'NO MEAL REQUIRED BUT COME TO COLLECT';
+
+
+        ELSIF V_FIRST_DATE IS NULL
+
+           OR V_LAST_DATE IS NULL
+
+        THEN
+
+            V_STATUS :=
+                'INVALID';
+
+            V_MESSAGE :=
+                'Dates not updated';
+
+
+        ELSIF TRUNC(
+                  SYSDATE
+              )
+              NOT BETWEEN
+              TRUNC(
+                  V_FIRST_DATE
+              )
+              AND
+              TRUNC(
+                  V_LAST_DATE
+              )
+
+        THEN
+
+            V_STATUS :=
+                'INVALID';
+
+            V_MESSAGE :=
+                'LAST DATE EXPIRED';
+
+
+        ELSE
+
+            V_STATUS :=
+                'SUCCESS';
+
+            V_MESSAGE :=
+                'Entitled for meal';
+
+        END IF;
+
+
+        /* ========================================================
+           ALREADY SCANNED
+           ======================================================== */
+
+        IF V_STATUS =
+           'SUCCESS'
+
+        THEN
+
+            SELECT COUNT(1)
+
+            INTO V_ALREADY_COUNT
+
+            FROM CMS.C_F1_SCAN_LOG
+
+            WHERE FX_BADGE =
+                  V_FX_BADGE
+
+              AND TRUNC(
+                      MEAL_DATE
+                  )
+                  =
+                  TRUNC(
+                      SYSDATE
+                  )
+
+              AND NVL(
+                      DEL_FLAG,
+                      0
+                  ) = 0
+
+              AND COLLECTED_DATA =
+                  'SUCCESS';
+
+
+            IF V_ALREADY_COUNT > 0 THEN
+
+                V_STATUS :=
+                    'ALREADY_SCANNED';
+
+                V_MESSAGE :=
+                    'Meal already collected today';
+
+            END IF;
+
+        END IF;
+
+    END IF;
+
+
+    /* ============================================================
+       INSERT SCAN LOG
+       ============================================================ */
+
+    INSERT INTO CMS.C_F1_SCAN_LOG
+    (
+        ID,
+        GROUPS,
+        PROPERTY_01,
+        MEAL_PREFERENCE,
+        FX_BADGE,
+        NAME,
+        FIRST_DATE_FXBL,
+        LAST_DATE_FXBL,
+        COLLECTED_DATA,
+        STATUS_MESSAGE,
+        MEAL_DATE,
+        FIRST_SCANTIME,
+        LAST_SCANTIME
+    )
+
+    VALUES
+    (
+        SEQ_C_F1_SCAN_LOG.NEXTVAL,
+
+        V_GROUPS,
+
+        V_SITE_VAL,
+
+        V_MEAL_PREF,
+
+        V_FX_BADGE,
+
+        V_NAME,
+
+        V_FIRST_DATE,
+
+        V_LAST_DATE,
+
+        V_STATUS,
+
+        V_MESSAGE,
+
+        SYSDATE,
+
+        SYSDATE,
+
+        SYSDATE
+    );
+
+
+    COMMIT;
+
+
+    /* ============================================================
+       RETURN SCAN RESULT
+       ============================================================ */
+
+    OPEN P_CURSOR FOR
+
+    SELECT
+
+        V_FX_BADGE
+            AS FX_BADGE,
+
+        V_NAME
+            AS NAME,
+
+        V_SITE_VAL
+            AS SITE,
+
+        V_MEAL_PREF_NAME
+            AS MEAL_PREFERENCE,
+
+        TO_CHAR(
+            SYSDATE,
+            'DD-MM-YYYY HH24:MI:SS'
+        )
+            AS SCAN_TIME,
+
+        V_STATUS
+            AS STATUS,
+
+        V_MESSAGE
+            AS STATUS_MESSAGE
+
+    FROM DUAL;
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        ROLLBACK;
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END INSERT_MEAL_SCAN_LOG;
+
 
 
 /* ================================================================
-   RESULT CARD WRAPPER
+   GET MEAL SCAN LOG
    ================================================================ */
 
-.result-card-wrapper {
-  display: flex;
+PROCEDURE GET_MEAL_SCAN_LOG(
+    V_SEARCH_TEXT IN VARCHAR2,
+    V_STATUS_FILTER IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+)
+IS
 
-  justify-content: center;
-}
+BEGIN
+
+    /* ============================================================
+       SCAN LOG
+       ============================================================ */
+
+    OPEN P_CURSOR FOR
+
+    SELECT
+
+        S.FX_BADGE,
+
+        S.NAME,
+
+        S.GROUPS,
+
+        S.PROPERTY_01
+            AS SITE,
+
+        BC.NAME
+            AS MEAL_PREFERENCE,
+
+        TO_CHAR(
+            S.FIRST_DATE_FXBL,
+            'DD-MM-YYYY'
+        )
+            AS FIRST_DATE_FXBL,
+
+        TO_CHAR(
+            S.LAST_DATE_FXBL,
+            'DD-MM-YYYY'
+        )
+            AS LAST_DATE_FXBL,
+
+        TO_CHAR(
+            NVL(
+                S.LAST_SCANTIME,
+                S.FIRST_SCANTIME
+            ),
+            'DD-MM-YYYY HH24:MI:SS'
+        )
+            AS SCAN_TIME,
+
+        S.COLLECTED_DATA
+            AS STATUS,
+
+        S.STATUS_MESSAGE
+
+
+    FROM CMS.C_F1_SCAN_LOG S
+
+
+    LEFT JOIN CMS.C_BASE_CODE_T BC
+
+        ON TO_CHAR(
+            S.MEAL_PREFERENCE
+        )
+        =
+        TO_CHAR(
+            BC.ID
+        )
+
+       AND BC.TYPE_ID = 81
+
+
+    WHERE NVL(
+              S.DEL_FLAG,
+              0
+          ) = 0
+
+
+      /* ==========================================================
+         SEARCH
+         ========================================================== */
+
+      AND
+      (
+          V_SEARCH_TEXT IS NULL
+
+          OR V_SEARCH_TEXT = ''
+
+          OR UPPER(
+                 S.FX_BADGE
+             )
+             LIKE
+             '%' ||
+             UPPER(
+                 V_SEARCH_TEXT
+             )
+             || '%'
+
+          OR UPPER(
+                 S.NAME
+             )
+             LIKE
+             '%' ||
+             UPPER(
+                 V_SEARCH_TEXT
+             )
+             || '%'
+      )
+
+
+      /* ==========================================================
+         STATUS
+         ========================================================== */
+
+      AND
+      (
+          V_STATUS_FILTER IS NULL
+
+          OR V_STATUS_FILTER = ''
+
+          OR V_STATUS_FILTER = 'All'
+
+          OR S.COLLECTED_DATA =
+             V_STATUS_FILTER
+      )
+
+
+      /* ==========================================================
+         SITE
+         ========================================================== */
+
+      AND
+      (
+          V_SITE IS NULL
+
+          OR V_SITE = ''
+
+          OR V_SITE = 'All'
+
+          OR UPPER(
+                 TRIM(
+                     S.PROPERTY_01
+                 )
+             )
+             =
+             UPPER(
+                 TRIM(
+                     V_SITE
+                 )
+             )
+      )
+
+
+    ORDER BY
+        S.MEAL_DATE DESC;
+
+
+    /* ============================================================
+       SUMMARY
+       ============================================================ */
+
+    OPEN P_SUMMARY_CURSOR FOR
+
+    SELECT
+
+        COUNT(1)
+            AS TOTAL_SCANS,
+
+
+        SUM(
+            CASE
+
+                WHEN COLLECTED_DATA =
+                     'SUCCESS'
+
+                THEN 1
+
+                ELSE 0
+
+            END
+        )
+            AS SUCCESS_COUNT,
+
+
+        SUM(
+            CASE
+
+                WHEN COLLECTED_DATA =
+                     'ALREADY_SCANNED'
+
+                THEN 1
+
+                ELSE 0
+
+            END
+        )
+            AS ALREADY_SCANNED_COUNT,
+
+
+        SUM(
+            CASE
+
+                WHEN COLLECTED_DATA =
+                     'INVALID'
+
+                THEN 1
+
+                ELSE 0
+
+            END
+        )
+            AS INVALID_COUNT
+
+
+    FROM CMS.C_F1_SCAN_LOG
+
+
+    WHERE NVL(
+              DEL_FLAG,
+              0
+          ) = 0
+
+
+      AND
+      (
+          V_SITE IS NULL
+
+          OR V_SITE = ''
+
+          OR V_SITE = 'All'
+
+          OR UPPER(
+                 TRIM(
+                     PROPERTY_01
+                 )
+             )
+             =
+             UPPER(
+                 TRIM(
+                     V_SITE
+                 )
+             )
+      );
+
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END GET_MEAL_SCAN_LOG;
+
 
 
 /* ================================================================
-   RESULT CARD
+   GET MEAL DASHBOARD
+   ----------------------------------------------------------------
+   USER + SITE BASED DASHBOARD
+
+   V_EMP_ID:
+       Logged-in employee ID
+
+   V_SITE:
+       NULL / '' / All
+           = All active sites of logged-in user
+
+       Specific site
+           = Only that site if it belongs to logged-in user
+
+   Security:
+       C_USER_MANAGE_T.DEL_FLAG = 0 / NULL
+       C_USER_MANAGE_T.SYSTEM_TYPE = 'CMS'
    ================================================================ */
 
-.result-card {
-  width: 100%;
+PROCEDURE GET_MEAL_DASHBOARD(
+    V_EMP_ID IN VARCHAR2,
+    V_DATE IN VARCHAR2,
+    V_SITE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+)
+IS
 
-  max-width: 800px;
+    V_DAY DATE;
 
-  background: #fff;
+    V_TOTAL NUMBER := 0;
 
-  border-radius: 14px;
+    V_NO_MEAL NUMBER := 0;
 
-  overflow: hidden;
+    V_COLLECTED NUMBER := 0;
 
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    V_NOT_REQ_CAME NUMBER := 0;
 
-  border: 2px solid transparent;
+    V_NOT_COLLECTED NUMBER := 0;
 
-  transition: all 0.2s ease;
-}
+BEGIN
+
+    /* ============================================================
+       DATE
+       ============================================================ */
+
+    BEGIN
+
+        V_DAY :=
+            TO_DATE(
+                V_DATE,
+                'DD-MM-YYYY'
+            );
+
+    EXCEPTION
+
+        WHEN OTHERS THEN
+
+            V_DAY :=
+                TRUNC(
+                    SYSDATE
+                );
+
+    END;
+
+
+    /* ============================================================
+       VALIDATE ACTIVE LOGGED-IN USER
+       ============================================================ */
+
+    DECLARE
+
+        V_USER_COUNT NUMBER := 0;
+
+    BEGIN
+
+        SELECT COUNT(1)
+
+        INTO V_USER_COUNT
+
+        FROM CMS.C_USER_MANAGE_T U
+
+        WHERE UPPER(
+                  TRIM(
+                      U.EMP_ID
+                  )
+              )
+              =
+              UPPER(
+                  TRIM(
+                      V_EMP_ID
+                  )
+              )
+
+          AND U.SYSTEM_TYPE =
+              'CMS'
+
+          AND NVL(
+                  U.DEL_FLAG,
+                  0
+              ) = 0
+
+          AND U.SITE IS NOT NULL;
+
+
+        /* ========================================================
+           USER NOT ACTIVE
+           ======================================================== */
+
+        IF V_USER_COUNT = 0 THEN
+
+            V_RES := '0';
+
+            V_RESULT :=
+                'Active CMS user/site not found for employee: '
+                || V_EMP_ID;
+
+
+            /* Empty card cursor */
+
+            OPEN P_CURSOR FOR
+
+            SELECT
+
+                0 AS TOTAL_EMPLOYEES,
+
+                0 AS MEALS_COLLECTED,
+
+                0 AS MEALS_NOT_COLLECTED,
+
+                0 AS NO_MEAL_REQUIRED,
+
+                0 AS NOT_REQUIRED_CAME
+
+            FROM DUAL;
+
+
+            /* Empty category cursor */
+
+            OPEN P_SUMMARY_CURSOR FOR
+
+            SELECT
+
+                'Indian Veg'
+                    AS CATEGORY,
+
+                0 AS COLLECTED_COUNT,
+
+                0 AS PERCENTAGE
+
+            FROM DUAL
+
+            WHERE 1 = 0;
+
+
+            RETURN;
+
+        END IF;
+
+    END;
+
+
+    /* ============================================================
+       EMPLOYEE DATA
+       ------------------------------------------------------------
+       Latest active meal record per badge.
+
+       Only sites belonging to the logged-in active user
+       are allowed.
+       ============================================================ */
+
+    WITH EMP AS
+    (
+        SELECT
+
+            FX_BADGE,
+
+            MEAL_PREFERENCE,
+
+            MEAL_PREFERENCE_NAME
+
+        FROM
+        (
+            SELECT
+
+                M.FX_BADGE,
+
+                M.MEAL_PREFERENCE,
+
+                BC.NAME
+                    AS MEAL_PREFERENCE_NAME,
+
+                ROW_NUMBER() OVER
+                (
+                    PARTITION BY
+                        M.FX_BADGE
+
+                    ORDER BY
+                        M.ADD_DATE DESC,
+                        M.ID DESC
+                )
+                    AS RN
+
+
+            FROM CMS.C_F1_MEAL_INFO M
+
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+
+                ON TO_CHAR(
+                    M.MEAL_PREFERENCE
+                )
+                =
+                TO_CHAR(
+                    BC.ID
+                )
+
+               AND BC.TYPE_ID = 81
+
+
+            WHERE NVL(
+                      M.DEL_FLAG,
+                      0
+                  ) = 0
+
+
+              /* ==================================================
+                 DATE
+                 ================================================== */
+
+              AND TRUNC(
+                      M.ADD_DATE
+                  )
+                  =
+                  V_DAY
+
+
+              /* ==================================================
+                 SITE FILTER
+                 ================================================== */
+
+              AND
+              (
+                  V_SITE IS NULL
+
+                  OR V_SITE = ''
+
+                  OR V_SITE = 'All'
+
+                  OR UPPER(
+                         TRIM(
+                             M.PROPERTY_01
+                         )
+                     )
+                     =
+                     UPPER(
+                         TRIM(
+                             V_SITE
+                         )
+                     )
+              )
+
+
+              /* ==================================================
+                 USER SITE AUTHORIZATION
+                 ================================================== */
+
+              AND EXISTS
+              (
+                  SELECT 1
+
+                  FROM CMS.C_USER_MANAGE_T U
+
+                  WHERE UPPER(
+                            TRIM(
+                                U.EMP_ID
+                            )
+                        )
+                        =
+                        UPPER(
+                            TRIM(
+                                V_EMP_ID
+                            )
+                        )
+
+                    AND U.SYSTEM_TYPE =
+                        'CMS'
+
+                    AND NVL(
+                            U.DEL_FLAG,
+                            0
+                        ) = 0
+
+                    AND U.SITE IS NOT NULL
+
+                    AND UPPER(
+                            TRIM(
+                                U.SITE
+                            )
+                        )
+                        =
+                        UPPER(
+                            TRIM(
+                                M.PROPERTY_01
+                            )
+                        )
+              )
+
+        )
+
+        WHERE RN = 1
+    ),
+
+
+    /* ============================================================
+       COLLECTED EMPLOYEES
+       ============================================================ */
+
+    COLLECTED AS
+    (
+        SELECT DISTINCT
+
+            S.FX_BADGE
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        WHERE NVL(
+                  S.DEL_FLAG,
+                  0
+              ) = 0
+
+          AND TRUNC(
+                  S.MEAL_DATE
+              )
+              =
+              V_DAY
+
+          AND S.COLLECTED_DATA =
+              'SUCCESS'
+
+
+          /* ======================================================
+             SITE FILTER
+             ====================================================== */
+
+          AND
+          (
+              V_SITE IS NULL
+
+              OR V_SITE = ''
+
+              OR V_SITE = 'All'
+
+              OR UPPER(
+                     TRIM(
+                         S.PROPERTY_01
+                     )
+                 )
+                 =
+                 UPPER(
+                     TRIM(
+                         V_SITE
+                     )
+                 )
+          )
+
+
+          /* ======================================================
+             USER SITE AUTHORIZATION
+             ====================================================== */
+
+          AND EXISTS
+          (
+              SELECT 1
+
+              FROM CMS.C_USER_MANAGE_T U
+
+              WHERE UPPER(
+                        TRIM(
+                            U.EMP_ID
+                        )
+                    )
+                    =
+                    UPPER(
+                        TRIM(
+                            V_EMP_ID
+                        )
+                    )
+
+                AND U.SYSTEM_TYPE =
+                    'CMS'
+
+                AND NVL(
+                        U.DEL_FLAG,
+                        0
+                    ) = 0
+
+                AND U.SITE IS NOT NULL
+
+                AND UPPER(
+                        TRIM(
+                            U.SITE
+                        )
+                    )
+                    =
+                    UPPER(
+                        TRIM(
+                            S.PROPERTY_01
+                        )
+                    )
+          )
+    )
+
+
+    /* ============================================================
+       CALCULATE DASHBOARD
+       ============================================================ */
+
+    SELECT
+
+        /* ========================================================
+           TOTAL EMPLOYEES
+           ======================================================== */
+
+        (
+            SELECT COUNT(1)
+
+            FROM EMP
+        ),
+
+
+        /* ========================================================
+           NO MEAL REQUIRED
+           ======================================================== */
+
+        (
+            SELECT COUNT(1)
+
+            FROM EMP
+
+            WHERE UPPER(
+                      TRIM(
+                          MEAL_PREFERENCE_NAME
+                      )
+                  )
+                  =
+                  'NO MEAL REQUIRED'
+        ),
+
+
+        /* ========================================================
+           MEALS COLLECTED
+           ======================================================== */
+
+        (
+            SELECT COUNT(1)
+
+            FROM COLLECTED
+        ),
+
+
+        /* ========================================================
+           NO MEAL REQUIRED BUT CAME
+           ======================================================== */
+
+        (
+            SELECT COUNT(
+                       DISTINCT
+                       S.FX_BADGE
+                   )
+
+            FROM CMS.C_F1_SCAN_LOG S
+
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+
+                ON TO_CHAR(
+                    S.MEAL_PREFERENCE
+                )
+                =
+                TO_CHAR(
+                    BC.ID
+                )
+
+               AND BC.TYPE_ID = 81
+
+
+            WHERE NVL(
+                      S.DEL_FLAG,
+                      0
+                  ) = 0
+
+
+              AND TRUNC(
+                      S.MEAL_DATE
+                  )
+                  =
+                  V_DAY
+
+
+              AND UPPER(
+                      TRIM(
+                          BC.NAME
+                      )
+                  )
+                  =
+                  'NO MEAL REQUIRED'
+
+
+              /* ==================================================
+                 SITE FILTER
+                 ================================================== */
+
+              AND
+              (
+                  V_SITE IS NULL
+
+                  OR V_SITE = ''
+
+                  OR V_SITE = 'All'
+
+                  OR UPPER(
+                         TRIM(
+                             S.PROPERTY_01
+                         )
+                     )
+                     =
+                     UPPER(
+                         TRIM(
+                             V_SITE
+                         )
+                     )
+              )
+
+
+              /* ==================================================
+                 USER SITE AUTHORIZATION
+                 ================================================== */
+
+              AND EXISTS
+              (
+                  SELECT 1
+
+                  FROM CMS.C_USER_MANAGE_T U
+
+                  WHERE UPPER(
+                            TRIM(
+                                U.EMP_ID
+                            )
+                        )
+                        =
+                        UPPER(
+                            TRIM(
+                                V_EMP_ID
+                            )
+                        )
+
+                    AND U.SYSTEM_TYPE =
+                        'CMS'
+
+                    AND NVL(
+                            U.DEL_FLAG,
+                            0
+                        ) = 0
+
+                    AND U.SITE IS NOT NULL
+
+                    AND UPPER(
+                            TRIM(
+                                U.SITE
+                            )
+                        )
+                        =
+                        UPPER(
+                            TRIM(
+                                S.PROPERTY_01
+                            )
+                        )
+              )
+        ),
+
+
+        /* ========================================================
+           ENTITLED BUT NOT COLLECTED
+           ======================================================== */
+
+        (
+            SELECT COUNT(1)
+
+            FROM EMP E
+
+            WHERE NVL(
+                      UPPER(
+                          TRIM(
+                              E.MEAL_PREFERENCE_NAME
+                          )
+                      ),
+                      'X'
+                  )
+                  <>
+                  'NO MEAL REQUIRED'
+
+
+              AND NOT EXISTS
+              (
+                  SELECT 1
+
+                  FROM COLLECTED C
+
+                  WHERE C.FX_BADGE =
+                        E.FX_BADGE
+              )
+        )
+
+
+    INTO
+
+        V_TOTAL,
+
+        V_NO_MEAL,
+
+        V_COLLECTED,
+
+        V_NOT_REQ_CAME,
+
+        V_NOT_COLLECTED
+
+
+    FROM DUAL;
+
+
+    /* ============================================================
+       DASHBOARD CARD RESULT
+       ============================================================ */
+
+    OPEN P_CURSOR FOR
+
+    SELECT
+
+        V_TOTAL
+            AS TOTAL_EMPLOYEES,
+
+        V_COLLECTED
+            AS MEALS_COLLECTED,
+
+        V_NOT_COLLECTED
+            AS MEALS_NOT_COLLECTED,
+
+        V_NO_MEAL
+            AS NO_MEAL_REQUIRED,
+
+        V_NOT_REQ_CAME
+            AS NOT_REQUIRED_CAME
+
+    FROM DUAL;
+
+
+    /* ============================================================
+       CATEGORY SUMMARY
+       ============================================================ */
+
+    OPEN P_SUMMARY_CURSOR FOR
+
+    WITH CATS AS
+    (
+
+        SELECT
+            1 AS SORT_NO,
+            'Indian Veg' AS CATEGORY
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            2,
+            'Indian Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            3,
+            'Western Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            4,
+            'Western Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            5,
+            'Chinese Non-Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            6,
+            'Chinese Veg'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            7,
+            'Jain'
+        FROM DUAL
+
+        UNION ALL
+
+        SELECT
+            8,
+            'Vegan'
+        FROM DUAL
+    ),
+
+
+    /* ============================================================
+       CATEGORY COUNT
+       ============================================================ */
+
+    CNT AS
+    (
+        SELECT
+
+            UPPER(
+                TRIM(
+                    BC.NAME
+                )
+            )
+                AS PREF,
+
+            COUNT(
+                DISTINCT
+                S.FX_BADGE
+            )
+                AS TOTAL_COUNT
+
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+
+            ON TO_CHAR(
+                S.MEAL_PREFERENCE
+            )
+            =
+            TO_CHAR(
+                BC.ID
+            )
+
+           AND BC.TYPE_ID = 81
+
+
+        WHERE NVL(
+                  S.DEL_FLAG,
+                  0
+              ) = 0
+
+
+          AND TRUNC(
+                  S.MEAL_DATE
+              )
+              =
+              V_DAY
+
+
+          AND S.COLLECTED_DATA =
+              'SUCCESS'
+
+
+          /* ======================================================
+             SITE FILTER
+             ====================================================== */
+
+          AND
+          (
+              V_SITE IS NULL
+
+              OR V_SITE = ''
+
+              OR V_SITE = 'All'
+
+              OR UPPER(
+                     TRIM(
+                         S.PROPERTY_01
+                     )
+                 )
+                 =
+                 UPPER(
+                     TRIM(
+                         V_SITE
+                     )
+                 )
+          )
+
+
+          /* ======================================================
+             USER SITE AUTHORIZATION
+             ====================================================== */
+
+          AND EXISTS
+          (
+              SELECT 1
+
+              FROM CMS.C_USER_MANAGE_T U
+
+              WHERE UPPER(
+                        TRIM(
+                            U.EMP_ID
+                        )
+                    )
+                    =
+                    UPPER(
+                        TRIM(
+                            V_EMP_ID
+                        )
+                    )
+
+                AND U.SYSTEM_TYPE =
+                    'CMS'
+
+                AND NVL(
+                        U.DEL_FLAG,
+                        0
+                    ) = 0
+
+                AND U.SITE IS NOT NULL
+
+                AND UPPER(
+                        TRIM(
+                            U.SITE
+                        )
+                    )
+                    =
+                    UPPER(
+                        TRIM(
+                            S.PROPERTY_01
+                        )
+                    )
+          )
+
+
+        GROUP BY
+
+            UPPER(
+                TRIM(
+                    BC.NAME
+                )
+            )
+    )
+
+
+    /* ============================================================
+       FINAL CATEGORY RESULT
+       ============================================================ */
+
+    SELECT
+
+        C.CATEGORY,
+
+        NVL(
+            N.TOTAL_COUNT,
+            0
+        )
+            AS COLLECTED_COUNT,
+
+        CASE
+
+            WHEN V_COLLECTED = 0
+
+            THEN 0
+
+            ELSE ROUND(
+                NVL(
+                    N.TOTAL_COUNT,
+                    0
+                )
+                * 100
+                /
+                V_COLLECTED
+            )
+
+        END
+            AS PERCENTAGE
+
+
+    FROM CATS C
+
+
+    LEFT JOIN CNT N
+
+        ON N.PREF =
+           UPPER(
+               C.CATEGORY
+           )
+
+
+    ORDER BY
+        C.SORT_NO;
+
+
+    /* ============================================================
+       SUCCESS
+       ============================================================ */
+
+    V_RES := '1';
+
+    V_RESULT := 'Success';
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        V_RES := '0';
+
+        V_RESULT :=
+            'Error: '
+            || SQLERRM;
+
+END GET_MEAL_DASHBOARD;
+
+
+END F1_MEAL_MANAGEMENT;
+
+
+
+
+
+
+
 
 
 /* ================================================================
-   RESULT STATUS BORDER
+   F1 MEAL MANAGEMENT
+   PACKAGE SPEC
    ================================================================ */
 
-.card-entitled {
-  border-color: #52c41a;
-}
-
-
-.card-not-entitled {
-  border-color: #ff4d4f;
-}
-
-
-.card-already {
-  border-color: #faad14;
-}
-
-
-/* ================================================================
-   RESULT CARD BODY
-   ================================================================ */
-
-.result-card-body {
-  display: flex;
-
-  align-items: center;
-
-  gap: 32px;
-
-  padding: 36px;
-}
-
-
-/* ================================================================
-   EMPLOYEE PHOTO
-   ================================================================ */
-
-.employee-photo {
-  flex-shrink: 0;
-}
-
-
-.avatar-circle {
-  width: 130px;
-
-  height: 130px;
-
-  border-radius: 50%;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  overflow: hidden;
-
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-
-  background: #f5f5f5;
-
-  i {
-    font-size: 68px;
-
-    color: #bfbfbf;
-  }
-}
-
-
-/* ================================================================
-   EMPLOYEE IMAGE
-   ================================================================ */
-
-.avatar-img {
-  width: 100%;
-
-  height: 100%;
-
-  border-radius: 50%;
-
-  object-fit: cover;
-}
-
-
-/* ================================================================
-   EMPLOYEE DETAILS
-   ================================================================ */
-
-.employee-details {
-  flex: 1;
-}
-
-
-.detail-row {
-  display: flex;
-
-  align-items: baseline;
-
-  margin-bottom: 14px;
-
-  font-size: 17px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .detail-label {
-    color: #595959;
-
-    font-weight: 500;
-
-    min-width: 190px;
-  }
-
-  .detail-colon {
-    margin-right: 10px;
-
-    color: #595959;
-  }
-
-  .detail-value {
-    color: #1f1f1f;
-
-    font-weight: 600;
-
-    flex: 1;
-  }
-}
-
-
-/* ================================================================
-   STATUS BANNER
-   ================================================================ */
-
-.status-banner {
-  width: 500px;
-
-  max-width: calc(100% - 48px);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 12px;
-
-  padding: 16px 20px;
-
-  margin: 0 auto 24px;
-
-  border-radius: 10px;
-
-  font-size: 19px;
-
-  font-weight: 700;
-
-  .status-icon {
-    font-size: 26px;
-  }
-
-  .status-colon {
-    margin: 0 -4px;
-  }
-}
-
-
-/* ================================================================
-   GREEN STATUS
-   ================================================================ */
-
-.banner-green {
-  background-color: #f6ffed;
-
-  color: #52c41a;
-
-  border: 1px solid #b7eb8f;
-}
-
-
-/* ================================================================
-   RED STATUS
-   ================================================================ */
-
-.banner-red {
-  background-color: #fff1f0;
-
-  color: #ff4d4f;
-
-  border: 1px solid #ffa39e;
-}
-
-
-/* ================================================================
-   ORANGE / ALREADY SCANNED
-   ================================================================ */
-
-.banner-orange {
-  background: #fffbe6;
-
-  color: #ffa200;
-
-  border: 1px solid #ffe58f;
-}
-
-
-/* ================================================================
-   SITE MISMATCH MESSAGE
-   ================================================================ */
-
-.site-mismatch-message {
-  width: 500px;
-
-  max-width: calc(100% - 48px);
-
-  margin: 0 auto 24px;
-
-  padding: 12px 16px;
-
-  border-radius: 8px;
-
-  background: #fff1f0;
-
-  border: 1px solid #ffa39e;
-
-  color: #cf1322;
-
-  font-size: 14px;
-
-  font-weight: 500;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 8px;
-
-  text-align: center;
-
-  i {
-    font-size: 18px;
-  }
-}
-
-
-/* ================================================================
-   WAITING STATE
-   ================================================================ */
-
-.waiting-card {
-  background: #fff;
-
-  border-radius: 10px;
-
-  padding: 80px 24px;
-
-  text-align: center;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-  font-size: 16px;
-}
-
-
-/* ================================================================
-   PROCEED ROW
-   ================================================================ */
-
-.proceed-row {
-  display: flex;
-
-  justify-content: flex-end;
-
-  width: 100%;
-
-  margin-top: 20px;
-
-  margin-bottom: 20px;
-
-  /* IMPORTANT:
-     Do NOT use margin-left: -360px;
-  */
-}
-
-
-/* ================================================================
-   RESPONSIVE
-   ================================================================ */
-
-@media (max-width: 900px) {
-
-  .scan-wrapper {
-    padding: 24px;
-  }
-
-
-  .site-filter-row {
-    flex-wrap: wrap;
-  }
-
-
-  .selected-site-info {
-    width: 100%;
-
-    margin-left: 0;
-  }
-
-
-  .result-card-body {
-    flex-direction: column;
-
-    align-items: center;
-
-    text-align: center;
-  }
-
-
-  .detail-row {
-    text-align: left;
-  }
-
-
-  .status-banner {
-    width: auto;
-
-    margin-left: 24px;
-
-    margin-right: 24px;
-  }
-
-
-  .site-mismatch-message {
-    width: auto;
-
-    margin-left: 24px;
-
-    margin-right: 24px;
-  }
-
-}
-
-
-@media (max-width: 600px) {
-
-  .scan-wrapper {
-    padding: 16px;
-  }
-
-
-  .header-row h1 {
-    font-size: 26px;
-  }
-
-
-  .scan-input-row {
-    flex-wrap: wrap;
-  }
-
-
-  .scan-input-row .scan-input {
-    width: 100%;
-
-    flex: none;
-  }
-
-
-  .scan-input-row button {
-    width: 100%;
-  }
-
-
-  .site-filter-row {
-    align-items: flex-start;
-
-    flex-direction: column;
-  }
-
-
-  .site-filter-label {
-    width: 100%;
-  }
-
-
-  .site-filter-card nz-select {
-    width: 100% !important;
-  }
-
-
-  .avatar-circle {
-    width: 110px;
-
-    height: 110px;
-  }
-
-
-  .detail-row {
-    font-size: 15px;
-
-    flex-wrap: wrap;
-  }
-
-
-  .detail-label {
-    min-width: 150px !important;
-  }
-
-
-  .status-banner {
-    font-size: 16px;
-
-    padding: 13px;
-  }
-
-}
+CREATE OR REPLACE PACKAGE CMS.F1_MEAL_MANAGEMENT
+AS
+
+    /* ============================================================
+       INSERT F1 MENU
+       ============================================================ */
+
+    PROCEDURE INSERT_F1_MENU(
+        V_GROUPS IN VARCHAR2,
+        V_MEAL_PREFERENCE IN VARCHAR2,
+        V_FX_BADGE IN VARCHAR2,
+        V_NAME IN VARCHAR2,
+        V_FIRST_DATE_FXBL IN VARCHAR2,
+        V_LAST_DATE_FXBL IN VARCHAR2,
+        V_ADD_BY IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2
+    );
+
+
+    /* ============================================================
+       BULK F1 MENU
+       ============================================================ */
+
+    PROCEDURE BULK_F1_MENU(
+        V_GROUPS IN VARCHAR2,
+        V_MEAL_PREFERENCE IN VARCHAR2,
+        V_FX_BADGE IN VARCHAR2,
+        V_NAME IN VARCHAR2,
+        V_FIRST_DATE_FXBL IN VARCHAR2,
+        V_LAST_DATE_FXBL IN VARCHAR2,
+        V_ADD_BY IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2
+    );
+
+
+    /* ============================================================
+       GET F1 MENU MANAGEMENT
+       ============================================================ */
+
+    PROCEDURE GET_F1_MENU_MANAGE(
+        V_EMP_ID IN VARCHAR2,
+        V_GROUPS IN VARCHAR2,
+        V_SITE IN VARCHAR2,
+        V_FX_BADGE IN VARCHAR2,
+        V_ADD_BY IN VARCHAR2,
+        L_START_PAGE IN VARCHAR2,
+        L_PAGE_SIZE IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2,
+        P_CURSOR OUT SYS_REFCURSOR
+    );
+
+
+    /* ============================================================
+       UPDATE F1 MENU MANAGEMENT
+       ============================================================ */
+
+    PROCEDURE UPDATE_F1_MENU_MANAGE(
+        V_ID IN NUMBER,
+        V_GROUPS IN VARCHAR2,
+        V_MEAL_PREFERENCE IN VARCHAR2,
+        V_FX_BADGE IN VARCHAR2,
+        V_NAME IN VARCHAR2,
+        V_FIRST_DATE_FXBL IN VARCHAR2,
+        V_LAST_DATE_FXBL IN VARCHAR2,
+        V_EDIT_BY IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2
+    );
+
+
+    /* ============================================================
+       DELETE F1 MENU MANAGEMENT
+       ============================================================ */
+
+    PROCEDURE DELETE_F1_MENU_MANAGE(
+        L_IDS IN VARCHAR2,
+        V_EDIT_BY IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2
+    );
+
+
+    /* ============================================================
+       GET F1 MENU BY FX BADGE
+       ============================================================ */
+
+    PROCEDURE GET_F1_MENU_BY_FXBADGE(
+        V_FX_BADGE IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2,
+        P_CURSOR OUT SYS_REFCURSOR
+    );
+
+
+    /* ============================================================
+       INSERT MEAL SCAN LOG
+       ============================================================ */
+
+    PROCEDURE INSERT_MEAL_SCAN_LOG(
+        V_FX_BADGE IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2,
+        P_CURSOR OUT SYS_REFCURSOR
+    );
+
+
+    /* ============================================================
+       GET MEAL SCAN LOG
+       ============================================================ */
+
+    PROCEDURE GET_MEAL_SCAN_LOG(
+        V_SEARCH_TEXT IN VARCHAR2,
+        V_STATUS_FILTER IN VARCHAR2,
+        V_SITE IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2,
+        P_CURSOR OUT SYS_REFCURSOR,
+        P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+    );
+
+
+    /* ============================================================
+       GET MEAL DASHBOARD
+       ------------------------------------------------------------
+       V_EMP_ID added for logged-in-user site authorization.
+       ============================================================ */
+
+    PROCEDURE GET_MEAL_DASHBOARD(
+        V_EMP_ID IN VARCHAR2,
+        V_DATE IN VARCHAR2,
+        V_SITE IN VARCHAR2,
+        V_RES OUT VARCHAR2,
+        V_RESULT OUT VARCHAR2,
+        P_CURSOR OUT SYS_REFCURSOR,
+        P_SUMMARY_CURSOR OUT SYS_REFCURSOR
+    );
+
+END F1_MEAL_MANAGEMENT;
