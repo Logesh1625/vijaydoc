@@ -1,1150 +1,721 @@
+import {
+  STColumn,
+  STComponent,
+  STChange,
+  STPage
+} from '@delon/abc';
 
-/* ================================================================
-   PACKAGE BODY
-   ================================================================ */
-CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
-AS
+import {
+  Component,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 
-/* ============================================================
-   INSERT F1 MENU
-   SITE is taken from C_USER_MANAGE_T using ADD_BY (EMP_ID)
-   and stored in PROPERTY_01
-   ============================================================ */
-PROCEDURE INSERT_F1_MENU(
-    V_GROUPS IN VARCHAR2,
-    V_MEAL_PREFERENCE IN VARCHAR2,
-    V_FX_BADGE IN VARCHAR2,
-    V_NAME IN VARCHAR2,
-    V_FIRST_DATE_FXBL IN VARCHAR2,
-    V_LAST_DATE_FXBL IN VARCHAR2,
-    V_ADD_BY IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2
-) IS
+import {
+  SFComponent,
+  SFSchema
+} from '@delon/form';
 
-    V_SITE_VAL CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
+import { SettingsService } from '@delon/theme';
+import { deepMerge } from '@delon/util';
 
-BEGIN
+import {
+  NzMessageService,
+  NzModalService
+} from 'ng-zorro-antd';
 
-    /* Site of the employee who is adding (from user master) */
-    SELECT MIN(U.SITE)
-    INTO V_SITE_VAL
-    FROM CMS.C_USER_MANAGE_T U
-    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_ADD_BY))
-      AND U.SYSTEM_TYPE = 'CMS';
+import { ActivatedRoute } from '@angular/router';
 
-    INSERT INTO CMS.C_F1_MEAL_INFO (
-        ID,
-        GROUPS,
-        PROPERTY_01,
-        MEAL_PREFERENCE,
-        FX_BADGE,
-        NAME,
-        FIRST_DATE_FXBL,
-        LAST_DATE_FXBL,
-        ADD_BY,
-        ADD_DATE
-    )
-    VALUES (
-        SEQ_C_F1_MEAL_INFO.NEXTVAL,
-        V_GROUPS,
-        V_SITE_VAL,
-        V_MEAL_PREFERENCE,
-        V_FX_BADGE,
-        V_NAME,
-        TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
-        TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
-        V_ADD_BY,
-        SYSDATE
+import { I18NService } from '@core/i18n/i18n.service';
+import { SharedModule } from '@shared';
+
+import {
+  PublicNetService
+} from '@../../src/app/routes/a_Public_net/Public_net.service';
+
+import {
+  AddDetailsDrawComponent
+} from './F1-Deatails-add/F1-Details-add';
+
+import {
+  F1ManageImportComponent
+} from '../food-time-price/F1-Details-import/F1-Details-import';
+
+
+@Component({
+  selector: 'app-food-time-price',
+  templateUrl: './food-time-price.component.html',
+  styleUrls: ['./food-time-price.component.scss']
+})
+export class FoodTimePriceComponent implements OnInit {
+
+  @ViewChild('sf', { static: false })
+  sf: SFComponent;
+
+  @ViewChild('st', { static: false })
+  private st: STComponent;
+
+  constructor(
+    private publicSvr: PublicNetService,
+    public settings: SettingsService,
+    private msgSvr: NzMessageService,
+    private shareSvr: SharedModule,
+    private modelSvr: NzModalService,
+    private router: ActivatedRoute,
+    private i18n: I18NService
+  ) {}
+
+  title = 'F1 Meal Management';
+
+  sfSchema: SFSchema;
+
+  source: any[] = [];
+
+  loading = false;
+
+  exportLoading = false;
+
+  pi = 1;
+
+  ps = 10;
+
+  total = 0;
+
+  /** Default site (first site of the logged-in user), used by the Add drawer */
+  site = '';
+
+  /** All sites that belong to the logged-in user */
+  siteList: string[] = [];
+
+  /** Site chosen in the dropdown. '' = All My Sites */
+  selectedSite = '';
+
+  groups = '';
+
+  fxBadge = '';
+
+  groupsList: any[] = [];
+
+  checkedTableData: any[] = [];
+
+  delIdx = 0;
+
+  pages: STPage = {
+    show: true,
+    front: false,
+    showSize: true
+  };
+
+  columns: STColumn[] = [
+    {
+      title: '',
+      type: 'checkbox',
+      fixed: 'left',
+      width: '50px',
+      className: 'text-center'
+    },
+
+    {
+      title: 'Item',
+      index: 'Rn',
+      className: 'text-center',
+      width: '80px'
+    },
+
+    {
+      title: 'Group',
+      index: 'Groups',
+      className: 'text-center',
+      width: '100px'
+    },
+
+    {
+      title: 'Site',
+      index: 'Site',
+      className: 'text-center',
+      width: '100px'
+    },
+
+    {
+      title: 'FX Badge',
+      index: 'FxBadge',
+      className: 'text-center',
+      width: '120px'
+    },
+
+    {
+      title: 'Name',
+      index: 'Name',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'Meal Preference',
+      index: 'MealPreference',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'First Date at FXBL',
+      index: 'FirstDateFxbl',
+      className: 'text-center',
+      width: '160px'
+    },
+
+    {
+      title: 'Last Date at FXBL',
+      index: 'LastDateFxbl',
+      className: 'text-center',
+      width: '160px'
+    },
+
+    {
+      title: 'Add By',
+      index: 'AddBy',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'Add Date',
+      index: 'AddDate',
+      className: 'text-center',
+      width: '160px'
+    },
+
+    {
+      title: 'Last Edit By',
+      index: 'EditBy',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'Last Edit Date',
+      index: 'EditDate',
+      className: 'text-center',
+      width: '160px'
+    }
+  ];
+
+  ngOnInit(): void {
+    const form = [
+      {
+        key: 'Groups',
+        name: 'Group',
+        type: 'string'
+      },
+      {
+        key: 'FxBadge',
+        name: 'FX Badge',
+        type: 'string'
+      },
+      {
+        key: 'AddBy',
+        name: 'Add By',
+        type: 'string'
+      }
+    ];
+
+    this.sfSchema = this.publicSvr.jointSchema(form);
+
+    console.log(
+      'Current user from SettingsService:',
+      this.publicSvr.getSettingUserInfo()
     );
 
-    COMMIT;
+    this.loadLoggedInUserSite();
+  }
 
-    V_RES := '1';
-    V_RESULT := 'Success';
+  /**
+   * Do not call search() from ngAfterViewInit().
+   * Search will be called after the user's sites are loaded.
+   */
 
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
+  private loadLoggedInUserSite(): void {
+    const userInfo = this.publicSvr.getSettingUserInfo();
 
-END INSERT_F1_MENU;
-
-
-/* ============================================================
-   BULK F1 MENU
-   ============================================================ */
-PROCEDURE BULK_F1_MENU(
-    V_GROUPS IN VARCHAR2,
-    V_MEAL_PREFERENCE IN VARCHAR2,
-    V_FX_BADGE IN VARCHAR2,
-    V_NAME IN VARCHAR2,
-    V_FIRST_DATE_FXBL IN VARCHAR2,
-    V_LAST_DATE_FXBL IN VARCHAR2,
-    V_ADD_BY IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2
-) IS
-
-    V_SITE_VAL CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-
-BEGIN
-
-    /* Site of the employee who is adding (from user master) */
-    SELECT MIN(U.SITE)
-    INTO V_SITE_VAL
-    FROM CMS.C_USER_MANAGE_T U
-    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_ADD_BY))
-      AND U.SYSTEM_TYPE = 'CMS';
-
-    INSERT INTO CMS.C_F1_MEAL_INFO (
-        ID,
-        GROUPS,
-        PROPERTY_01,
-        MEAL_PREFERENCE,
-        FX_BADGE,
-        NAME,
-        FIRST_DATE_FXBL,
-        LAST_DATE_FXBL,
-        ADD_BY,
-        ADD_DATE
-    )
-    VALUES (
-        SEQ_C_F1_MEAL_INFO.NEXTVAL,
-        V_GROUPS,
-        V_SITE_VAL,
-        V_MEAL_PREFERENCE,
-        V_FX_BADGE,
-        V_NAME,
-        TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
-        TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
-        V_ADD_BY,
-        SYSDATE
+    console.log(
+      'Logged-in user information:',
+      userInfo
     );
 
-    COMMIT;
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END BULK_F1_MENU;
-
-
-/* ============================================================
-   GET F1 MENU MANAGEMENT
-
-   MEAL_PREFERENCE:
-       C_F1_MEAL_INFO.MEAL_PREFERENCE = Base Code ID
-       C_BASE_CODE_T.ID = Primary Key
-       C_BASE_CODE_T.TYPE_ID = 81
-       C_BASE_CODE_T.NAME = Display value
-
-   Shows only records whose SITE belongs to V_EMP_ID (C_USER_MANAGE_T).
-   Filters: GROUPS, SITE (PROPERTY_01), FX_BADGE, ADD_BY
-   ============================================================ */
-PROCEDURE GET_F1_MENU_MANAGE(
-    V_EMP_ID IN VARCHAR2,
-    V_GROUPS IN VARCHAR2,
-    V_SITE IN VARCHAR2,
-    V_FX_BADGE IN VARCHAR2,
-    V_ADD_BY IN VARCHAR2,
-    L_START_PAGE IN VARCHAR2,
-    L_PAGE_SIZE IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2,
-    P_CURSOR OUT SYS_REFCURSOR
-) IS
-BEGIN
-
-    OPEN P_CURSOR FOR
-
-    SELECT
-        RN,
-        ROWSCOUNT,
-        ID,
-        GROUPS,
-        SITE,
-        MEAL_PREFERENCE,
-        FX_BADGE,
-        NAME,
-        FIRST_DATE_FXBL,
-        LAST_DATE_FXBL,
-        ADD_BY,
-        ADD_DATE,
-        EDIT_BY,
-        EDIT_DATE
-    FROM
-    (
-        SELECT
-            ROWNUM AS RN,
-            COUNT(1) OVER() AS ROWSCOUNT,
-
-            V.ID,
-            V.GROUPS,
-            V.PROPERTY_01 AS SITE,
-
-            /* ID -> NAME */
-            BC.NAME AS MEAL_PREFERENCE,
-
-            V.FX_BADGE,
-            V.NAME,
-
-            TO_CHAR(
-                V.FIRST_DATE_FXBL,
-                'DD-MM-YYYY'
-            ) AS FIRST_DATE_FXBL,
-
-            TO_CHAR(
-                V.LAST_DATE_FXBL,
-                'DD-MM-YYYY'
-            ) AS LAST_DATE_FXBL,
-
-            V.ADD_BY,
-
-            TO_CHAR(
-                V.ADD_DATE,
-                'DD-MM-YYYY HH24:MI:SS'
-            ) AS ADD_DATE,
-
-            V.EDIT_BY,
-
-            TO_CHAR(
-                V.EDIT_DATE,
-                'DD-MM-YYYY HH24:MI:SS'
-            ) AS EDIT_DATE
-
-        FROM CMS.C_F1_MEAL_INFO V
-
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 81
-
-        WHERE NVL(V.DEL_FLAG, 0) = 0
-
-          AND (
-                V_GROUPS IS NULL
-                OR V.GROUPS LIKE '%' || V_GROUPS || '%'
-              )
-
-          AND (
-                V_SITE IS NULL
-                OR UPPER(TRIM(V.PROPERTY_01)) = UPPER(TRIM(V_SITE))
-              )
-
-          AND (
-                V_FX_BADGE IS NULL
-                OR V.FX_BADGE LIKE '%' || V_FX_BADGE || '%'
-              )
-
-          AND (
-                V_ADD_BY IS NULL
-                OR UPPER(TRIM(V.ADD_BY)) = UPPER(TRIM(V_ADD_BY))
-              )
-
-          AND EXISTS (
-                SELECT 1
-                FROM CMS.C_USER_MANAGE_T U
-                WHERE U.EMP_ID = V_EMP_ID
-                  AND U.SYSTEM_TYPE = 'CMS'
-                  AND U.SITE = V.PROPERTY_01
-              )
-
-        ORDER BY V.ADD_DATE DESC, V.ID DESC
-    )
-
-    WHERE RN > (L_START_PAGE - 1) * L_PAGE_SIZE
-
-      AND RN <=
-          (L_START_PAGE - 1) * L_PAGE_SIZE
-          + L_PAGE_SIZE;
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-EXCEPTION
-    WHEN OTHERS THEN
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END GET_F1_MENU_MANAGE;
-
-
-/* ============================================================
-   UPDATE F1 MENU MANAGEMENT
-
-   DB still stores MEAL_PREFERENCE ID.
-   ============================================================ */
-PROCEDURE UPDATE_F1_MENU_MANAGE(
-    V_ID IN NUMBER,
-    V_GROUPS IN VARCHAR2,
-    V_MEAL_PREFERENCE IN VARCHAR2,
-    V_FX_BADGE IN VARCHAR2,
-    V_NAME IN VARCHAR2,
-    V_FIRST_DATE_FXBL IN VARCHAR2,
-    V_LAST_DATE_FXBL IN VARCHAR2,
-    V_EDIT_BY IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2
-) IS
-BEGIN
-
-    UPDATE CMS.C_F1_MEAL_INFO
-    SET
-        GROUPS = V_GROUPS,
-        FX_BADGE = V_FX_BADGE,
-        MEAL_PREFERENCE = V_MEAL_PREFERENCE,
-        NAME = V_NAME,
-        FIRST_DATE_FXBL =
-            TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY'),
-        LAST_DATE_FXBL =
-            TO_DATE(V_LAST_DATE_FXBL, 'DD-MM-YYYY'),
-        EDIT_BY = V_EDIT_BY,
-        EDIT_DATE = SYSDATE
-    WHERE ID = V_ID;
-
-    IF SQL%ROWCOUNT = 0 THEN
-
-        ROLLBACK;
-
-        V_RES := '0';
-        V_RESULT :=
-            'No record found with ID = ' ||
-            V_ID ||
-            '. Update failed.';
-
-    ELSE
-
-        COMMIT;
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    END IF;
-
-EXCEPTION
-    WHEN OTHERS THEN
-
-        ROLLBACK;
-
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END UPDATE_F1_MENU_MANAGE;
-
-
-/* ============================================================
-   DELETE F1 MENU MANAGEMENT
-   ============================================================ */
-PROCEDURE DELETE_F1_MENU_MANAGE(
-    L_IDS IN VARCHAR2,
-    V_EDIT_BY IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2
-) IS
-BEGIN
-
-    UPDATE CMS.C_F1_MEAL_INFO
-    SET
-        DEL_FLAG = 1,
-        EDIT_DATE = SYSDATE,
-        EDIT_BY = V_EDIT_BY
-    WHERE INSTR(',' || L_IDS || ',', ',' || ID || ',') > 0;
-
-    COMMIT;
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-EXCEPTION
-    WHEN OTHERS THEN
-
-        ROLLBACK;
-
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END DELETE_F1_MENU_MANAGE;
-
-
-/* ============================================================
-   GET F1 MENU BY FX BADGE
-
-   MEAL_PREFERENCE returned as NAME.
-   SITE returned from PROPERTY_01.
-
-   Entitlement also checks Base Code NAME.
-   ============================================================ */
-PROCEDURE GET_F1_MENU_BY_FXBADGE(
-    V_FX_BADGE IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2,
-    P_CURSOR OUT SYS_REFCURSOR
-) IS
-
-    V_COUNT NUMBER;
-    V_ALREADY NUMBER;
-
-BEGIN
-
-    /* Check FX Badge */
-    SELECT COUNT(1)
-    INTO V_COUNT
-    FROM CMS.C_F1_MEAL_INFO
-    WHERE FX_BADGE = V_FX_BADGE
-      AND NVL(DEL_FLAG, 0) = 0;
-
-
-    IF V_COUNT = 0 THEN
-
-        V_RES := '0';
-        V_RESULT := 'No record found for this FX Badge.';
-
-        OPEN P_CURSOR FOR
-        SELECT NULL AS FX_BADGE
-        FROM DUAL
-        WHERE 1 = 0;
-
-        RETURN;
-
-    END IF;
-
-
-    /* Already collected today */
-    SELECT COUNT(1)
-    INTO V_ALREADY
-    FROM CMS.C_F1_SCAN_LOG
-    WHERE FX_BADGE = V_FX_BADGE
-      AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-      AND NVL(DEL_FLAG, 0) = 0
-      AND COLLECTED_DATA = 'SUCCESS';
-
-
-    OPEN P_CURSOR FOR
-
-    SELECT
-        V.GROUPS,
-        V.SUB_GROUP,
-        V.PROPERTY_01 AS SITE,
-
-        /* ID -> NAME */
-        BC.NAME AS MEAL_PREFERENCE,
-
-        V.FX_BADGE,
-        V.NAME,
-
-        TO_CHAR(
-            V.FIRST_DATE_FXBL,
-            'DD-MM-YYYY'
-        ) AS FIRST_DATE_FXBL,
-
-        TO_CHAR(
-            V.LAST_DATE_FXBL,
-            'DD-MM-YYYY'
-        ) AS LAST_DATE_FXBL,
-
-        CASE
-
-            WHEN UPPER(TRIM(BC.NAME)) =
-                 'NO MEAL REQUIRED'
-            THEN 'NOT_ENTITLED'
-
-            WHEN V.FIRST_DATE_FXBL IS NULL
-              OR V.LAST_DATE_FXBL IS NULL
-            THEN 'NOT_UPDATED'
-
-            WHEN TRUNC(SYSDATE) NOT BETWEEN
-                 TRUNC(V.FIRST_DATE_FXBL)
-                 AND TRUNC(V.LAST_DATE_FXBL)
-            THEN 'LAST DATE EXPIRED'
-
-            WHEN V_ALREADY > 0
-            THEN 'ALREADY_SCANNED'
-
-            ELSE 'ENTITLED'
-
-        END AS ENTITLEMENT_STATUS
-
-    FROM
-    (
-        SELECT *
-        FROM CMS.C_F1_MEAL_INFO
-        WHERE FX_BADGE = V_FX_BADGE
-          AND NVL(DEL_FLAG, 0) = 0
-        ORDER BY ADD_DATE DESC, ID DESC
-    ) V
-
-    LEFT JOIN CMS.C_BASE_CODE_T BC
-        ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-       AND BC.TYPE_ID = 81
-
-    WHERE ROWNUM = 1;
-
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-
-EXCEPTION
-    WHEN OTHERS THEN
-
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END GET_F1_MENU_BY_FXBADGE;
-
-
-/* ============================================================
-   INSERT MEAL SCAN LOG
-
-   Signature unchanged. SITE is copied from the badge's latest
-   C_F1_MEAL_INFO record (PROPERTY_01) into
-   C_F1_SCAN_LOG.PROPERTY_01.
-
-   DB stores MEAL_PREFERENCE ID.
-   Logic uses Base Code NAME.
-   ============================================================ */
-PROCEDURE INSERT_MEAL_SCAN_LOG(
-    V_FX_BADGE IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2,
-    P_CURSOR OUT SYS_REFCURSOR
-) IS
-
-    V_COUNT NUMBER;
-    V_ALREADY_COUNT NUMBER;
-
-    V_GROUPS
-        CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
-
-    V_SITE_VAL
-        CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-
-    V_NAME
-        CMS.C_F1_MEAL_INFO.NAME%TYPE;
-
-    V_MEAL_PREF
-        CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
-
-    V_MEAL_PREF_NAME
-        CMS.C_BASE_CODE_T.NAME%TYPE;
-
-    V_FIRST_DATE
-        CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
-
-    V_LAST_DATE
-        CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
-
-    V_STATUS VARCHAR2(50);
-    V_MESSAGE VARCHAR2(200);
-
-BEGIN
-
-    /* Check FX Badge */
-    SELECT COUNT(1)
-    INTO V_COUNT
-    FROM CMS.C_F1_MEAL_INFO
-    WHERE FX_BADGE = V_FX_BADGE
-      AND NVL(DEL_FLAG, 0) = 0;
-
-
-    IF V_COUNT = 0 THEN
-
-        V_STATUS := 'INVALID';
-        V_MESSAGE := 'FX Badge not found';
-
-        V_GROUPS := NULL;
-        V_SITE_VAL := NULL;
-        V_NAME := NULL;
-        V_MEAL_PREF := NULL;
-        V_MEAL_PREF_NAME := NULL;
-        V_FIRST_DATE := NULL;
-        V_LAST_DATE := NULL;
-
-    ELSE
-
-        /* Get latest record */
-        SELECT
-            GROUPS,
-            PROPERTY_01,
-            NAME,
-            MEAL_PREFERENCE,
-            FIRST_DATE_FXBL,
-            LAST_DATE_FXBL
-        INTO
-            V_GROUPS,
-            V_SITE_VAL,
-            V_NAME,
-            V_MEAL_PREF,
-            V_FIRST_DATE,
-            V_LAST_DATE
-        FROM
-        (
-            SELECT *
-            FROM CMS.C_F1_MEAL_INFO
-            WHERE FX_BADGE = V_FX_BADGE
-              AND NVL(DEL_FLAG, 0) = 0
-            ORDER BY ADD_DATE DESC, ID DESC
-        )
-        WHERE ROWNUM = 1;
-
-
-        /* Get Meal Preference NAME */
-        SELECT NVL(MAX(BC.NAME), V_MEAL_PREF)
-        INTO V_MEAL_PREF_NAME
-        FROM CMS.C_BASE_CODE_T BC
-        WHERE BC.TYPE_ID = 81
-          AND TO_CHAR(BC.ID) = TO_CHAR(V_MEAL_PREF);
-
-
-        /* Entitlement */
-        IF UPPER(TRIM(V_MEAL_PREF_NAME)) =
-           'NO MEAL REQUIRED' THEN
-
-            V_STATUS := 'INVALID';
-
-            V_MESSAGE :=
-                'NO MEAL REQUIRED BUT COME TO COLLECT';
-
-        ELSIF V_FIRST_DATE IS NULL
-           OR V_LAST_DATE IS NULL THEN
-
-            V_STATUS := 'INVALID';
-
-            V_MESSAGE := 'Dates not updated';
-
-        ELSIF TRUNC(SYSDATE) NOT BETWEEN
-              TRUNC(V_FIRST_DATE)
-              AND TRUNC(V_LAST_DATE) THEN
-
-            V_STATUS := 'INVALID';
-
-            V_MESSAGE := 'LAST DATE EXPIRED';
-
-        ELSE
-
-            V_STATUS := 'SUCCESS';
-
-            V_MESSAGE := 'Entitled for meal';
-
-        END IF;
-
-
-        /* Already scanned today */
-        IF V_STATUS = 'SUCCESS' THEN
-
-            SELECT COUNT(1)
-            INTO V_ALREADY_COUNT
-            FROM CMS.C_F1_SCAN_LOG
-            WHERE FX_BADGE = V_FX_BADGE
-              AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-              AND NVL(DEL_FLAG, 0) = 0
-              AND COLLECTED_DATA = 'SUCCESS';
-
-
-            IF V_ALREADY_COUNT > 0 THEN
-
-                V_STATUS := 'ALREADY_SCANNED';
-
-                V_MESSAGE :=
-                    'Meal already collected today';
-
-            END IF;
-
-        END IF;
-
-    END IF;
-
-
-    /* Insert scan log */
-    INSERT INTO CMS.C_F1_SCAN_LOG (
-        ID,
-        GROUPS,
-        PROPERTY_01,
-        MEAL_PREFERENCE,
-        FX_BADGE,
-        NAME,
-        FIRST_DATE_FXBL,
-        LAST_DATE_FXBL,
-        COLLECTED_DATA,
-        STATUS_MESSAGE,
-        MEAL_DATE,
-        FIRST_SCANTIME,
-        LAST_SCANTIME
-    )
-    VALUES (
-        SEQ_C_F1_SCAN_LOG.NEXTVAL,
-        V_GROUPS,
-        V_SITE_VAL,
-        V_MEAL_PREF,
-        V_FX_BADGE,
-        V_NAME,
-        V_FIRST_DATE,
-        V_LAST_DATE,
-        V_STATUS,
-        V_MESSAGE,
-        SYSDATE,
-        SYSDATE,
-        SYSDATE
+    if (!userInfo || !userInfo.eeid) {
+      this.msgSvr.error(
+        'Logged-in user EEID is missing'
+      );
+
+      return;
+    }
+
+    console.log(
+      'Calling CMS-Get_user_manage for EEID:',
+      userInfo.eeid
     );
 
-
-    COMMIT;
-
-
-    /* Return NAME instead of ID */
-    OPEN P_CURSOR FOR
-
-    SELECT
-        V_FX_BADGE AS FX_BADGE,
-        V_NAME AS NAME,
-        V_SITE_VAL AS SITE,
-        V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
-        TO_CHAR(
-            SYSDATE,
-            'DD-MM-YYYY HH24:MI:SS'
-        ) AS SCAN_TIME,
-        V_STATUS AS STATUS,
-        V_MESSAGE AS STATUS_MESSAGE
-    FROM DUAL;
-
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-
-EXCEPTION
-    WHEN OTHERS THEN
-
-        ROLLBACK;
-
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END INSERT_MEAL_SCAN_LOG;
-
-
-/* ============================================================
-   GET MEAL SCAN LOG
-   Optional SITE filter (C_F1_SCAN_LOG.PROPERTY_01)
-   ============================================================ */
-PROCEDURE GET_MEAL_SCAN_LOG(
-    V_SEARCH_TEXT IN VARCHAR2,
-    V_STATUS_FILTER IN VARCHAR2,
-    V_SITE IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2,
-    P_CURSOR OUT SYS_REFCURSOR,
-    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
-) IS
-BEGIN
-
-    /* Scan Log */
-    OPEN P_CURSOR FOR
-
-    SELECT
-        S.FX_BADGE,
-        S.NAME,
-        S.GROUPS,
-        S.PROPERTY_01 AS SITE,
-
-        /* ID -> NAME */
-        BC.NAME AS MEAL_PREFERENCE,
-
-        TO_CHAR(
-            S.FIRST_DATE_FXBL,
-            'DD-MM-YYYY'
-        ) AS FIRST_DATE_FXBL,
-
-        TO_CHAR(
-            S.LAST_DATE_FXBL,
-            'DD-MM-YYYY'
-        ) AS LAST_DATE_FXBL,
-
-        TO_CHAR(
-            NVL(S.LAST_SCANTIME, S.FIRST_SCANTIME),
-            'DD-MM-YYYY HH24:MI:SS'
-        ) AS SCAN_TIME,
-
-        S.COLLECTED_DATA AS STATUS,
-        S.STATUS_MESSAGE
-
-    FROM CMS.C_F1_SCAN_LOG S
-
-    LEFT JOIN CMS.C_BASE_CODE_T BC
-        ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-       AND BC.TYPE_ID = 81
-
-    WHERE NVL(S.DEL_FLAG, 0) = 0
-
-      AND (
-            V_SEARCH_TEXT IS NULL
-            OR V_SEARCH_TEXT = ''
-            OR UPPER(S.FX_BADGE)
-               LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
-            OR UPPER(S.NAME)
-               LIKE '%' || UPPER(V_SEARCH_TEXT) || '%'
-          )
-
-      AND (
-            V_STATUS_FILTER IS NULL
-            OR V_STATUS_FILTER = 'All'
-            OR S.COLLECTED_DATA = V_STATUS_FILTER
-          )
-
-      AND (
-            V_SITE IS NULL
-            OR V_SITE = 'All'
-            OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE))
-          )
-
-    ORDER BY S.MEAL_DATE DESC;
-
-
-    /* Summary */
-    OPEN P_SUMMARY_CURSOR FOR
-
-    SELECT
-        COUNT(1) AS TOTAL_SCANS,
-
-        SUM(
-            CASE
-                WHEN COLLECTED_DATA = 'SUCCESS'
-                THEN 1
-                ELSE 0
-            END
-        ) AS SUCCESS_COUNT,
-
-        SUM(
-            CASE
-                WHEN COLLECTED_DATA = 'ALREADY_SCANNED'
-                THEN 1
-                ELSE 0
-            END
-        ) AS ALREADY_SCANNED_COUNT,
-
-        SUM(
-            CASE
-                WHEN COLLECTED_DATA = 'INVALID'
-                THEN 1
-                ELSE 0
-            END
-        ) AS INVALID_COUNT
-
-    FROM CMS.C_F1_SCAN_LOG
-
-    WHERE NVL(DEL_FLAG, 0) = 0
-
-      AND (
-            V_SITE IS NULL
-            OR V_SITE = 'All'
-            OR UPPER(TRIM(PROPERTY_01)) = UPPER(TRIM(V_SITE))
-          );
-
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-
-EXCEPTION
-    WHEN OTHERS THEN
-
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END GET_MEAL_SCAN_LOG;
-
-
-/* ============================================================
-   GET MEAL DASHBOARD
-   Optional SITE filter on meal info and scan log
-   ============================================================ */
-PROCEDURE GET_MEAL_DASHBOARD(
-    V_DATE IN VARCHAR2,
-    V_SITE IN VARCHAR2,
-    V_RES OUT VARCHAR2,
-    V_RESULT OUT VARCHAR2,
-    P_CURSOR OUT SYS_REFCURSOR,
-    P_SUMMARY_CURSOR OUT SYS_REFCURSOR
-) IS
-
-    V_DAY DATE;
-
-    V_TOTAL NUMBER := 0;
-    V_NO_MEAL NUMBER := 0;
-    V_COLLECTED NUMBER := 0;
-    V_NOT_REQ_CAME NUMBER := 0;
-    V_NOT_COLLECTED NUMBER := 0;
-
-BEGIN
-
-    V_DAY :=
-        NVL(
-            TO_DATE(V_DATE, 'DD-MM-YYYY'),
-            TRUNC(SYSDATE)
+    this.publicSvr.getSitebasedUser().subscribe(
+      (userList: any[]) => {
+        console.log(
+          'CMS-Get_user_manage user list:',
+          userList
         );
 
+        if (!userList || userList.length === 0) {
+          this.msgSvr.error(
+            'No user data returned from CMS-Get_user_manage'
+          );
 
-    /* ========================================================
-       EMP
-       Latest record per badge on selected date
-       ======================================================== */
-    WITH EMP AS
-    (
-        SELECT
-            FX_BADGE,
-            MEAL_PREFERENCE,
-            MEAL_PREFERENCE_NAME
-        FROM
-        (
-            SELECT
-                M.FX_BADGE,
-                M.MEAL_PREFERENCE,
-                BC.NAME AS MEAL_PREFERENCE_NAME,
+          return;
+        }
 
-                ROW_NUMBER() OVER (
-                    PARTITION BY M.FX_BADGE
-                    ORDER BY M.ADD_DATE DESC, M.ID DESC
-                ) AS RN
+        // A user can have more than one site
+        this.siteList = this.extractAllSites(
+          userList,
+          userInfo.eeid
+        );
 
-            FROM CMS.C_F1_MEAL_INFO M
+        console.log(
+          'Resolved logged-in user sites:',
+          this.siteList
+        );
 
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(M.MEAL_PREFERENCE)
-                   = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 81
+        if (this.siteList.length === 0) {
+          this.msgSvr.error(
+            'Logged-in user site is missing'
+          );
 
-            WHERE NVL(M.DEL_FLAG, 0) = 0
-              AND TRUNC(M.ADD_DATE) = V_DAY
-              AND (
-                    V_SITE IS NULL
-                    OR V_SITE = 'All'
-                    OR UPPER(TRIM(M.PROPERTY_01)) = UPPER(TRIM(V_SITE))
-                  )
-        )
-        WHERE RN = 1
-    ),
+          return;
+        }
 
-    /* ========================================================
-       Collected employees
-       ======================================================== */
-    COLLECTED AS
-    (
-        SELECT DISTINCT FX_BADGE
-        FROM CMS.C_F1_SCAN_LOG
-        WHERE NVL(DEL_FLAG, 0) = 0
-          AND TRUNC(MEAL_DATE) = V_DAY
-          AND COLLECTED_DATA = 'SUCCESS'
-          AND (
-                V_SITE IS NULL
-                OR V_SITE = 'All'
-                OR UPPER(TRIM(PROPERTY_01)) = UPPER(TRIM(V_SITE))
-              )
+        this.site = this.siteList[0];
+
+        // Default: show data of all my sites
+        this.selectedSite = '';
+
+        // Call F1 API only after sites are available
+        this.search(true);
+      },
+      error => {
+        console.error(
+          'CMS-Get_user_manage error:',
+          error
+        );
+
+        this.msgSvr.error(
+          'Unable to load logged-in user information'
+        );
+      }
+    );
+  }
+
+  private getItemEeid(item: any): string {
+    return String(
+      item.Eeid ||
+      item.EEID ||
+      item.EeidNo ||
+      item.EmpId ||
+      item.EmployeeId ||
+      item.EmployeeCode ||
+      item.eeid ||
+      ''
     )
+    .trim()
+    .toUpperCase();
+  }
 
-    SELECT
+  /**
+   * Returns every unique site of the logged-in employee.
+   */
+  private extractAllSites(
+    userList: any[],
+    eeid: string
+  ): string[] {
+    const loginEeid = String(eeid)
+      .trim()
+      .toUpperCase();
 
-        /* Total employees */
-        (
-            SELECT COUNT(1)
-            FROM EMP
-        ),
+    const sites = userList
+      .filter(item => item && this.getItemEeid(item) === loginEeid)
+      .map(item => this.extractSite(item))
+      .filter(site => !!site);
 
-        /* No Meal Required */
-        (
-            SELECT COUNT(1)
-            FROM EMP
-            WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME))
-                  = 'NO MEAL REQUIRED'
-        ),
+    return Array.from(new Set(sites));
+  }
 
-        /* Meals collected */
-        (
-            SELECT COUNT(1)
-            FROM COLLECTED
-        ),
+  private extractSite(user: any): string {
+    if (!user) {
+      return '';
+    }
 
-        /* No Meal Required but came */
-        (
-            SELECT COUNT(DISTINCT S.FX_BADGE)
+    const site =
+      user.Site ||
+      user.site ||
+      user.SITE ||
+      user.SiteName ||
+      user.siteName ||
+      user.WorkSite ||
+      user.Worksite ||
+      user.BasicCode ||
+      user.Basiccode ||
+      user.Location ||
+      user.location ||
+      '';
 
-            FROM CMS.C_F1_SCAN_LOG S
+    return String(site).trim();
+  }
 
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(S.MEAL_PREFERENCE)
-                   = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 81
+  search(first?: boolean): void {
+    this.checkedTableData = [];
 
-            WHERE NVL(S.DEL_FLAG, 0) = 0
-              AND TRUNC(S.MEAL_DATE) = V_DAY
+    if (first) {
+      this.pi = 1;
+    }
 
-              AND UPPER(TRIM(BC.NAME))
-                  = 'NO MEAL REQUIRED'
+    this.loading = true;
 
-              AND (
-                    V_SITE IS NULL
-                    OR V_SITE = 'All'
-                    OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE))
-                  )
-        ),
+    this.searchHandle(false);
+  }
 
-        /* Entitled but not collected */
-        (
-            SELECT COUNT(1)
-            FROM EMP E
+  searchHandle(isExport?: boolean): void {
+    const userInfo = this.publicSvr.getSettingUserInfo();
 
-            WHERE NVL(
-                    UPPER(TRIM(E.MEAL_PREFERENCE_NAME)),
-                    'X'
-                  ) <> 'NO MEAL REQUIRED'
+    if (!userInfo || !userInfo.eeid) {
+      this.loading = false;
+      this.exportLoading = false;
+      this.msgSvr.error('Logged-in user EEID is missing');
+      return;
+    }
 
-              AND NOT EXISTS
-              (
-                  SELECT 1
-                  FROM COLLECTED C
-                  WHERE C.FX_BADGE = E.FX_BADGE
-              )
-        )
+    if (!this.siteList || this.siteList.length === 0) {
+      this.loading = false;
+      this.exportLoading = false;
+      this.msgSvr.error('Logged-in user site is missing');
+      return;
+    }
 
-    INTO
-        V_TOTAL,
-        V_NO_MEAL,
-        V_COLLECTED,
-        V_NOT_REQ_CAME,
-        V_NOT_COLLECTED
+    const params: any = {
+      Groups: this.groups || '',
+      FxBadge: this.fxBadge || '',
+      EmpId: userInfo.eeid,
+      SystemName: 'CMS',
+      Site: this.selectedSite || '',
+      StartPage: isExport ? 1 : this.pi,
+      PageSize: isExport ? 999999999999999 : this.ps,
+      Func: 'CMS-GetF1MenuManage'
+    };
 
-    FROM DUAL;
+    const formValues =
+      this.sf && this.sf.value
+        ? this.sf.value
+        : {};
 
+    const finalParams: any = deepMerge(
+      params,
+      formValues
+    );
 
-    /* ========================================================
-       Dashboard Cards
-       ======================================================== */
-    OPEN P_CURSOR FOR
+    // Site always comes from the dropdown ('' = all my sites)
+    finalParams.Site = this.selectedSite || '';
 
-    SELECT
-        V_TOTAL AS TOTAL_EMPLOYEES,
-        V_COLLECTED AS MEALS_COLLECTED,
-        V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
-        V_NO_MEAL AS NO_MEAL_REQUIRED,
-        V_NOT_REQ_CAME AS NOT_REQUIRED_CAME
+    console.log(
+      'F1 Menu Manage final params:',
+      finalParams
+    );
 
-    FROM DUAL;
-
-
-    /* ========================================================
-       Category-wise collected meals
-       ======================================================== */
-    OPEN P_SUMMARY_CURSOR FOR
-
-    WITH CATS AS
-    (
-        SELECT 1 AS SORT_NO,
-               'Indian Veg' AS CATEGORY
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT 2,
-               'Indian Non-Veg'
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT 3,
-               'Western Veg'
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT 4,
-               'Western Non-Veg'
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT 5,
-               'Jain'
-        FROM DUAL
-
-        UNION ALL
-
-        SELECT 6,
-               'Vegan'
-        FROM DUAL
-    ),
-
-    CNT AS
-    (
-        SELECT
-            UPPER(TRIM(BC.NAME)) AS PREF,
-
-            COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
-
-        FROM CMS.C_F1_SCAN_LOG S
-
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(S.MEAL_PREFERENCE)
-               = TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 81
-
-        WHERE NVL(S.DEL_FLAG, 0) = 0
-          AND TRUNC(S.MEAL_DATE) = V_DAY
-          AND S.COLLECTED_DATA = 'SUCCESS'
-          AND (
-                V_SITE IS NULL
-                OR V_SITE = 'All'
-                OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE))
-              )
-
-        GROUP BY UPPER(TRIM(BC.NAME))
+    this.publicSvr.iwxPostF1(
+      finalParams,
+      {
+        headers: {
+          apiID: 'ffff-1789633596388-10208193125-1306',
+          userKey: 'E9785F13CCEAFB251A6AB147AFD24336'
+        }
+      },
+      true
     )
+    .then((res: any) => {
+      this.loading = false;
+      this.exportLoading = false;
 
-    SELECT
-        C.CATEGORY,
+      console.log(
+        'F1 Menu Manage response:',
+        res
+      );
 
-        NVL(
-            N.TOTAL_COUNT,
-            0
-        ) AS COLLECTED_COUNT,
+      if (!res || String(res.IsOK) !== '1') {
+        if (!isExport) {
+          this.source = [];
+          this.total = 0;
+        }
 
-        CASE
+        this.msgSvr.error(
+          res && res.Msg
+            ? res.Msg
+            : 'Unable to load F1 menu data'
+        );
 
-            WHEN V_COLLECTED = 0
-            THEN 0
+        return;
+      }
 
-            ELSE ROUND(
-                NVL(N.TOTAL_COUNT, 0)
-                * 100
-                / V_COLLECTED
-            )
+      const list = Array.isArray(res.List)
+        ? res.List
+        : [];
 
-        END AS PERCENTAGE
+      if (isExport) {
+        this.exportExcel(list);
+        return;
+      }
 
-    FROM CATS C
+      this.source = list;
 
-    LEFT JOIN CNT N
-        ON N.PREF = UPPER(C.CATEGORY)
+      this.total = list.length > 0
+        ? Number(list[0].Rowscount || 0)
+        : 0;
+    })
+    .catch(error => {
+      this.loading = false;
+      this.exportLoading = false;
 
-    ORDER BY C.SORT_NO;
+      console.error(
+        'F1 Menu Manage API error:',
+        error
+      );
 
+      this.msgSvr.error(
+        'F1 Menu Manage API failed'
+      );
+    });
+  }
 
-    V_RES := '1';
-    V_RESULT := 'Success';
+  private exportExcel(list: any[]): void {
+    if (!list || list.length === 0) {
+      this.msgSvr.error('No Data!');
+      return;
+    }
 
+    const allData = list.map(item => {
+      return {
+        Item: item.Rn,
+        Group: item.Groups,
+        Site: item.Site,
+        FxBadge: item.FxBadge,
+        Name: item.Name,
+        MealPreference: item.MealPreference,
+        FirstDateFxbl: item.FirstDateFxbl,
+        LastDateFxbl: item.LastDateFxbl,
+        AddBy: item.AddBy,
+        AddDate: item.AddDate,
+        LastEditBy: item.EditBy,
+        LastEditDate: item.EditDate
+      };
+    });
 
-EXCEPTION
-    WHEN OTHERS THEN
+    const fileName =
+      'F1_Meal_Management_' +
+      new Date().getTime() +
+      '.xlsx';
 
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
+    // second argument = number of columns (was 12 for 11 fields, now 13 for 12 fields)
+    this.publicSvr.exportHandle(
+      allData,
+      13,
+      fileName
+    );
+  }
 
-END GET_MEAL_DASHBOARD;
+  add(): void {
+    this.openDrawer('Add');
+  }
 
+  update(): void {
+    if (this.checkedTableData.length !== 1) {
+      this.shareSvr.showMsg(
+        'error',
+        this.i18n.fanyi(
+          'table.content.edit-data-select'
+        )
+      );
 
-END F1_MEAL_MANAGEMENT;
+      return;
+    }
+
+    this.openDrawer('Edit');
+  }
+
+  importbulk(): void {
+    this.shareSvr.openDrawer(
+      'Import',
+      F1ManageImportComponent,
+      {},
+      result => {
+        if (result) {
+          this.search(true);
+        }
+      }
+    );
+  }
+
+  openDrawer(name: string): void {
+    if (
+      name === 'Edit' &&
+      this.checkedTableData.length !== 1
+    ) {
+      this.shareSvr.showMsg(
+        'error',
+        this.i18n.fanyi(
+          'table.content.edit-data-select'
+        )
+      );
+
+      return;
+    }
+
+    console.log(
+      'Selected row:',
+      this.checkedTableData[0]
+    );
+
+    this.shareSvr.openDrawer(
+      name,
+      AddDetailsDrawComponent,
+      {
+        option: name,
+        editData: this.checkedTableData[0],
+        site: this.selectedSite || this.site,
+        siteList: this.siteList
+      },
+      result => {
+        if (result) {
+          this.search(true);
+        }
+      }
+    );
+  }
+
+  delete(): void {
+    if (this.checkedTableData.length === 0) {
+      this.shareSvr.showMsg(
+        'error',
+        this.i18n.fanyi(
+          'table.content.edit-data-select'
+        )
+      );
+
+      return;
+    }
+
+    this.delIdx = 0;
+
+    this.shareSvr.modalSvr.confirm({
+      nzTitle: 'Prompt',
+
+      nzContent:
+        'Are you sure you want to delete the selected ' +
+        this.checkedTableData.length +
+        ' data?',
+
+      nzOnOk: () => {
+        this.delHandle();
+      }
+    });
+  }
+
+  delHandle(): void {
+    const ids: any[] = [];
+
+    this.checkedTableData.forEach(item => {
+      if (
+        item &&
+        item.Id !== undefined &&
+        item.Id !== null
+      ) {
+        ids.push(item.Id);
+      }
+    });
+
+    if (ids.length === 0) {
+      this.msgSvr.error(
+        'Selected records do not contain Id'
+      );
+
+      return;
+    }
+
+    const userInfo = this.publicSvr.getSettingUserInfo();
+
+    const params = {
+      Ids: ids.join(',') + ',',
+      EditBy: userInfo.eeid,
+      Func: 'CMS-DeleteF1MenuManage'
+    };
+
+    console.log(
+      'Delete params:',
+      params
+    );
+
+    this.publicSvr.iwxPostF1(
+      params,
+      {
+        headers: {
+          apiID: 'ffff-1789634776545-10208193125-1341',
+          userKey: 'E9785F13CCEAFB251A6AB147AFD24336'
+        }
+      },
+      true
+    )
+    .then((res: any) => {
+      if (res && String(res.IsOK) === '1') {
+        this.msgSvr.success('Success');
+        this.search(true);
+      } else {
+        this.msgSvr.error(
+          res && res.Msg
+            ? res.Msg
+            : 'Delete failed'
+        );
+      }
+    })
+    .catch(error => {
+      console.error(
+        'Delete API error:',
+        error
+      );
+
+      this.msgSvr.error(
+        'Delete failed'
+      );
+    });
+  }
+
+  exportData(): void {
+    if (!this.siteList || this.siteList.length === 0) {
+      this.msgSvr.error(
+        'Logged-in user site is missing'
+      );
+
+      return;
+    }
+
+    this.exportLoading = true;
+
+    this.searchHandle(true);
+  }
+
+  change(ret: STChange): void {
+    if (ret.type === 'checkbox') {
+      this.checkedTableData = ret.checkbox || [];
+    }
+
+    if (ret.type === 'pi') {
+      this.pi = ret.pi;
+      this.search(false);
+    }
+
+    if (ret.type === 'ps') {
+      this.ps = ret.ps;
+      this.search(true);
+    }
+  }
+}
