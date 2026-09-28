@@ -1,157 +1,395 @@
-CREATE OR REPLACE PACKAGE CMS.F1_MEAL_MANAGEMENT
-AS
+PROCEDURE GET_MEAL_DASHBOARD(
+    V_EMP_ID            IN VARCHAR2,
+    V_DATE              IN VARCHAR2,
+    V_SITE              IN VARCHAR2,
+    V_RES               OUT VARCHAR2,
+    V_RESULT            OUT VARCHAR2,
+    P_CURSOR            OUT SYS_REFCURSOR,
+    P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
+) IS
+
+    V_DAY DATE;
+
+    V_TOTAL NUMBER := 0;
+    V_NO_MEAL NUMBER := 0;
+    V_COLLECTED NUMBER := 0;
+    V_NOT_REQ_CAME NUMBER := 0;
+    V_NOT_COLLECTED NUMBER := 0;
+
+BEGIN
 
     /* ============================================================
-       INSERT F1 MENU
+       DATE
        ============================================================ */
 
-    PROCEDURE INSERT_F1_MENU(
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_ADD_BY            IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    );
-
-
-    /* ============================================================
-       BULK F1 MENU
-       ============================================================ */
-
-    PROCEDURE BULK_F1_MENU(
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_ADD_BY            IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    );
+    V_DAY :=
+        TO_DATE(
+            V_DATE,
+            'DD-MM-YYYY'
+        );
 
 
     /* ============================================================
-       GET F1 MENU MANAGEMENT
+       EMPLOYEE DATA
+
+       Employee is valid when:
+
+       DEL_FLAG = 0
+       AND selected date is between
+           FIRST_DATE_FXBL and LAST_DATE_FXBL
+
+       User can see only sites assigned to him.
        ============================================================ */
 
-    PROCEDURE GET_F1_MENU_MANAGE(
-        V_EMP_ID        IN VARCHAR2,
-        V_GROUPS        IN VARCHAR2,
-        V_SITE          IN VARCHAR2,
-        V_FX_BADGE      IN VARCHAR2,
-        V_ADD_BY        IN VARCHAR2,
-        L_START_PAGE    IN VARCHAR2,
-        L_PAGE_SIZE     IN VARCHAR2,
-        V_RES           OUT VARCHAR2,
-        V_RESULT        OUT VARCHAR2,
-        P_CURSOR        OUT SYS_REFCURSOR
-    );
+    WITH EMP AS
+    (
+        SELECT
+            M.FX_BADGE,
+            M.MEAL_PREFERENCE,
+            BC.NAME AS MEAL_PREFERENCE_NAME,
+            M.PROPERTY_01 AS SITE
+        FROM CMS.C_F1_MEAL_INFO M
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+            ON TO_CHAR(M.MEAL_PREFERENCE)
+               =
+               TO_CHAR(BC.ID)
+           AND BC.TYPE_ID = 81
+
+        WHERE NVL(M.DEL_FLAG, 0) = 0
+
+          /* DATE FILTER */
+          AND V_DAY BETWEEN
+              TRUNC(M.FIRST_DATE_FXBL)
+              AND
+              TRUNC(M.LAST_DATE_FXBL)
+
+          /* ======================================================
+             USER SITE AUTHORIZATION
+             ====================================================== */
+
+          AND EXISTS
+          (
+              SELECT 1
+              FROM CMS.C_USER_MANAGE_T U
+
+              WHERE UPPER(TRIM(U.EMP_ID))
+                    =
+                    UPPER(TRIM(V_EMP_ID))
+
+                AND U.SYSTEM_TYPE = 'CMS'
+
+                AND NVL(U.DEL_FLAG, 0) = 0
+
+                AND UPPER(TRIM(U.SITE))
+                    =
+                    UPPER(TRIM(M.PROPERTY_01))
+
+                /* Selected site */
+                AND
+                (
+                    V_SITE IS NULL
+                    OR V_SITE = ''
+                    OR UPPER(TRIM(V_SITE)) = 'ALL'
+                    OR UPPER(TRIM(U.SITE))
+                       =
+                       UPPER(TRIM(V_SITE))
+                )
+          )
+    ),
+
+    /* ============================================================
+       COLLECTED EMPLOYEES
+       ============================================================ */
+
+    COLLECTED AS
+    (
+        SELECT DISTINCT
+            S.FX_BADGE
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        WHERE NVL(S.DEL_FLAG, 0) = 0
+
+          AND TRUNC(S.MEAL_DATE) = V_DAY
+
+          AND S.COLLECTED_DATA = 'SUCCESS'
+
+          /* USER SITE */
+          AND EXISTS
+          (
+              SELECT 1
+              FROM CMS.C_USER_MANAGE_T U
+
+              WHERE UPPER(TRIM(U.EMP_ID))
+                    =
+                    UPPER(TRIM(V_EMP_ID))
+
+                AND U.SYSTEM_TYPE = 'CMS'
+
+                AND NVL(U.DEL_FLAG, 0) = 0
+
+                AND UPPER(TRIM(U.SITE))
+                    =
+                    UPPER(TRIM(S.PROPERTY_01))
+
+                AND
+                (
+                    V_SITE IS NULL
+                    OR V_SITE = ''
+                    OR UPPER(TRIM(V_SITE)) = 'ALL'
+                    OR UPPER(TRIM(U.SITE))
+                       =
+                       UPPER(TRIM(V_SITE))
+                )
+          )
+    )
 
 
     /* ============================================================
-       UPDATE F1 MENU MANAGEMENT
+       DASHBOARD COUNTS
        ============================================================ */
 
-    PROCEDURE UPDATE_F1_MENU_MANAGE(
-        V_ID                IN NUMBER,
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_EDIT_BY           IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    );
+    SELECT
+
+        /* TOTAL EMPLOYEES */
+        (
+            SELECT COUNT(*)
+            FROM EMP
+        ),
+
+        /* NO MEAL REQUIRED */
+        (
+            SELECT COUNT(*)
+            FROM EMP
+            WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME))
+                  =
+                  'NO MEAL REQUIRED'
+        ),
+
+        /* COLLECTED */
+        (
+            SELECT COUNT(*)
+            FROM COLLECTED
+        ),
+
+        /* NOT REQUIRED BUT CAME */
+        (
+            SELECT COUNT(DISTINCT S.FX_BADGE)
+
+            FROM CMS.C_F1_SCAN_LOG S
+
+            LEFT JOIN CMS.C_BASE_CODE_T BC
+                ON TO_CHAR(S.MEAL_PREFERENCE)
+                   =
+                   TO_CHAR(BC.ID)
+               AND BC.TYPE_ID = 81
+
+            WHERE NVL(S.DEL_FLAG, 0) = 0
+
+              AND TRUNC(S.MEAL_DATE) = V_DAY
+
+              AND UPPER(TRIM(BC.NAME))
+                  =
+                  'NO MEAL REQUIRED'
+
+              AND EXISTS
+              (
+                  SELECT 1
+                  FROM CMS.C_USER_MANAGE_T U
+
+                  WHERE UPPER(TRIM(U.EMP_ID))
+                        =
+                        UPPER(TRIM(V_EMP_ID))
+
+                    AND U.SYSTEM_TYPE = 'CMS'
+
+                    AND NVL(U.DEL_FLAG, 0) = 0
+
+                    AND UPPER(TRIM(U.SITE))
+                        =
+                        UPPER(TRIM(S.PROPERTY_01))
+
+                    AND
+                    (
+                        V_SITE IS NULL
+                        OR V_SITE = ''
+                        OR UPPER(TRIM(V_SITE)) = 'ALL'
+                        OR UPPER(TRIM(U.SITE))
+                           =
+                           UPPER(TRIM(V_SITE))
+                    )
+              )
+        ),
+
+        /* NOT COLLECTED */
+        (
+            SELECT COUNT(*)
+            FROM EMP E
+
+            WHERE UPPER(
+                      NVL(
+                          TRIM(E.MEAL_PREFERENCE_NAME),
+                          'X'
+                      )
+                  )
+                  <>
+                  'NO MEAL REQUIRED'
+
+              AND NOT EXISTS
+              (
+                  SELECT 1
+                  FROM COLLECTED C
+
+                  WHERE C.FX_BADGE =
+                        E.FX_BADGE
+              )
+        )
+
+    INTO
+        V_TOTAL,
+        V_NO_MEAL,
+        V_COLLECTED,
+        V_NOT_REQ_CAME,
+        V_NOT_COLLECTED
+
+    FROM DUAL;
 
 
     /* ============================================================
-       DELETE F1 MENU MANAGEMENT
+       CURSOR 1 - DASHBOARD CARDS
        ============================================================ */
 
-    PROCEDURE DELETE_F1_MENU_MANAGE(
-        L_IDS       IN VARCHAR2,
-        V_EDIT_BY   IN VARCHAR2,
-        V_RES       OUT VARCHAR2,
-        V_RESULT    OUT VARCHAR2
-    );
+    OPEN P_CURSOR FOR
+
+    SELECT
+        V_TOTAL AS TOTAL_EMPLOYEES,
+        V_COLLECTED AS MEALS_COLLECTED,
+        V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
+        V_NO_MEAL AS NO_MEAL_REQUIRED,
+        V_NOT_REQ_CAME AS NOT_REQUIRED_CAME
+    FROM DUAL;
 
 
     /* ============================================================
-       GET F1 MENU BY FX BADGE
+       CURSOR 2 - CATEGORY SUMMARY
        ============================================================ */
 
-    PROCEDURE GET_F1_MENU_BY_FXBADGE(
-        V_FX_BADGE  IN VARCHAR2,
-        V_RES       OUT VARCHAR2,
-        V_RESULT    OUT VARCHAR2,
-        P_CURSOR    OUT SYS_REFCURSOR
-    );
+    OPEN P_SUMMARY_CURSOR FOR
+
+    WITH CATS AS
+    (
+        SELECT 1 SORT_NO, 'Indian Veg' CATEGORY FROM DUAL
+        UNION ALL
+        SELECT 2, 'Indian Non-Veg' FROM DUAL
+        UNION ALL
+        SELECT 3, 'Western Veg' FROM DUAL
+        UNION ALL
+        SELECT 4, 'Western Non-Veg' FROM DUAL
+        UNION ALL
+        SELECT 5, 'Chinese Non-Veg' FROM DUAL
+        UNION ALL
+        SELECT 6, 'Chinese Veg' FROM DUAL
+        UNION ALL
+        SELECT 7, 'Jain' FROM DUAL
+        UNION ALL
+        SELECT 8, 'Vegan' FROM DUAL
+    ),
+
+    CNT AS
+    (
+        SELECT
+            UPPER(TRIM(BC.NAME)) AS PREF,
+            COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        LEFT JOIN CMS.C_BASE_CODE_T BC
+            ON TO_CHAR(S.MEAL_PREFERENCE)
+               =
+               TO_CHAR(BC.ID)
+           AND BC.TYPE_ID = 81
+
+        WHERE NVL(S.DEL_FLAG, 0) = 0
+
+          AND TRUNC(S.MEAL_DATE) = V_DAY
+
+          AND S.COLLECTED_DATA = 'SUCCESS'
+
+          /* USER SITE AUTHORIZATION */
+          AND EXISTS
+          (
+              SELECT 1
+              FROM CMS.C_USER_MANAGE_T U
+
+              WHERE UPPER(TRIM(U.EMP_ID))
+                    =
+                    UPPER(TRIM(V_EMP_ID))
+
+                AND U.SYSTEM_TYPE = 'CMS'
+
+                AND NVL(U.DEL_FLAG, 0) = 0
+
+                AND UPPER(TRIM(U.SITE))
+                    =
+                    UPPER(TRIM(S.PROPERTY_01))
+
+                AND
+                (
+                    V_SITE IS NULL
+                    OR V_SITE = ''
+                    OR UPPER(TRIM(V_SITE)) = 'ALL'
+                    OR UPPER(TRIM(U.SITE))
+                       =
+                       UPPER(TRIM(V_SITE))
+                )
+          )
+
+        GROUP BY
+            UPPER(TRIM(BC.NAME))
+    )
+
+    SELECT
+        C.CATEGORY,
+
+        NVL(
+            N.TOTAL_COUNT,
+            0
+        ) AS COLLECTED_COUNT,
+
+        CASE
+            WHEN V_COLLECTED = 0
+            THEN 0
+
+            ELSE ROUND(
+                NVL(N.TOTAL_COUNT, 0)
+                * 100
+                / V_COLLECTED
+            )
+        END AS PERCENTAGE
+
+    FROM CATS C
+
+    LEFT JOIN CNT N
+        ON N.PREF =
+           UPPER(TRIM(C.CATEGORY))
+
+    ORDER BY
+        C.SORT_NO;
 
 
-    /* ============================================================
-       INSERT MEAL SCAN LOG
-       ============================================================ */
+    V_RES := '1';
 
-    PROCEDURE INSERT_MEAL_SCAN_LOG(
-        V_FX_BADGE  IN VARCHAR2,
-        V_RES       OUT VARCHAR2,
-        V_RESULT    OUT VARCHAR2,
-        P_CURSOR    OUT SYS_REFCURSOR
-    );
+    V_RESULT := 'Success';
 
 
-    /* ============================================================
-       GET MEAL SCAN LOG
-       ============================================================ */
+EXCEPTION
 
-    PROCEDURE GET_MEAL_SCAN_LOG(
-        V_SEARCH_TEXT       IN VARCHAR2,
-        V_STATUS_FILTER     IN VARCHAR2,
-        V_SITE              IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2,
-        P_CURSOR            OUT SYS_REFCURSOR,
-        P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
-    );
+    WHEN OTHERS THEN
 
+        V_RES := '0';
 
-    /* ============================================================
-       GET MEAL DASHBOARD
+        V_RESULT :=
+            'Error: ' || SQLERRM;
 
-       V_EMP_ID
-       ------------------------------------------------------------
-       Logged-in CMS employee ID.
-
-       V_DATE
-       ------------------------------------------------------------
-       Dashboard date.
-
-       V_SITE
-       ------------------------------------------------------------
-       NULL / '' / 'All'
-           = all sites assigned to logged-in user
-
-       Specific site
-           = only that site
-       ============================================================ */
-
-    PROCEDURE GET_MEAL_DASHBOARD(
-        V_EMP_ID            IN VARCHAR2,
-        V_DATE              IN VARCHAR2,
-        V_SITE              IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2,
-        P_CURSOR            OUT SYS_REFCURSOR,
-        P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
-    );
-
-
-END F1_MEAL_MANAGEMENT;
-/
+END GET_MEAL_DASHBOARD;
