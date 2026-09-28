@@ -1,58 +1,203 @@
-export let ouacServiceUrl: string;//一賬通url
-export let serviceUrl: string;//服務器url--一直調用正式url
-export let iwxServiceUrl: string;//愛萬象url,一直調用正式url
-export let iwxServiceUrlF1: string;//愛萬象url,一直調用正式url
 
-export let iwxServiceUrlNew: string;//愛萬象url,區分正式和測試url
-export let toolsServiceUrl: string = "";//工具箱url,一直調用正式url
-export let toolsServiceUrlNew: string = "";//工具箱url,區分正式和測試url
-export let uploadFileServiceUrl: string = "";//上傳附件url,區分正式和測試url
-export let uploadFileServiceUrlNew: string = "";//上傳附件url,區分正式和測試url
-((doc) => {
-    urlManage();
-})(document)
+Claude finished the response
+Deciding where scan and dashboard site filters should come from.
+Purinjuthu. Neenga solradhu: record-a add panna employee-oda site-a eduthu PROPERTY_01-la store pannanum. Check results-um OK:
 
-function urlManage() {
-        iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
-    iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";//正式
-    serviceUrl = "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";//正式
-    ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com?SysCode=FMS_INDIA&NewVersion=V401";//正式
-    toolsServiceUrl = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";//正式
-    uploadFileServiceUrl = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";//正式
+C_F1_MEAL_INFO.PROPERTY_01: USED_ROWS = 0, so safe-a use pannalaam.
+C_F1_SCAN_LOG: PROPERTY_01 to PROPERTY_04 irukku.
+Design ippadi vachirukken:
 
-    if (window.location.host == "fms.idpbgind.efoxconn.com" || window.location.host == "10.208.193.124:8000" ||
-        window.location.host == "localhost:4205"
-        ||
-        window.location.host == "10.209.110.101:4205" || window.location.host == "10.209.110.187:4205" || window.location.host == "10.209.110.94:4205" ||
-        window.location.host == "10.208.192.44:9090" ||  window.location.host == "10.209.110.208:4205") {
-        // TEST DB ku maatha idha maathinen (previously live)
-        iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";//測試
-                iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
-        iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";//測試
-        toolsServiceUrlNew = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";//正式
-        uploadFileServiceUrlNew = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";//正式
-    } else if (window.location.host == "fms.idpbgtn.efoxconn.com") {
-        serviceUrl = "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";//正式
-        ouacServiceUrl = "https://ouac.idpbgtn.efoxconn.com?SysCode=FMS_INDIA";//正式
-        toolsServiceUrl = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";//正式
-        uploadFileServiceUrl = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";//正式
-        iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
+Add / Edit / Bulk: frontend employee site-a V_SITE-aa anuppum, procedure PROPERTY_01-la save pannum.
+Scan log: scanner app-la matrum vendaam. Badge-oda meal record-la irukkira site-a scan log PROPERTY_01-ku copy pannum.
+Get / Dashboard / Scan log: site filter irukkum. Get-la V_ADD_BY filter-um irukku.
+Created a file, ran a command, shared files
+Spec-um body-um oru file-la irukku. Munna spec run pannunga, appuram body.
 
-        iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";//正式
-        iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";//正式
-        toolsServiceUrlNew = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";//正式
-        uploadFileServiceUrlNew = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";//正式
-    } else {
-        iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";  //測試
-                iwxServiceUrlF1 = "http://10.208.193.125:8086/gateway/manager";//F1
-        iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";//測試
-        toolsServiceUrlNew = "http://10.208.193.152/APIFurnace/api2/N";//測試
-        uploadFileServiceUrlNew = "http://10.208.193.124:5689/FileWebService.asmx";//測試
+Enna maathirukken
+Procedure	Maatram
+INSERT_F1_MENU, BULK_F1_MENU	V_SITE param add, PROPERTY_01-la save aagum
+UPDATE_F1_MENU_MANAGE	V_SITE param add. Value kudukala-naa pazhaiya site apdiyae irukkum (NVL)
+GET_F1_MENU_MANAGE	V_SITE and V_ADD_BY filter add. Cursor-la PROPERTY_01 AS SITE varum, so frontend-la Site field-ae kedaikkum. Paging-ku munnadi ORDER BY ADD_DATE DESC add pannirukken
+GET_F1_MENU_BY_FXBADGE	SITE return aagum
+INSERT_MEAL_SCAN_LOG	Signature maaralai. Badge-oda meal record-la irukkira site-a scan log PROPERTY_01-ku copy pannum
+GET_MEAL_SCAN_LOG, GET_MEAL_DASHBOARD	Optional V_SITE filter add
+Frontend-la seyya vendiyadhu
+F1-Details-add.ts: getUserBaseInfo block-a remove pannitu, site: any; declare pannunga. Adhu parent-la irundhu openDrawer() vazhiya varum. add()-lum edit()-lum params-la Site: this.site add pannunga. Munnadi sonna maadhiri thaan.
+Bulk import component (F1-Details-import): andha file-a naan paakala. Andha payload-lum Site: <logged-in user site> add pannanum. Illana bulk-la add pannina records-ku site NULL-aa irukkum.
+API config: CMS-InsertF1Menu, CMS-UpdateF1MenuManage, CMS-GetF1MenuManage (and bulk, dashboard, scan log) mapping-la Site to V_SITE, AddBy to V_ADD_BY map pannanum. Illana proc-ku value pogaadhu.
+Kavanikkanum
+Pazhaiya records-ku PROPERTY_01 NULL. Ippo V_SITE kuduthu filter pannina andha records varaadhu. Employee-oda site kedaikkira table therinjaa (getSitebasedUser edhu table-la irundhu varudhu-nu sollunga), adhai vachi backfill UPDATE ezhudhi tharen.
+Spec signature maariyirukku, so GET_F1_MENU_MANAGE, GET_MEAL_SCAN_LOG, GET_MEAL_DASHBOARD call panra ella idathulayum (web API and mobile scanner app) param add pannanum. Illana PLS-00306 error varum.
+Check panna
+sql
+SELECT ID, FX_BADGE, NAME, PROPERTY_01 AS SITE, ADD_BY
+FROM CMS.C_F1_MEAL_INFO
+WHERE NVL(DEL_FLAG, 0) = 0
+ORDER BY ADD_DATE DESC;
+Frontend-la Add panna appuram indha query-la SITE column-la employee-oda site vandhirukkanum.
 
-        if (window.location.protocol == "http:") {
-            ouacServiceUrl = "http://ouac.idpbgind.efoxconn.com:8080/?SysCode=FMS_INDIA&NewVersion=V401";//一賬通多因子認證測試網址
-        } else {
-            ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com/?SysCode=FMS_INDIA&NewVersion=V401";//一賬通多因子認證正式網址 
-        }
-    }
-}
+
+F1 meal management property01
+Code·SQL 
+
+CREATE OR REPLACE PACKAGE BODY CMS.VENDOR_STAFF_MANAGE_PK AS -- Package body PROCEDURE INSERT_VENDOR_MANAGE( V_SITE IN VARCHAR2, V_FOOD_VENDOR IN VARCHAR2, V_VENDOR_LEGAL_PERSON IN VARCHAR2, V_VENDOR_SUPERVISOR IN VARCHAR2, V_PHONE_NO IN VARCHAR2, V_ACTUAL_SERVICE_PEOPLE IN VARCHAR2, V_STA
+
+pasted
+
+FOR EXAMPLE FOR SITE VALUE
+
+Preparing precise text replacements to apply the procedure edits.
+Idhu ivlo simple-aa mudiyum. Neenga kaatuna VENDOR_STAFF_MANAGE_PK-la site DB-laye C_USER_MANAGE_T (EMP_ID, SITE, SYSTEM_TYPE = 'CMS') vazhiya edukkuraanga. Adhe pattern-a F1 package-kum use pannaa, frontend-la irundhu site anuppa vendiya avasiyam illa. Adhanaala package-a adhukku yetha maadhiri maathikkaren.
+
+Ran a command, shared files
+Neenga kaatuna vendor package pattern-a apdiyae follow pannitten. Same file-a update pannirukken (spec + body).
+
+Enna maathirukken
+Insert / Bulk (INSERT_F1_MENU, BULK_F1_MENU)
+
+V_SITE parameter remove pannirukken. Ippo V_ADD_BY (employee id) vachi DB-laye site edukkum:
+sql
+SELECT MIN(U.SITE) INTO V_SITE_VAL
+FROM CMS.C_USER_MANAGE_T U
+WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_ADD_BY))
+  AND U.SYSTEM_TYPE = 'CMS';
+Adhai PROPERTY_01-la save pannum. Oru employee-ku rendu site irundhaa MIN oru site-a edukkum.
+
+Update (UPDATE_F1_MENU_MANAGE)
+
+V_SITE remove pannirukken. Record add pannappo pota site apdiyae irukkum.
+Get (GET_F1_MENU_MANAGE)
+
+Vendor package maadhiri V_EMP_ID first parameter-aa vandhirukku. Login pannina employee-oda site(s)-la irukkira records mattum kaattum:
+sql
+AND EXISTS (
+    SELECT 1 FROM CMS.C_USER_MANAGE_T U
+    WHERE U.EMP_ID = V_EMP_ID
+      AND U.SYSTEM_TYPE = 'CMS'
+      AND U.SITE = V.PROPERTY_01
+)
+Vendor example-la JOIN use pannirukkanga. Naan EXISTS use pannirukken, so oru user-ku same site rendu vaati irundha rows duplicate aagaadhu.
+
+Maaralai: GET_F1_MENU_BY_FXBADGE, INSERT_MEAL_SCAN_LOG (badge record-la irundhu site copy aagum), GET_MEAL_SCAN_LOG, GET_MEAL_DASHBOARD munnadi maadhiriye irukku.
+
+Frontend-la ippo seyya vendiyadhu
+F1-Details-add.ts: add()-la irukkira getUserBaseInfo / siteValue block-a remove pannunga. Site anuppa vendaam, DB paathukkum. Munnadi sonna site: any; and Site: this.site changes-um ippo thevai illa.
+Bulk import: Site anuppa vendaam, AddBy mattum poidhaa podhum.
+food-time-price.component.ts: already EmpId and Site anuppudhu, so code maatra vendaam. API config-la EmpId to V_EMP_ID map pannunga (vendor API-la ippadi thaan irukkum). Filter form-la AddBy add pannina, adhai V_ADD_BY-ku map pannunga.
+Kavanikka vendiyadhu
+GET_F1_MENU_MANAGE-la V_EMP_ID kattaayam. Null-aa kudutha edhuvum varaadhu.
+Pazhaiya records-ku PROPERTY_01 NULL, so ippo grid-la theriyaadhu. Backfill-ku indha query run pannunga. Adhu ADD_BY-oda site-a pazhaiya rows-ku set pannum:
+sql
+UPDATE CMS.C_F1_MEAL_INFO M
+SET M.PROPERTY_01 = (
+    SELECT MIN(U.SITE)
+    FROM CMS.C_USER_MANAGE_T U
+    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(M.ADD_BY))
+      AND U.SYSTEM_TYPE = 'CMS'
+)
+WHERE M.PROPERTY_01 IS NULL;
+-- check panna appuram COMMIT
+Munnadi SELECT maathi run panni result paarunga, appuram thaan UPDATE + COMMIT pannunga.
+
+Test panna:
+sql
+SELECT EMP_ID, SITE, SYSTEM_TYPE
+FROM CMS.C_USER_MANAGE_T
+WHERE EMP_ID = 'HH0023768';
+Idhula site varudhaa nu paarunga. Illana insert-la PROPERTY_01 NULL-aa pogum.
+
+
+F1 meal management property01
+Code·SQL 
+1790567056664_image.png
+Idhu code-la thappu illa. Andha SELECT ... INTO V_SITE_VAL ... V_ADD_BY snippet procedure-kulla irukka vendiyadhu, adhula V_ADD_BY oru parameter. SQL editor-la thaniya run pannina V_ADD_BY yaar-nu Oracle-ku theriyaadhu, adhaan ORA-00904: "V_ADD_BY": invalid identifier. INTO clause-um SQL-la illa, PL/SQL-la mattum thaan.
+
+SQL editor-la check panna (real employee id-a podunga)
+sql
+SELECT MIN(U.SITE) AS SITE
+FROM CMS.C_USER_MANAGE_T U
+WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM('HH0023768'))
+  AND U.SYSTEM_TYPE = 'CMS';
+Idhu site value kudutha lookup sariyaa work aagudhu. NULL vandhaa, indha employee-ku SYSTEM_TYPE = 'CMS' row illa. Adha paakka:
+
+sql
+SELECT EMP_ID, SITE, SYSTEM_TYPE
+FROM CMS.C_USER_MANAGE_T
+WHERE UPPER(TRIM(EMP_ID)) = UPPER(TRIM('HH0023768'));
+Procedure-a test panna (package compile aana appuram)
+sql
+DECLARE
+    V_RES    VARCHAR2(10);
+    V_RESULT VARCHAR2(4000);
+BEGIN
+    CMS.F1_MEAL_MANAGEMENT.INSERT_F1_MENU(
+        V_GROUPS          => 'TEST',
+        V_MEAL_PREFERENCE => '146',
+        V_FX_BADGE        => 'TEST001',
+        V_NAME            => 'Test User',
+        V_FIRST_DATE_FXBL => '01-10-2026',
+        V_LAST_DATE_FXBL  => '31-10-2026',
+        V_ADD_BY          => 'HH0023768',
+        V_RES             => V_RES,
+        V_RESULT          => V_RESULT
+    );
+    DBMS_OUTPUT.PUT_LINE(V_RES || ' | ' || V_RESULT);
+END;
+/
+
+SELECT ID, FX_BADGE, PROPERTY_01 AS SITE, ADD_BY
+FROM CMS.C_F1_MEAL_INFO
+WHERE FX_BADGE = 'TEST001';
+SITE column-la employee-oda site vandhaa work aagudhu.
+
+Test row-a cleanup panna:
+
+sql
+DELETE FROM CMS.C_F1_MEAL_INFO WHERE FX_BADGE = 'TEST001';
+COMMIT;
+Production DB-na test data insert pannuradhukku munnadi oru dhadava confirm pannikonga.
+
+Deciding how to handle site selection and unused templates.
+Rendu files-um full-aa ready pannitten. HTML-la sf-template="Factory" and vendor templates remove pannirukken. Adhu form schema-la use aagala, adhula [(ngModel)] rendu vaati irundhudhu. Site dropdown-a form-ku mela thaniya vachirukken.
+
+Created 2 files, shared files
+TS file-um HTML file-um ready.
+
+Enna maathirukken
+TS
+
+siteList (user-oda ella sites), selectedSite ('' = All My Sites) variables add pannirukken.
+loadLoggedInUserSite() ippo extractAllSites() use pannudhu. Munnadi find oru row mattum eduthudhu, ippo ella rows-um eduthu unique site list-a create pannudhu. Idhaala HH0023768-ku 69941, 95326 rendum varum.
+searchHandle(): Site: this.selectedSite || '' anuppudhu. Munnadi finalParams.Site = this.site nu force pannina line-a maathirukken.
+AddBy filter form-la add pannirukken.
+Site column table-layum Excel export-layum add pannirukken. exportHandle second arg 12 irundhadhu 13 aakkirukken (fields 11 irundhadhu 12 aachu). Adhu column count-nu naan assume pannirukken, Excel-la column layout thappa vandha idha check pannunga.
+Drawer-ku site and siteList rendum pass aagudhu.
+HTML
+
+Site dropdown add pannirukken. Maatha (ngModelChange)="search(true)" iruppadhaala select panna udane grid refresh aagum.
+Factory and vendor templates remove pannirukken.
+Kavanikka vendiyadhu
+getSitebasedUser() rendu site rows-um return pannuthaannu confirm pannanum. Browser console-la 'CMS-Get_user_manage user list:' log paarunga. HH0023768-ku rendu row vandhaa dropdown-la rendu site theriyum. Oru row mattum vandhaa dropdown-la ondru mattum irukkum. Appo vera API vendum, console output anuppunga.
+Backend GET_F1_MENU_MANAGE-la V_EMP_ID and V_SITE param-kku API config-la mapping irukkanum. EmpId to V_EMP_ID, Site to V_SITE, AddBy to V_ADD_BY. Illana filter work aagaadhu.
+Add drawer-la site: any; siteList: any[] = []; declare pannanum. add() params-la Site: this.site add pannanum. Insert proc-la V_SITE param-um vendum, adhu innum package-la add aagala. Drawer file and package regenerate pannanuma? Sollunga, rendaiyum tharen.
+Component class file name food-time-price.component.ts nu present aachu. Ungal project-la already irukkura file name-la replace pannunga.
+
+Food time price.component
+TS 
+
+Food time price.component
+Code·HTML 
+1790569392997_image.png
+1790569426212_image.png
+user manage la user ku del flag onnu irunthulum.data show ahguthu a;ppidi haga kudathu
+
+Patching backend and frontend checks to exclude deleted users.
+Idhu real bug. Rendu row-um DEL_FLAG = 1 (delete aana user), aana data varudhu. Reason: naan ezhudhuna lookup, C_USER_MANAGE_T-la DEL_FLAG check pannala. Neenga kaatuna vendor package-lum DEL_FLAG check illa, adha copy pannitten. Fix pannaren.
+
+Ran a command
+
+
+You are out of free messages until 1:50 PM
+
+
+Claude is AI and can make mistakes. Please double-check response
