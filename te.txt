@@ -1,4 +1,124 @@
-PROCEDURE BULK_F1_MENU(
+CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
+AS
+
+    /* =========================================================
+       EMPTY CURSOR
+       ========================================================= */
+    PROCEDURE OPEN_EMPTY_CURSOR(
+        P_CURSOR OUT SYS_REFCURSOR
+    )
+    IS
+    BEGIN
+
+        OPEN P_CURSOR FOR
+            SELECT
+                CAST(NULL AS NUMBER)        AS ID,
+                CAST(NULL AS VARCHAR2(100)) AS FX_BADGE,
+                CAST(NULL AS VARCHAR2(200)) AS NAME
+            FROM DUAL
+            WHERE 1 = 0;
+
+    END OPEN_EMPTY_CURSOR;
+
+
+    /* =========================================================
+       1. INSERT F1 MENU
+       ========================================================= */
+    PROCEDURE INSERT_F1_MENU(
+        V_GROUPS            IN VARCHAR2,
+        V_MEAL_PREFERENCE   IN VARCHAR2,
+        V_FX_BADGE          IN VARCHAR2,
+        V_NAME              IN VARCHAR2,
+        V_FIRST_DATE_FXBL   IN VARCHAR2,
+        V_LAST_DATE_FXBL    IN VARCHAR2,
+        V_ADD_BY            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    )
+    IS
+        L_COUNT NUMBER;
+    BEGIN
+
+        /* -----------------------------------------------------
+           CHECK DUPLICATE BADGE
+           ----------------------------------------------------- */
+        SELECT COUNT(1)
+        INTO L_COUNT
+        FROM CMS.C_F1_MEAL_INFO
+        WHERE UPPER(TRIM(FX_BADGE)) =
+              UPPER(TRIM(V_FX_BADGE))
+          AND NVL(DEL_FLAG,0) = 0;
+
+
+        IF L_COUNT > 0 THEN
+
+            V_RES := '0';
+            V_RESULT := 'FX Badge already exists';
+
+            RETURN;
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           INSERT
+           ----------------------------------------------------- */
+        INSERT INTO CMS.C_F1_MEAL_INFO
+        (
+            ID,
+            GROUPS,
+            MEAL_PREFERENCE,
+            FX_BADGE,
+            NAME,
+            FIRST_DATE_FXBL,
+            LAST_DATE_FXBL,
+            ADD_BY,
+            ADD_DATE,
+            DEL_FLAG
+        )
+        VALUES
+        (
+            CMS.SEQ_C_F1_MEAL_INFO.NEXTVAL,
+            V_GROUPS,
+            V_MEAL_PREFERENCE,
+            V_FX_BADGE,
+            V_NAME,
+            TO_DATE(
+                V_FIRST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ),
+            TO_DATE(
+                V_LAST_DATE_FXBL,
+                'DD-MM-YYYY'
+            ),
+            V_ADD_BY,
+            SYSDATE,
+            0
+        );
+
+
+        COMMIT;
+
+
+        V_RES := '1';
+        V_RESULT := 'F1 Menu inserted successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            ROLLBACK;
+
+            V_RES := '0';
+            V_RESULT := SQLERRM;
+
+    END INSERT_F1_MENU;
+
+
+    /* =========================================================
+       2. BULK F1 MENU
+       ========================================================= */
+   PROCEDURE BULK_F1_MENU(
     V_DATA              IN CLOB,
     V_ADD_BY            IN VARCHAR2,
     V_RES               OUT VARCHAR2,
@@ -317,3 +437,1717 @@ EXCEPTION
             SQLERRM;
 
 END BULK_F1_MENU;
+    /* =========================================================
+       3. GET F1 MENU MANAGEMENT
+       SITE BASED
+       ========================================================= */
+    PROCEDURE GET_F1_MENU_MANAGE(
+        V_EMP_ID            IN VARCHAR2,
+        V_GROUPS            IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_FX_BADGE          IN VARCHAR2,
+        V_ADD_BY            IN VARCHAR2,
+        L_START_PAGE        IN VARCHAR2,
+        L_PAGE_SIZE         IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR
+    )
+    IS
+        L_START NUMBER;
+        L_SIZE  NUMBER;
+    BEGIN
+
+        L_START := NVL(
+            TO_NUMBER(L_START_PAGE),
+            1
+        );
+
+        L_SIZE := NVL(
+            TO_NUMBER(L_PAGE_SIZE),
+            20
+        );
+
+
+        OPEN P_CURSOR FOR
+
+        SELECT *
+        FROM
+        (
+            SELECT
+                M.ID,
+
+                M.GROUPS,
+
+                M.MEAL_PREFERENCE,
+
+                M.FX_BADGE,
+
+                M.NAME,
+
+                TO_CHAR(
+                    M.FIRST_DATE_FXBL,
+                    'DD-MM-YYYY'
+                ) AS FIRST_DATE_FXBL,
+
+                TO_CHAR(
+                    M.LAST_DATE_FXBL,
+                    'DD-MM-YYYY'
+                ) AS LAST_DATE_FXBL,
+
+                M.PROPERTY_01 AS SITE,
+
+                M.ADD_BY,
+
+                M.ADD_DATE,
+
+                M.EDIT_BY,
+
+                M.EDIT_DATE,
+
+                M.DEL_FLAG,
+
+                ROW_NUMBER() OVER
+                (
+                    ORDER BY M.ID DESC
+                ) AS RN
+
+            FROM CMS.C_F1_MEAL_INFO M
+
+            WHERE NVL(M.DEL_FLAG,0) = 0
+
+
+            /* -------------------------------------------------
+               GROUP FILTER
+               ------------------------------------------------- */
+            AND
+            (
+                V_GROUPS IS NULL
+                OR TRIM(V_GROUPS) = ''
+                OR UPPER(TRIM(M.GROUPS)) =
+                   UPPER(TRIM(V_GROUPS))
+            )
+
+
+            /* -------------------------------------------------
+               BADGE FILTER
+               ------------------------------------------------- */
+            AND
+            (
+                V_FX_BADGE IS NULL
+                OR TRIM(V_FX_BADGE) = ''
+                OR UPPER(TRIM(M.FX_BADGE)) LIKE
+                   '%' ||
+                   UPPER(TRIM(V_FX_BADGE)) ||
+                   '%'
+            )
+
+
+            /* -------------------------------------------------
+               USER SITE AUTHORIZATION
+               ------------------------------------------------- */
+            AND EXISTS
+            (
+                SELECT 1
+                FROM CMS.C_USER_MANAGE_T U
+
+                WHERE UPPER(TRIM(U.EMP_ID)) =
+                      UPPER(TRIM(V_EMP_ID))
+
+                  AND U.SYSTEM_TYPE = 'CMS'
+
+                  AND NVL(U.DEL_FLAG,0) = 0
+
+                  AND U.SITE IS NOT NULL
+
+                  AND
+                  (
+                      V_SITE IS NULL
+                      OR TRIM(V_SITE) = ''
+                      OR UPPER(TRIM(U.SITE)) =
+                         UPPER(TRIM(V_SITE))
+                  )
+
+                  AND UPPER(TRIM(U.SITE)) =
+                      UPPER(TRIM(M.PROPERTY_01))
+            )
+        )
+        WHERE RN BETWEEN
+            ((L_START - 1) * L_SIZE) + 1
+            AND
+            (L_START * L_SIZE);
+
+
+        V_RES := '1';
+        V_RESULT := 'F1 Menu retrieved successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            V_RES := '0';
+            V_RESULT := SQLERRM;
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+    END GET_F1_MENU_MANAGE;
+
+
+    /* =========================================================
+       4. UPDATE F1 MENU
+       ========================================================= */
+    PROCEDURE UPDATE_F1_MENU_MANAGE(
+        V_ID                IN VARCHAR2,
+        V_GROUPS            IN VARCHAR2,
+        V_MEAL_PREFERENCE   IN VARCHAR2,
+        V_FX_BADGE          IN VARCHAR2,
+        V_NAME              IN VARCHAR2,
+        V_FIRST_DATE_FXBL   IN VARCHAR2,
+        V_LAST_DATE_FXBL    IN VARCHAR2,
+        V_EDIT_BY           IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    )
+    IS
+    BEGIN
+
+        UPDATE CMS.C_F1_MEAL_INFO
+
+        SET
+            GROUPS =
+                V_GROUPS,
+
+            MEAL_PREFERENCE =
+                V_MEAL_PREFERENCE,
+
+            FX_BADGE =
+                V_FX_BADGE,
+
+            NAME =
+                V_NAME,
+
+            FIRST_DATE_FXBL =
+                TO_DATE(
+                    V_FIRST_DATE_FXBL,
+                    'DD-MM-YYYY'
+                ),
+
+            LAST_DATE_FXBL =
+                TO_DATE(
+                    V_LAST_DATE_FXBL,
+                    'DD-MM-YYYY'
+                ),
+
+            EDIT_BY =
+                V_EDIT_BY,
+
+            EDIT_DATE =
+                SYSDATE
+
+        WHERE ID =
+              TO_NUMBER(V_ID)
+
+          AND NVL(DEL_FLAG,0) = 0;
+
+
+        IF SQL%ROWCOUNT = 0 THEN
+
+            V_RES := '0';
+            V_RESULT := 'Record not found';
+
+            RETURN;
+
+        END IF;
+
+
+        COMMIT;
+
+
+        V_RES := '1';
+        V_RESULT := 'F1 Menu updated successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            ROLLBACK;
+
+            V_RES := '0';
+            V_RESULT := SQLERRM;
+
+    END UPDATE_F1_MENU_MANAGE;
+
+
+    /* =========================================================
+       5. DELETE F1 MENU
+       ========================================================= */
+    PROCEDURE DELETE_F1_MENU_MANAGE(
+        L_IDS               IN VARCHAR2,
+        V_EDIT_BY           IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    )
+    IS
+    BEGIN
+
+        UPDATE CMS.C_F1_MEAL_INFO
+
+        SET
+            DEL_FLAG =
+                1,
+
+            EDIT_BY =
+                V_EDIT_BY,
+
+            EDIT_DATE =
+                SYSDATE
+
+        WHERE ID IN
+        (
+            SELECT
+                TO_NUMBER(
+                    TRIM(
+                        REGEXP_SUBSTR(
+                            L_IDS,
+                            '[^,]+',
+                            1,
+                            LEVEL
+                        )
+                    )
+                )
+
+            FROM DUAL
+
+            CONNECT BY
+                REGEXP_SUBSTR(
+                    L_IDS,
+                    '[^,]+',
+                    1,
+                    LEVEL
+                ) IS NOT NULL
+        );
+
+
+        COMMIT;
+
+
+        V_RES := '1';
+        V_RESULT := 'F1 Menu deleted successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            ROLLBACK;
+
+            V_RES := '0';
+            V_RESULT := SQLERRM;
+
+    END DELETE_F1_MENU_MANAGE;
+
+
+    /* =========================================================
+       6. GET F1 MENU BY FX BADGE
+       SITE BASED
+       ========================================================= */
+    PROCEDURE GET_F1_MENU_BY_FXBADGE(
+        V_FX_BADGE          IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_EMP_ID            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR
+    )
+    IS
+        L_USER_COUNT NUMBER;
+        L_SITE_COUNT NUMBER;
+    BEGIN
+
+        /* -----------------------------------------------------
+           CHECK USER
+           ----------------------------------------------------- */
+        SELECT COUNT(1)
+
+        INTO L_USER_COUNT
+
+        FROM CMS.C_USER_MANAGE_T U
+
+        WHERE UPPER(TRIM(U.EMP_ID)) =
+              UPPER(TRIM(V_EMP_ID))
+
+          AND U.SYSTEM_TYPE = 'CMS'
+
+          AND NVL(U.DEL_FLAG,0) = 0
+
+          AND U.SITE IS NOT NULL;
+
+
+        IF L_USER_COUNT = 0 THEN
+
+            V_RES := '0';
+            V_RESULT := 'User is not authorized';
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+            RETURN;
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           CHECK SELECTED SITE
+           ----------------------------------------------------- */
+        IF V_SITE IS NOT NULL
+           AND TRIM(V_SITE) <> ''
+        THEN
+
+            SELECT COUNT(1)
+
+            INTO L_SITE_COUNT
+
+            FROM CMS.C_USER_MANAGE_T U
+
+            WHERE UPPER(TRIM(U.EMP_ID)) =
+                  UPPER(TRIM(V_EMP_ID))
+
+              AND U.SYSTEM_TYPE = 'CMS'
+
+              AND NVL(U.DEL_FLAG,0) = 0
+
+              AND UPPER(TRIM(U.SITE)) =
+                  UPPER(TRIM(V_SITE));
+
+
+            IF L_SITE_COUNT = 0 THEN
+
+                V_RES := '0';
+
+                V_RESULT :=
+                    'Selected site is not authorized for this user';
+
+                OPEN_EMPTY_CURSOR(P_CURSOR);
+
+                RETURN;
+
+            END IF;
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           GET EMPLOYEE
+           ----------------------------------------------------- */
+        OPEN P_CURSOR FOR
+
+        SELECT
+            X.ID,
+            X.GROUPS,
+            X.MEAL_PREFERENCE,
+            X.FX_BADGE,
+            X.NAME,
+            X.FIRST_DATE_FXBL,
+            X.LAST_DATE_FXBL,
+            X.SITE,
+            X.ENTITLEMENT_STATUS
+
+        FROM
+        (
+            SELECT
+                M.ID,
+
+                M.GROUPS,
+
+                M.MEAL_PREFERENCE,
+
+                M.FX_BADGE,
+
+                M.NAME,
+
+                TO_CHAR(
+                    M.FIRST_DATE_FXBL,
+                    'DD-MM-YYYY'
+                ) AS FIRST_DATE_FXBL,
+
+                TO_CHAR(
+                    M.LAST_DATE_FXBL,
+                    'DD-MM-YYYY'
+                ) AS LAST_DATE_FXBL,
+
+                M.PROPERTY_01 AS SITE,
+
+
+                CASE
+
+                    WHEN EXISTS
+                    (
+                        SELECT 1
+
+                        FROM CMS.C_F1_SCAN_LOG S
+
+                        WHERE UPPER(TRIM(S.FX_BADGE)) =
+                              UPPER(TRIM(M.FX_BADGE))
+
+                          AND NVL(S.DEL_FLAG,0) = 0
+
+                          AND UPPER(TRIM(S.PROPERTY_01)) =
+                              UPPER(TRIM(M.PROPERTY_01))
+
+                          AND TRUNC(S.ADD_DATE) =
+                              TRUNC(SYSDATE)
+
+                          AND UPPER(TRIM(S.STATUS)) =
+                              'SUCCESS'
+                    )
+
+                    THEN 'ALREADY_SCANNED'
+
+
+                    WHEN UPPER(TRIM(M.MEAL_PREFERENCE)) =
+                         'NO MEAL REQUIRED'
+
+                    THEN 'NO_MEAL_REQUIRED'
+
+
+                    WHEN TRUNC(SYSDATE) BETWEEN
+                         TRUNC(M.FIRST_DATE_FXBL)
+                         AND
+                         TRUNC(M.LAST_DATE_FXBL)
+
+                    THEN 'ENTITLED'
+
+
+                    ELSE 'NOT_UPDATED'
+
+                END AS ENTITLEMENT_STATUS,
+
+
+                ROW_NUMBER() OVER
+                (
+                    ORDER BY M.ID DESC
+                ) AS RN
+
+
+            FROM CMS.C_F1_MEAL_INFO M
+
+
+            WHERE UPPER(TRIM(M.FX_BADGE)) =
+                  UPPER(TRIM(V_FX_BADGE))
+
+              AND NVL(M.DEL_FLAG,0) = 0
+
+
+              /* SITE FILTER */
+              AND
+              (
+                  V_SITE IS NULL
+                  OR TRIM(V_SITE) = ''
+                  OR UPPER(TRIM(M.PROPERTY_01)) =
+                     UPPER(TRIM(V_SITE))
+              )
+
+
+              /* USER SITE AUTHORIZATION */
+              AND EXISTS
+              (
+                  SELECT 1
+
+                  FROM CMS.C_USER_MANAGE_T U
+
+                  WHERE UPPER(TRIM(U.EMP_ID)) =
+                        UPPER(TRIM(V_EMP_ID))
+
+                    AND U.SYSTEM_TYPE = 'CMS'
+
+                    AND NVL(U.DEL_FLAG,0) = 0
+
+                    AND UPPER(TRIM(U.SITE)) =
+                        UPPER(TRIM(M.PROPERTY_01))
+              )
+
+        ) X
+
+        WHERE X.RN = 1;
+
+
+        V_RES := '1';
+
+        V_RESULT :=
+            'Employee retrieved successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            V_RES := '0';
+            V_RESULT := SQLERRM;
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+    END GET_F1_MENU_BY_FXBADGE;
+
+
+    /* =========================================================
+       7. INSERT MEAL SCAN LOG
+       SITE BASED
+       ========================================================= */
+    PROCEDURE INSERT_MEAL_SCAN_LOG(
+        V_FX_BADGE          IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_EMP_ID            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR
+    )
+    IS
+
+        L_USER_COUNT       NUMBER;
+        L_SITE_COUNT       NUMBER;
+        L_ALREADY_COUNT    NUMBER;
+
+        L_SITE              VARCHAR2(200);
+        L_MEAL_PREFERENCE   VARCHAR2(200);
+
+        L_FIRST_DATE        DATE;
+        L_LAST_DATE         DATE;
+
+        L_STATUS            VARCHAR2(50);
+
+    BEGIN
+
+        /* -----------------------------------------------------
+           CHECK USER
+           ----------------------------------------------------- */
+        SELECT COUNT(1)
+
+        INTO L_USER_COUNT
+
+        FROM CMS.C_USER_MANAGE_T U
+
+        WHERE UPPER(TRIM(U.EMP_ID)) =
+              UPPER(TRIM(V_EMP_ID))
+
+          AND U.SYSTEM_TYPE = 'CMS'
+
+          AND NVL(U.DEL_FLAG,0) = 0
+
+          AND U.SITE IS NOT NULL;
+
+
+        IF L_USER_COUNT = 0 THEN
+
+            V_RES := '0';
+            V_RESULT := 'User is not authorized';
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+            RETURN;
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           CHECK SITE
+           ----------------------------------------------------- */
+        SELECT COUNT(1)
+
+        INTO L_SITE_COUNT
+
+        FROM CMS.C_USER_MANAGE_T U
+
+        WHERE UPPER(TRIM(U.EMP_ID)) =
+              UPPER(TRIM(V_EMP_ID))
+
+          AND U.SYSTEM_TYPE = 'CMS'
+
+          AND NVL(U.DEL_FLAG,0) = 0
+
+          AND UPPER(TRIM(U.SITE)) =
+              UPPER(TRIM(V_SITE));
+
+
+        IF L_SITE_COUNT = 0 THEN
+
+            V_RES := '0';
+
+            V_RESULT :=
+                'Selected site is not authorized';
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+            RETURN;
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           GET EMPLOYEE
+           ----------------------------------------------------- */
+        BEGIN
+
+            SELECT
+                X.PROPERTY_01,
+                X.MEAL_PREFERENCE,
+                X.FIRST_DATE_FXBL,
+                X.LAST_DATE_FXBL
+
+            INTO
+                L_SITE,
+                L_MEAL_PREFERENCE,
+                L_FIRST_DATE,
+                L_LAST_DATE
+
+            FROM
+            (
+                SELECT
+
+                    M.PROPERTY_01,
+
+                    M.MEAL_PREFERENCE,
+
+                    M.FIRST_DATE_FXBL,
+
+                    M.LAST_DATE_FXBL,
+
+                    ROW_NUMBER() OVER
+                    (
+                        ORDER BY M.ID DESC
+                    ) AS RN
+
+                FROM CMS.C_F1_MEAL_INFO M
+
+                WHERE UPPER(TRIM(M.FX_BADGE)) =
+                      UPPER(TRIM(V_FX_BADGE))
+
+                  AND NVL(M.DEL_FLAG,0) = 0
+
+                  AND UPPER(TRIM(M.PROPERTY_01)) =
+                      UPPER(TRIM(V_SITE))
+
+            ) X
+
+            WHERE X.RN = 1;
+
+
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+
+                V_RES := '0';
+
+                V_RESULT :=
+                    'FX Badge not found in selected site';
+
+                OPEN_EMPTY_CURSOR(P_CURSOR);
+
+                RETURN;
+
+        END;
+
+
+        /* -----------------------------------------------------
+           CHECK ALREADY SCANNED
+           ----------------------------------------------------- */
+        SELECT COUNT(1)
+
+        INTO L_ALREADY_COUNT
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        WHERE UPPER(TRIM(S.FX_BADGE)) =
+              UPPER(TRIM(V_FX_BADGE))
+
+          AND UPPER(TRIM(S.PROPERTY_01)) =
+              UPPER(TRIM(V_SITE))
+
+          AND TRUNC(S.ADD_DATE) =
+              TRUNC(SYSDATE)
+
+          AND UPPER(TRIM(S.STATUS)) =
+              'SUCCESS'
+
+          AND NVL(S.DEL_FLAG,0) = 0;
+
+
+        IF L_ALREADY_COUNT > 0 THEN
+
+            V_RES := '0';
+
+            V_RESULT :=
+                'ALREADY_SCANNED';
+
+
+            OPEN P_CURSOR FOR
+
+                SELECT
+                    V_FX_BADGE AS FX_BADGE,
+                    V_SITE AS SITE,
+                    'ALREADY_SCANNED' AS STATUS
+
+                FROM DUAL;
+
+
+            RETURN;
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           DETERMINE STATUS
+           ----------------------------------------------------- */
+        IF UPPER(TRIM(L_MEAL_PREFERENCE)) =
+           'NO MEAL REQUIRED'
+        THEN
+
+            L_STATUS :=
+                'NO_MEAL_REQUIRED';
+
+
+        ELSIF TRUNC(SYSDATE) BETWEEN
+              TRUNC(L_FIRST_DATE)
+              AND
+              TRUNC(L_LAST_DATE)
+        THEN
+
+            L_STATUS :=
+                'SUCCESS';
+
+
+        ELSE
+
+            L_STATUS :=
+                'NOT_ENTITLED';
+
+        END IF;
+
+
+        /* -----------------------------------------------------
+           INSERT SCAN LOG
+           ----------------------------------------------------- */
+        INSERT INTO CMS.C_F1_SCAN_LOG
+        (
+            ID,
+            FX_BADGE,
+            STATUS,
+            ADD_BY,
+            ADD_DATE,
+            DEL_FLAG,
+            PROPERTY_01
+        )
+        VALUES
+        (
+            CMS.SEQ_C_F1_SCAN_LOG.NEXTVAL,
+            V_FX_BADGE,
+            L_STATUS,
+            V_EMP_ID,
+            SYSDATE,
+            0,
+            V_SITE
+        );
+
+
+        COMMIT;
+
+
+        /* -----------------------------------------------------
+           RETURN RESULT
+           ----------------------------------------------------- */
+        OPEN P_CURSOR FOR
+
+            SELECT
+
+                V_FX_BADGE AS FX_BADGE,
+
+                V_SITE AS SITE,
+
+                L_STATUS AS STATUS,
+
+                L_MEAL_PREFERENCE AS MEAL_PREFERENCE
+
+            FROM DUAL;
+
+
+        IF L_STATUS = 'SUCCESS' THEN
+
+            V_RES := '1';
+
+            V_RESULT :=
+                'Meal scan successful';
+
+
+        ELSIF L_STATUS = 'NO_MEAL_REQUIRED' THEN
+
+            V_RES := '0';
+
+            V_RESULT :=
+                'NO_MEAL_REQUIRED';
+
+
+        ELSE
+
+            V_RES := '0';
+
+            V_RESULT :=
+                'NOT_ENTITLED';
+
+        END IF;
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            ROLLBACK;
+
+            V_RES := '0';
+
+            V_RESULT := SQLERRM;
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+    END INSERT_MEAL_SCAN_LOG;
+
+
+    /* =========================================================
+       8. GET MEAL SCAN LOG
+       ========================================================= */
+    PROCEDURE GET_MEAL_SCAN_LOG(
+        V_SEARCH_TEXT       IN VARCHAR2,
+        V_STATUS_FILTER     IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR,
+        P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
+    )
+    IS
+    BEGIN
+
+        /* -----------------------------------------------------
+           SCAN LOG
+           ----------------------------------------------------- */
+        OPEN P_CURSOR FOR
+
+        SELECT
+
+            S.ID,
+
+            S.FX_BADGE,
+
+            M.NAME,
+
+            M.MEAL_PREFERENCE,
+
+            S.STATUS,
+
+            S.PROPERTY_01 AS SITE,
+
+            S.ADD_BY,
+
+            S.ADD_DATE
+
+        FROM CMS.C_F1_SCAN_LOG S
+
+        LEFT JOIN CMS.C_F1_MEAL_INFO M
+            ON UPPER(TRIM(M.FX_BADGE)) =
+               UPPER(TRIM(S.FX_BADGE))
+
+           AND NVL(M.DEL_FLAG,0) = 0
+
+           AND UPPER(TRIM(M.PROPERTY_01)) =
+               UPPER(TRIM(S.PROPERTY_01))
+
+
+        WHERE NVL(S.DEL_FLAG,0) = 0
+
+
+          /* SEARCH */
+          AND
+          (
+              V_SEARCH_TEXT IS NULL
+              OR TRIM(V_SEARCH_TEXT) = ''
+
+              OR UPPER(TRIM(S.FX_BADGE)) LIKE
+                 '%' ||
+                 UPPER(TRIM(V_SEARCH_TEXT)) ||
+                 '%'
+
+              OR UPPER(TRIM(M.NAME)) LIKE
+                 '%' ||
+                 UPPER(TRIM(V_SEARCH_TEXT)) ||
+                 '%'
+          )
+
+
+          /* STATUS */
+          AND
+          (
+              V_STATUS_FILTER IS NULL
+
+              OR TRIM(V_STATUS_FILTER) = ''
+
+              OR UPPER(TRIM(S.STATUS)) =
+                 UPPER(TRIM(V_STATUS_FILTER))
+          )
+
+
+          /* SITE */
+          AND
+          (
+              V_SITE IS NULL
+
+              OR TRIM(V_SITE) = ''
+
+              OR UPPER(TRIM(S.PROPERTY_01)) =
+                 UPPER(TRIM(V_SITE))
+          )
+
+
+        ORDER BY
+            S.ADD_DATE DESC;
+
+
+        /* -----------------------------------------------------
+           SUMMARY
+           ----------------------------------------------------- */
+        OPEN P_SUMMARY_CURSOR FOR
+
+        SELECT
+
+            COUNT(*) AS TOTAL_SCANS,
+
+            SUM
+            (
+                CASE
+                    WHEN UPPER(TRIM(STATUS)) =
+                         'SUCCESS'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS SUCCESS_COUNT,
+
+            SUM
+            (
+                CASE
+                    WHEN UPPER(TRIM(STATUS)) =
+                         'ALREADY_SCANNED'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS ALREADY_SCANNED_COUNT,
+
+            SUM
+            (
+                CASE
+                    WHEN UPPER(TRIM(STATUS)) =
+                         'NOT_ENTITLED'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS NOT_ENTITLED_COUNT,
+
+            SUM
+            (
+                CASE
+                    WHEN UPPER(TRIM(STATUS)) =
+                         'NO_MEAL_REQUIRED'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS NO_MEAL_REQUIRED_COUNT
+
+        FROM CMS.C_F1_SCAN_LOG
+
+        WHERE NVL(DEL_FLAG,0) = 0
+
+          AND TRUNC(ADD_DATE) =
+              TRUNC(SYSDATE)
+
+          AND
+          (
+              V_SITE IS NULL
+
+              OR TRIM(V_SITE) = ''
+
+              OR UPPER(TRIM(PROPERTY_01)) =
+                 UPPER(TRIM(V_SITE))
+          );
+
+
+        V_RES := '1';
+
+        V_RESULT :=
+            'Meal scan log retrieved successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            V_RES := '0';
+
+            V_RESULT := SQLERRM;
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+            OPEN P_SUMMARY_CURSOR FOR
+
+                SELECT
+
+                    0 AS TOTAL_SCANS,
+
+                    0 AS SUCCESS_COUNT,
+
+                    0 AS ALREADY_SCANNED_COUNT,
+
+                    0 AS NOT_ENTITLED_COUNT,
+
+                    0 AS NO_MEAL_REQUIRED_COUNT
+
+                FROM DUAL;
+
+    END GET_MEAL_SCAN_LOG;
+
+
+    /* =========================================================
+       9. GET MEAL DASHBOARD
+       SITE + DATE BASED
+       ========================================================= */
+    PROCEDURE GET_MEAL_DASHBOARD(
+        V_EMP_ID            IN VARCHAR2,
+        V_DATE              IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR,
+        P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
+    )
+    IS
+
+        L_DAY DATE;
+
+    BEGIN
+
+        /* -----------------------------------------------------
+           DATE
+           ----------------------------------------------------- */
+        IF V_DATE IS NULL
+           OR TRIM(V_DATE) = ''
+        THEN
+
+            L_DAY :=
+                TRUNC(SYSDATE);
+
+        ELSE
+
+            L_DAY :=
+                TO_DATE(
+                    V_DATE,
+                    'DD-MM-YYYY'
+                );
+
+        END IF;
+
+
+        /* =====================================================
+           DASHBOARD MAIN DATA
+           ===================================================== */
+        OPEN P_CURSOR FOR
+
+        WITH EMPLOYEE_DATA AS
+        (
+            SELECT *
+            FROM
+            (
+                SELECT
+
+                    M.ID,
+
+                    M.FX_BADGE,
+
+                    M.NAME,
+
+                    M.MEAL_PREFERENCE,
+
+                    M.PROPERTY_01 AS SITE,
+
+                    ROW_NUMBER() OVER
+                    (
+                        PARTITION BY
+
+                            UPPER(TRIM(M.FX_BADGE)),
+
+                            UPPER(TRIM(M.PROPERTY_01))
+
+                        ORDER BY
+                            M.ID DESC
+                    ) AS RN
+
+                FROM CMS.C_F1_MEAL_INFO M
+
+                WHERE NVL(M.DEL_FLAG,0) = 0
+
+
+                  /* EMPLOYEE VALID ON SELECTED DATE */
+                  AND L_DAY BETWEEN
+                      TRUNC(M.FIRST_DATE_FXBL)
+                      AND
+                      TRUNC(M.LAST_DATE_FXBL)
+
+
+                  /* USER SITE AUTHORIZATION */
+                  AND EXISTS
+                  (
+                      SELECT 1
+
+                      FROM CMS.C_USER_MANAGE_T U
+
+                      WHERE UPPER(TRIM(U.EMP_ID)) =
+                            UPPER(TRIM(V_EMP_ID))
+
+                        AND U.SYSTEM_TYPE = 'CMS'
+
+                        AND NVL(U.DEL_FLAG,0) = 0
+
+                        AND U.SITE IS NOT NULL
+
+                        AND
+                        (
+                            V_SITE IS NULL
+                            OR TRIM(V_SITE) = ''
+
+                            OR UPPER(TRIM(U.SITE)) =
+                               UPPER(TRIM(V_SITE))
+                        )
+
+                        AND UPPER(TRIM(U.SITE)) =
+                            UPPER(TRIM(M.PROPERTY_01))
+                  )
+            )
+
+            WHERE RN = 1
+        ),
+
+
+        /* =====================================================
+           SUCCESSFULLY COLLECTED
+           ===================================================== */
+        COLLECTED AS
+        (
+            SELECT DISTINCT
+
+                UPPER(TRIM(S.FX_BADGE))
+                    AS FX_BADGE,
+
+                UPPER(TRIM(S.PROPERTY_01))
+                    AS SITE
+
+            FROM CMS.C_F1_SCAN_LOG S
+
+            WHERE NVL(S.DEL_FLAG,0) = 0
+
+              AND TRUNC(S.ADD_DATE) =
+                  L_DAY
+
+              AND UPPER(TRIM(S.STATUS)) =
+                  'SUCCESS'
+
+
+              /* SELECTED SITE */
+              AND
+              (
+                  V_SITE IS NULL
+                  OR TRIM(V_SITE) = ''
+
+                  OR UPPER(TRIM(S.PROPERTY_01)) =
+                     UPPER(TRIM(V_SITE))
+              )
+
+
+              /* USER AUTHORIZED SITE */
+              AND EXISTS
+              (
+                  SELECT 1
+
+                  FROM CMS.C_USER_MANAGE_T U
+
+                  WHERE UPPER(TRIM(U.EMP_ID)) =
+                        UPPER(TRIM(V_EMP_ID))
+
+                    AND U.SYSTEM_TYPE = 'CMS'
+
+                    AND NVL(U.DEL_FLAG,0) = 0
+
+                    AND UPPER(TRIM(U.SITE)) =
+                        UPPER(TRIM(S.PROPERTY_01))
+              )
+        )
+
+
+        /* =====================================================
+           DASHBOARD VALUES
+           ===================================================== */
+        SELECT
+
+            COUNT(*) AS TOTAL_EMPLOYEES,
+
+
+            /* -------------------------------------------------
+               MEALS COLLECTED
+               ------------------------------------------------- */
+            (
+                SELECT COUNT(*)
+
+                FROM COLLECTED C
+
+                INNER JOIN EMPLOYEE_DATA E
+
+                    ON UPPER(TRIM(E.FX_BADGE)) =
+                       UPPER(TRIM(C.FX_BADGE))
+
+                   AND UPPER(TRIM(E.SITE)) =
+                       UPPER(TRIM(C.SITE))
+            ) AS MEALS_COLLECTED,
+
+
+            /* -------------------------------------------------
+               NO MEAL REQUIRED
+               ------------------------------------------------- */
+            SUM
+            (
+                CASE
+
+                    WHEN UPPER(TRIM(E.MEAL_PREFERENCE)) =
+                         'NO MEAL REQUIRED'
+
+                    THEN 1
+
+                    ELSE 0
+
+                END
+            ) AS NO_MEAL_REQUIRED,
+
+
+            /* -------------------------------------------------
+               MEALS NOT COLLECTED
+               ------------------------------------------------- */
+            SUM
+            (
+                CASE
+
+                    WHEN UPPER(TRIM(E.MEAL_PREFERENCE)) <>
+                         'NO MEAL REQUIRED'
+
+                     AND NOT EXISTS
+                     (
+                         SELECT 1
+
+                         FROM COLLECTED C
+
+                         WHERE UPPER(TRIM(C.FX_BADGE)) =
+                               UPPER(TRIM(E.FX_BADGE))
+
+                           AND UPPER(TRIM(C.SITE)) =
+                               UPPER(TRIM(E.SITE))
+                     )
+
+                    THEN 1
+
+                    ELSE 0
+
+                END
+            ) AS MEALS_NOT_COLLECTED,
+
+
+            /* -------------------------------------------------
+               NO MEAL REQUIRED BUT CAME
+               ------------------------------------------------- */
+            SUM
+            (
+                CASE
+
+                    WHEN UPPER(TRIM(E.MEAL_PREFERENCE)) =
+                         'NO MEAL REQUIRED'
+
+                     AND EXISTS
+                     (
+                         SELECT 1
+
+                         FROM CMS.C_F1_SCAN_LOG S
+
+                         WHERE UPPER(TRIM(S.FX_BADGE)) =
+                               UPPER(TRIM(E.FX_BADGE))
+
+                           AND UPPER(TRIM(S.PROPERTY_01)) =
+                               UPPER(TRIM(E.SITE))
+
+                           AND TRUNC(S.ADD_DATE) =
+                               L_DAY
+
+                           AND NVL(S.DEL_FLAG,0) = 0
+                     )
+
+                    THEN 1
+
+                    ELSE 0
+
+                END
+            ) AS NOT_REQUIRED_CAME
+
+        FROM EMPLOYEE_DATA E;
+
+
+        /* =====================================================
+           DASHBOARD SUMMARY
+           ===================================================== */
+        OPEN P_SUMMARY_CURSOR FOR
+
+        WITH EMPLOYEE_DATA AS
+        (
+            SELECT *
+            FROM
+            (
+                SELECT
+
+                    M.ID,
+
+                    M.FX_BADGE,
+
+                    M.NAME,
+
+                    M.MEAL_PREFERENCE,
+
+                    M.PROPERTY_01 AS SITE,
+
+                    ROW_NUMBER() OVER
+                    (
+                        PARTITION BY
+
+                            UPPER(TRIM(M.FX_BADGE)),
+
+                            UPPER(TRIM(M.PROPERTY_01))
+
+                        ORDER BY
+                            M.ID DESC
+                    ) AS RN
+
+                FROM CMS.C_F1_MEAL_INFO M
+
+                WHERE NVL(M.DEL_FLAG,0) = 0
+
+                  AND L_DAY BETWEEN
+                      TRUNC(M.FIRST_DATE_FXBL)
+                      AND
+                      TRUNC(M.LAST_DATE_FXBL)
+
+                  AND EXISTS
+                  (
+                      SELECT 1
+
+                      FROM CMS.C_USER_MANAGE_T U
+
+                      WHERE UPPER(TRIM(U.EMP_ID)) =
+                            UPPER(TRIM(V_EMP_ID))
+
+                        AND U.SYSTEM_TYPE = 'CMS'
+
+                        AND NVL(U.DEL_FLAG,0) = 0
+
+                        AND U.SITE IS NOT NULL
+
+                        AND
+                        (
+                            V_SITE IS NULL
+                            OR TRIM(V_SITE) = ''
+
+                            OR UPPER(TRIM(U.SITE)) =
+                               UPPER(TRIM(V_SITE))
+                        )
+
+                        AND UPPER(TRIM(U.SITE)) =
+                            UPPER(TRIM(M.PROPERTY_01))
+                  )
+            )
+
+            WHERE RN = 1
+        ),
+
+
+        COLLECTED AS
+        (
+            SELECT DISTINCT
+
+                UPPER(TRIM(S.FX_BADGE))
+                    AS FX_BADGE,
+
+                UPPER(TRIM(S.PROPERTY_01))
+                    AS SITE
+
+            FROM CMS.C_F1_SCAN_LOG S
+
+            WHERE NVL(S.DEL_FLAG,0) = 0
+
+              AND TRUNC(S.ADD_DATE) =
+                  L_DAY
+
+              AND UPPER(TRIM(S.STATUS)) =
+                  'SUCCESS'
+
+              AND
+              (
+                  V_SITE IS NULL
+                  OR TRIM(V_SITE) = ''
+
+                  OR UPPER(TRIM(S.PROPERTY_01)) =
+                     UPPER(TRIM(V_SITE))
+              )
+        )
+
+
+        /* -----------------------------------------------------
+           MEALS COLLECTED
+           ----------------------------------------------------- */
+        SELECT
+
+            'Meals Collected' AS LABEL,
+
+            (
+                SELECT COUNT(*)
+
+                FROM COLLECTED C
+
+                INNER JOIN EMPLOYEE_DATA E
+
+                    ON UPPER(TRIM(E.FX_BADGE)) =
+                       UPPER(TRIM(C.FX_BADGE))
+
+                   AND UPPER(TRIM(E.SITE)) =
+                       UPPER(TRIM(C.SITE))
+            ) AS VALUE
+
+        FROM DUAL
+
+
+        UNION ALL
+
+
+        /* -----------------------------------------------------
+           MEALS NOT COLLECTED
+           ----------------------------------------------------- */
+        SELECT
+
+            'Meals Not Collected' AS LABEL,
+
+            COUNT(*)
+
+        FROM EMPLOYEE_DATA E
+
+        WHERE UPPER(TRIM(E.MEAL_PREFERENCE)) <>
+              'NO MEAL REQUIRED'
+
+          AND NOT EXISTS
+          (
+              SELECT 1
+
+              FROM COLLECTED C
+
+              WHERE UPPER(TRIM(C.FX_BADGE)) =
+                    UPPER(TRIM(E.FX_BADGE))
+
+                AND UPPER(TRIM(C.SITE)) =
+                    UPPER(TRIM(E.SITE))
+          )
+
+
+        UNION ALL
+
+
+        /* -----------------------------------------------------
+           NO MEAL REQUIRED
+           ----------------------------------------------------- */
+        SELECT
+
+            'No Meal Required' AS LABEL,
+
+            COUNT(*)
+
+        FROM EMPLOYEE_DATA E
+
+        WHERE UPPER(TRIM(E.MEAL_PREFERENCE)) =
+              'NO MEAL REQUIRED';
+
+
+        V_RES := '1';
+
+        V_RESULT :=
+            'Dashboard retrieved successfully';
+
+
+    EXCEPTION
+        WHEN OTHERS THEN
+
+            V_RES := '0';
+
+            V_RESULT := SQLERRM;
+
+            OPEN_EMPTY_CURSOR(P_CURSOR);
+
+
+            OPEN P_SUMMARY_CURSOR FOR
+
+                SELECT
+                    'Meals Collected' AS LABEL,
+                    0 AS VALUE
+
+                FROM DUAL
+
+                UNION ALL
+
+                SELECT
+                    'Meals Not Collected',
+                    0
+
+                FROM DUAL
+
+                UNION ALL
+
+                SELECT
+                    'No Meal Required',
+                    0
+
+                FROM DUAL;
+
+    END GET_MEAL_DASHBOARD;
+
+
+END F1_MEAL_MANAGEMENT;
+ 
+
+CREATE OR REPLACE PACKAGE CMS.F1_MEAL_MANAGEMENT
+AS
+
+    /* =========================================================
+       INSERT SINGLE F1 MENU
+       ========================================================= */
+    PROCEDURE INSERT_F1_MENU(
+        V_GROUPS            IN VARCHAR2,
+        V_MEAL_PREFERENCE   IN VARCHAR2,
+        V_FX_BADGE          IN VARCHAR2,
+        V_NAME              IN VARCHAR2,
+        V_FIRST_DATE_FXBL   IN VARCHAR2,
+        V_LAST_DATE_FXBL    IN VARCHAR2,
+        V_ADD_BY            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    );
+
+
+    /* =========================================================
+       BULK F1 MENU
+       ========================================================= */
+    PROCEDURE BULK_F1_MENU(
+        V_DATA              IN CLOB,
+        V_ADD_BY            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    );
+
+
+    /* =========================================================
+       GET F1 MENU MANAGEMENT
+       ========================================================= */
+    PROCEDURE GET_F1_MENU_MANAGE(
+        V_EMP_ID            IN VARCHAR2,
+        V_GROUPS            IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_FX_BADGE          IN VARCHAR2,
+        V_ADD_BY            IN VARCHAR2,
+        L_START_PAGE        IN VARCHAR2,
+        L_PAGE_SIZE         IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR
+    );
+
+
+    /* =========================================================
+       UPDATE F1 MENU
+       ========================================================= */
+    PROCEDURE UPDATE_F1_MENU_MANAGE(
+        V_ID                IN VARCHAR2,
+        V_GROUPS            IN VARCHAR2,
+        V_MEAL_PREFERENCE   IN VARCHAR2,
+        V_FX_BADGE          IN VARCHAR2,
+        V_NAME              IN VARCHAR2,
+        V_FIRST_DATE_FXBL   IN VARCHAR2,
+        V_LAST_DATE_FXBL    IN VARCHAR2,
+        V_EDIT_BY           IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    );
+
+
+    /* =========================================================
+       DELETE F1 MENU
+       ========================================================= */
+    PROCEDURE DELETE_F1_MENU_MANAGE(
+        L_IDS               IN VARCHAR2,
+        V_EDIT_BY           IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2
+    );
+
+
+    /* =========================================================
+       GET EMPLOYEE BY FX BADGE
+       SITE BASED
+       ========================================================= */
+    PROCEDURE GET_F1_MENU_BY_FXBADGE(
+        V_FX_BADGE          IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_EMP_ID            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR
+    );
+
+
+    /* =========================================================
+       INSERT MEAL SCAN LOG
+       SITE BASED
+       ========================================================= */
+    PROCEDURE INSERT_MEAL_SCAN_LOG(
+        V_FX_BADGE          IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_EMP_ID            IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR
+    );
+
+
+    /* =========================================================
+       GET MEAL SCAN LOG
+       ========================================================= */
+    PROCEDURE GET_MEAL_SCAN_LOG(
+        V_SEARCH_TEXT       IN VARCHAR2,
+        V_STATUS_FILTER     IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR,
+        P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
+    );
+
+
+    /* =========================================================
+       GET MEAL DASHBOARD
+       SITE + DATE BASED
+       ========================================================= */
+    PROCEDURE GET_MEAL_DASHBOARD(
+        V_EMP_ID            IN VARCHAR2,
+        V_DATE              IN VARCHAR2,
+        V_SITE              IN VARCHAR2,
+        V_RES               OUT VARCHAR2,
+        V_RESULT            OUT VARCHAR2,
+        P_CURSOR            OUT SYS_REFCURSOR,
+        P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
+    );
+
+END F1_MEAL_MANAGEMENT;
