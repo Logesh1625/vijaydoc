@@ -1,1726 +1,1014 @@
-import {
-  Component,
-  OnInit
-} from '@angular/core';
+<div
+  class="dashboard-wrapper"
+  [class.is-loading]="loading">
 
-import {
-  PublicNetService
-} from 'src/app/routes/a_Public_net/Public_net.service';
 
+  <!-- ============================================================
+       PAGE HEADER
+       ============================================================ -->
 
-/* ================================================================
-   CATEGORY MODEL
-   ================================================================ */
+  <div class="page-header">
 
-interface CategoryItem {
 
-  name: string;
+    <div class="page-title-wrap">
 
-  count: number;
 
-  percent: number;
+      <div class="page-icon">
 
-  color: string;
+        <svg
+          viewBox="0 0 24 24"
+          width="26"
+          height="26"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
 
-  icon: string;
+          <path
+            d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
 
-}
+          <path
+            d="M7 2v20" />
 
+          <path
+            d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
 
-/* ================================================================
-   SUMMARY MODEL
-   ================================================================ */
+        </svg>
 
-interface SummaryItem {
+      </div>
 
-  label: string;
 
-  count: number;
+      <div>
 
-  percent: number;
+        <h2 class="page-title">
+          F1 MEAL MANAGEMENT SYSTEM
+        </h2>
 
-  color: string;
 
-}
+        <p class="page-sub">
+          Your Daily Step Toward Greater Impact!
+        </p>
 
+      </div>
 
-/* ================================================================
-   COMPONENT
-   ================================================================ */
+    </div>
 
-@Component({
 
-  selector: 'app-dashboard',
+    <!-- ==========================================================
+         FILTERS
+         ========================================================== -->
 
-  templateUrl: './dashboard.component.html',
+    <div class="filter-block">
 
-  styleUrls: ['./dashboard.component.scss']
 
-})
+      <!-- ========================================================
+           SITE FILTER
+           ======================================================== -->
 
+      <div class="site-filter">
 
-export class F1DashboardComponent implements OnInit {
 
+        <div class="site-filter-label">
 
-  /* ================================================================
-     DATE
-     ================================================================ */
+          <i
+            nz-icon
+            nzType="environment"
+            nzTheme="outline">
+          </i>
 
-  selectedDate: Date = new Date();
+          <span>
+            Site
+          </span>
 
+        </div>
 
-  /* ================================================================
-     SITE
-     ================================================================ */
 
-  siteList: string[] = [];
+        <nz-select
 
-  /*
-   * IMPORTANT:
-   *
-   * selectedSite stores RAW site ID.
-   *
-   * 95326 = FXBL
-   * 69941 = FXCN
-   *
-   * UI will show FXBL / FXCN.
-   */
-  selectedSite: string = '';
+          class="site-select"
 
-  site: string = '';
+          [(ngModel)]="selectedSite"
 
+          name="selectedSite"
 
-  /*
-   * Dropdown list.
-   *
-   * value = RAW site ID
-   * label = UI site name
-   */
-  locationList: any[] = [];
+          nzPlaceHolder="Select Site"
 
+          [nzDisabled]="locationList.length === 0"
 
-  /* ================================================================
-     SITE DISPLAY MAP
-     ================================================================ */
+          (ngModelChange)="onLocationChange($event)">
 
-  private siteNameMap: {
-    [key: string]: string;
-  } = {
 
-    '95326': 'FXBL',
+          <nz-option
+            *ngFor="
+              let location of locationList
+            "
 
-    '69941': 'FXCN'
+            [nzValue]="location.value"
 
-  };
+            [nzLabel]="location.label">
 
+          </nz-option>
 
-  /* ================================================================
-     DASHBOARD CARD VALUES
-     ================================================================ */
 
-  totalEmployees: number = 0;
+        </nz-select>
 
-  mealsCollected: number = 0;
 
-  mealsNotCollected: number = 0;
+        <!-- ======================================================
+             SELECTED SITE
+             ====================================================== -->
 
-  noMealRequired: number = 0;
+        <div class="selected-site">
 
-  notCameToCollect: number = 0;
 
+          <span>
+            Selected Site:
+          </span>
 
-  /* ================================================================
-     CATEGORY LIST
-     ================================================================ */
 
-  categoryList: CategoryItem[] = [
+          <strong>
 
-    {
-      name: 'Indian Veg',
-      count: 0,
-      percent: 0,
-      color: '#52c41a',
-      icon: '🥬'
-    },
+            {{
+              selectedSite
+                ? getSiteName(selectedSite)
+                : 'All My Sites'
+            }}
 
-    {
-      name: 'Indian Non-Veg',
-      count: 0,
-      percent: 0,
-      color: '#1890ff',
-      icon: '🍗'
-    },
+          </strong>
 
-    {
-      name: 'Western Veg',
-      count: 0,
-      percent: 0,
-      color: '#722ed1',
-      icon: '🥗'
-    },
 
-    {
-      name: 'Western Non-Veg',
-      count: 0,
-      percent: 0,
-      color: '#faad14',
-      icon: '🍔'
-    },
+        </div>
 
-    {
-      name: 'Chinese Non-Veg',
-      count: 0,
-      percent: 0,
-      color: '#f8784d',
-      icon: '🥡'
-    },
 
-    {
-      name: 'Chinese Veg',
-      count: 0,
-      percent: 0,
-      color: '#a0c065',
-      icon: '🍜'
-    },
+      </div>
 
-    {
-      name: 'Jain',
-      count: 0,
-      percent: 0,
-      color: '#13c2c2',
-      icon: '🌿'
-    },
 
-    {
-      name: 'Vegan',
-      count: 0,
-      percent: 0,
-      color: '#eb2f96',
-      icon: '🌱'
-    }
+      <!-- ========================================================
+           DATE
+           ======================================================== -->
 
-  ];
+      <nz-date-picker
 
+        [(ngModel)]="selectedDate"
 
-  /* ================================================================
-     SUMMARY
-     ================================================================ */
+        (ngModelChange)="onDateChange($event)"
 
-  summaryList: SummaryItem[] = [];
+        nzFormat="DD-MMM-YYYY"
 
+        [nzAllowClear]="false">
 
-  donutGradient: string =
-    'conic-gradient(#e6ebf5 0% 100%)';
+      </nz-date-picker>
 
 
-  /* ================================================================
-     LOADING
-     ================================================================ */
+    </div>
 
-  loading: boolean = false;
+  </div>
 
 
-  /* ================================================================
-     COLOR MAP
-     ================================================================ */
 
-  private colorMap: {
-    [key: string]: string
-  } = {
+  <!-- ============================================================
+       BANNER
+       ============================================================ -->
 
-    'Indian Veg': '#52c41a',
+  <div class="banner-card">
 
-    'Indian Non-Veg': '#1890ff',
 
-    'Western Veg': '#722ed1',
+    <svg
+      class="banner-art"
+      viewBox="0 0 360 150"
+      aria-hidden="true">
 
-    'Western Non-Veg': '#faad14',
 
-    'Chinese Non-Veg': '#f8784d',
+      <g
+        fill="rgba(255,255,255,0.10)"
+        stroke="rgba(255,255,255,0.35)"
+        stroke-width="1.5">
 
-    'Chinese Veg': '#a0c065',
 
-    'Jain': '#13c2c2',
+        <ellipse
+          cx="100"
+          cy="100"
+          rx="84"
+          ry="28" />
 
-    'Vegan': '#eb2f96'
 
-  };
+        <ellipse
+          cx="100"
+          cy="94"
+          rx="60"
+          ry="18" />
 
 
-  /* ================================================================
-     ICON MAP
-     ================================================================ */
+        <ellipse
+          cx="250"
+          cy="82"
+          rx="64"
+          ry="21" />
 
-  private iconMap: {
-    [key: string]: string
-  } = {
 
-    'Indian Veg': '🥬',
+        <ellipse
+          cx="250"
+          cy="77"
+          rx="44"
+          ry="13" />
 
-    'Indian Non-Veg': '🍗',
 
-    'Western Veg': '🥗',
+      </g>
 
-    'Western Non-Veg': '🍔',
 
-    'Chinese Non-Veg': '🥡',
+      <g
+        fill="rgba(255,255,255,0.22)">
 
-    'Chinese Veg': '🍜',
 
-    'Jain': '🌿',
+        <circle
+          cx="92"
+          cy="90"
+          r="6" />
 
-    'Vegan': '🌱'
 
-  };
+        <circle
+          cx="112"
+          cy="96"
+          r="4" />
 
 
-  /* ================================================================
-     CONSTRUCTOR
-     ================================================================ */
+        <circle
+          cx="244"
+          cy="74"
+          r="5" />
 
-  constructor(
-    private publicSvr: PublicNetService
-  ) {}
 
+      </g>
 
-  /* ================================================================
-     INIT
-     ================================================================ */
 
-  ngOnInit(): void {
+    </svg>
 
-    this.resetDashboard();
 
-    this.loadLoggedInUserSite();
+    <div class="banner-left">
 
-  }
 
+      <div class="breadcrumb">
 
-  /* ================================================================
-     LOAD LOGGED-IN USER SITE
-     ================================================================ */
+        <span>
+          Home
+        </span>
 
-  private loadLoggedInUserSite(): void {
+        <span class="sep">
+          &rsaquo;
+        </span>
 
-    const userInfo =
-      this.publicSvr.getSettingUserInfo();
+        <span class="current">
+          Dashboard
+        </span>
 
+      </div>
 
-    console.log(
-      'F1 Dashboard - Logged in user:',
-      userInfo
-    );
 
+      <h1 class="banner-title">
+        Meal Distribution Details
+      </h1>
 
-    if (
-      !userInfo ||
-      !userInfo.eeid
-    ) {
 
-      console.error(
-        'F1 Dashboard - EEID not found'
-      );
+      <p class="banner-subtitle">
+        Daily meal collection at a glance
+      </p>
 
-      this.resetDashboard();
 
-      return;
+    </div>
 
-    }
 
+    <div class="banner-tagline">
 
-    this.publicSvr
-      .getSitebasedUser()
-      .subscribe(
 
-        (userList: any[]) => {
+      <i
+        nz-icon
+        nzType="heart"
+        nzTheme="outline">
+      </i>
 
-          console.log(
-            'F1 Dashboard - User site list:',
-            userList
-          );
 
+      <span>
+        Healthy Food
+      </span>
 
-          if (
-            !userList ||
-            userList.length === 0
-          ) {
 
-            console.error(
-              'F1 Dashboard - No user/site data'
-            );
+      <span class="dot">
+      </span>
 
-            this.resetDashboard();
 
-            return;
+      <span>
+        Happy Workplace
+      </span>
 
-          }
 
+    </div>
 
-          /*
-           * Get only active sites
-           * belonging to logged-in user.
-           */
-          this.siteList =
-            this.extractAllSites(
-              userList,
-              userInfo.eeid
-            );
 
+  </div>
 
-          console.log(
-            'F1 Dashboard - Active raw sites:',
-            this.siteList
-          );
 
 
-          if (
-            this.siteList.length === 0
-          ) {
+  <!-- ============================================================
+       STAT CARDS
+       ============================================================ -->
 
-            console.error(
-              'F1 Dashboard - No active site found'
-            );
+  <div class="stat-cards-row">
 
-            this.resetDashboard();
 
-            return;
+    <!-- TOTAL EMPLOYEES -->
 
-          }
+    <div class="stat-card card-blue">
 
 
-          /*
-           * Default = All My Sites
-           */
-          this.selectedSite = '';
+      <div class="stat-top">
 
-          this.site = '';
 
+        <div class="stat-icon">
 
-          /*
-           * Build dropdown.
-           */
-          this.buildLocationList();
+          <i
+            nz-icon
+            nzType="team"
+            nzTheme="outline">
+          </i>
 
+        </div>
 
-          /*
-           * Load dashboard.
-           */
-          this.getDashboardData();
 
-        },
+        <span class="stat-trend flat">
 
+          <i
+            nz-icon
+            nzType="bar-chart"
+            nzTheme="outline">
+          </i>
 
-        error => {
+        </span>
 
-          console.error(
-            'F1 Dashboard - getSitebasedUser error:',
-            error
-          );
 
-          this.resetDashboard();
+      </div>
 
-        }
 
-      );
+      <div class="stat-title">
+        Total Employees
+      </div>
 
-  }
 
+      <div class="stat-value">
+        {{ totalEmployees | number }}
+      </div>
 
-  /* ================================================================
-     GET EMPLOYEE ID
-     ================================================================ */
 
-  private getItemEeid(
-    item: any
-  ): string {
+      <div class="stat-sub">
+        Employees on record
+      </div>
 
-    if (!item) {
 
-      return '';
+    </div>
 
-    }
 
 
-    const value =
+    <!-- MEALS COLLECTED -->
 
-      item.Eeid ||
+    <div class="stat-card card-green">
 
-      item.EEID ||
 
-      item.EeidNo ||
+      <div class="stat-top">
 
-      item.EmpId ||
 
-      item.EMP_ID ||
+        <div class="stat-icon">
 
-      item.EmployeeId ||
+          <i
+            nz-icon
+            nzType="check-circle"
+            nzTheme="outline">
+          </i>
 
-      item.EmployeeCode ||
+        </div>
 
-      item.eeid ||
 
-      '';
+        <span class="stat-trend up">
 
+          <i
+            nz-icon
+            nzType="arrow-up"
+            nzTheme="outline">
+          </i>
 
-    return String(value)
-      .trim()
-      .toUpperCase();
+          {{ pct(mealsCollected) }}%
 
-  }
+        </span>
 
 
-  /* ================================================================
-     CHECK ACTIVE USER
-     ================================================================ */
+      </div>
 
-  private isActiveUser(
-    item: any
-  ): boolean {
 
-    if (!item) {
+      <div class="stat-title">
+        Meals Collected
+      </div>
 
-      return false;
 
-    }
+      <div class="stat-value">
+        {{ mealsCollected | number }}
+      </div>
 
 
-    let delFlag: any = 0;
+      <div class="stat-sub">
+        Collected meals
+      </div>
 
 
-    if (
-      item.DelFlag !== undefined &&
-      item.DelFlag !== null &&
-      item.DelFlag !== ''
-    ) {
+    </div>
 
-      delFlag =
-        item.DelFlag;
 
-    }
 
-    else if (
-      item.DEL_FLAG !== undefined &&
-      item.DEL_FLAG !== null &&
-      item.DEL_FLAG !== ''
-    ) {
+    <!-- MEALS NOT COLLECTED -->
 
-      delFlag =
-        item.DEL_FLAG;
+    <div class="stat-card card-red">
 
-    }
 
-    else if (
-      item.delFlag !== undefined &&
-      item.delFlag !== null &&
-      item.delFlag !== ''
-    ) {
+      <div class="stat-top">
 
-      delFlag =
-        item.delFlag;
 
-    }
+        <div class="stat-icon">
 
-    else if (
-      item.del_flag !== undefined &&
-      item.del_flag !== null &&
-      item.del_flag !== ''
-    ) {
+          <i
+            nz-icon
+            nzType="close-circle"
+            nzTheme="outline">
+          </i>
 
-      delFlag =
-        item.del_flag;
+        </div>
 
-    }
 
+        <span class="stat-trend down">
 
-    return Number(delFlag) === 0;
+          <i
+            nz-icon
+            nzType="arrow-down"
+            nzTheme="outline">
+          </i>
 
-  }
+          {{ pct(mealsNotCollected) }}%
 
+        </span>
 
-  /* ================================================================
-     EXTRACT ALL ACTIVE SITES
-     ================================================================ */
 
-  private extractAllSites(
-    userList: any[],
-    eeid: string
-  ): string[] {
+      </div>
 
-    const loginEeid =
-      String(eeid)
-        .trim()
-        .toUpperCase();
 
+      <div class="stat-title">
+        Meals Not Collected
+      </div>
 
-    const sites: string[] = [];
 
+      <div class="stat-value">
+        {{ mealsNotCollected | number }}
+      </div>
 
-    userList.forEach(
-      item => {
 
-        if (!item) {
+      <div class="stat-sub">
+        Yet to collect
+      </div>
 
-          return;
 
-        }
+    </div>
 
 
-        const itemEeid =
-          this.getItemEeid(item);
 
+    <!-- NO MEAL REQUIRED -->
 
-        if (
-          itemEeid !== loginEeid
-        ) {
+    <div class="stat-card card-purple">
 
-          return;
 
-        }
+      <div class="stat-top">
 
 
-        if (
-          !this.isActiveUser(item)
-        ) {
+        <div class="stat-icon">
 
-          return;
+          <i
+            nz-icon
+            nzType="stop"
+            nzTheme="outline">
+          </i>
 
-        }
+        </div>
 
 
-        const site =
-          this.extractSite(item);
+        <span class="stat-trend flat">
 
+          <i
+            nz-icon
+            nzType="arrow-right"
+            nzTheme="outline">
+          </i>
 
-        if (site) {
+          {{ pct(noMealRequired) }}%
 
-          sites.push(site);
+        </span>
 
-        }
 
-      }
-    );
+      </div>
 
 
-    /*
-     * Remove duplicates.
-     */
-    const uniqueSites: string[] = [];
+      <div class="stat-title">
+        No Meal Required
+      </div>
 
 
-    sites.forEach(
-      site => {
+      <div class="stat-value">
+        {{ noMealRequired | number }}
+      </div>
 
-        const exists =
-          uniqueSites.some(
-            x =>
-              x.toUpperCase() ===
-              site.toUpperCase()
-          );
 
+      <div class="stat-sub">
+        Meal not required
+      </div>
 
-        if (!exists) {
 
-          uniqueSites.push(site);
+    </div>
 
-        }
 
-      }
-    );
 
+    <!-- NOT REQUIRED BUT CAME -->
 
-    return uniqueSites;
+    <div class="stat-card card-orange">
 
-  }
 
+      <div class="stat-top">
 
-  /* ================================================================
-     EXTRACT SITE
-     ================================================================ */
 
-  private extractSite(
-    user: any
-  ): string {
+        <div class="stat-icon">
 
-    if (!user) {
+          <i
+            nz-icon
+            nzType="user"
+            nzTheme="outline">
+          </i>
 
-      return '';
+        </div>
 
-    }
 
+        <span class="stat-trend flat">
 
-    const site =
+          <i
+            nz-icon
+            nzType="arrow-right"
+            nzTheme="outline">
+          </i>
 
-      user.Site ||
+          {{ pct(notCameToCollect) }}%
 
-      user.site ||
+        </span>
 
-      user.SITE ||
 
-      user.SiteName ||
+      </div>
 
-      user.siteName ||
 
-      user.WorkSite ||
+      <div class="stat-title">
+        Not Required - Came to Collect
+      </div>
 
-      user.Worksite ||
 
-      user.BasicCode ||
+      <div class="stat-value">
+        {{ notCameToCollect | number }}
+      </div>
 
-      user.Basiccode ||
 
-      user.Location ||
+      <div class="stat-sub">
+        No meal, but came to collect
+      </div>
 
-      user.location ||
 
-      '';
+    </div>
 
 
-    return String(site)
-      .trim();
+  </div>
 
-  }
 
 
-  /* ================================================================
-     SITE ID -> DISPLAY NAME
-     ================================================================ */
+  <!-- ============================================================
+       CATEGORY WISE
+       ============================================================ -->
 
-  getSiteName(
-    siteId: any
-  ): string {
+  <div class="category-card">
 
-    const id =
-      String(siteId || '')
-        .trim()
-        .toUpperCase();
 
+    <div class="category-header">
 
-    if (!id) {
 
-      return '';
+      <div class="category-title">
 
-    }
 
+        <i
+          nz-icon
+          nzType="bar-chart"
+          nzTheme="outline">
+        </i>
 
-    /*
-     * Already display value.
-     */
-    if (
-      id === 'FXBL' ||
-      id === 'FXCN'
-    ) {
 
-      return id;
+        <span>
+          Meals Collected - Category Wise
+        </span>
 
-    }
 
+      </div>
 
-    return (
-      this.siteNameMap[id] ||
-      id
-    );
 
-  }
+      <div class="category-sub">
 
 
-  /* ================================================================
-     BUILD SITE DROPDOWN
-     ================================================================ */
+        <i
+          nz-icon
+          nzType="bar-chart"
+          nzTheme="outline">
+        </i>
 
-  private buildLocationList(): void {
 
-    /*
-     * All My Sites
-     */
-    this.locationList = [
+        Category wise distribution of collected meals
 
-      {
-        value: '',
-        label: 'All My Sites'
-      }
 
-    ];
+      </div>
 
 
-    /*
-     * Add user's active sites.
-     *
-     * Example:
-     *
-     * value = 95326
-     * label = FXBL
-     *
-     * value = 69941
-     * label = FXCN
-     */
-    this.siteList.forEach(
-      siteId => {
+    </div>
 
-        this.locationList.push({
 
-          value: siteId,
 
-          label:
-            this.getSiteName(siteId)
+    <div class="category-grid">
 
-        });
 
-      }
-    );
+      <div
 
+        class="category-item"
 
-    console.log(
-      'F1 Dashboard - Site Dropdown:',
-      this.locationList
-    );
+        *ngFor="let cat of categoryList"
 
-  }
+        [ngStyle]="{
+          'border-top-color': cat.color
+        }">
 
 
-  /* ================================================================
-     DATE CHANGE
-     ================================================================ */
+        <div class="cat-top">
 
-  onDateChange(
-    date: Date
-  ): void {
 
-    if (date) {
+          <div
 
-      this.selectedDate = date;
+            class="cat-icon"
 
-    }
+            [ngStyle]="{
+              'background-color':
+                cat.color + '22'
+            }">
 
-    else {
+            {{ cat.icon }}
 
-      this.selectedDate =
-        new Date();
+          </div>
 
-    }
 
+          <div class="cat-name">
 
-    console.log(
-      'F1 Dashboard - Date:',
-      this.formatDate(
-        this.selectedDate
-      )
-    );
+            {{ cat.name }}
 
+          </div>
 
-    this.getDashboardData();
 
-  }
+        </div>
 
 
-  /* ================================================================
-     SITE CHANGE
-     ================================================================ */
+        <div
 
-  onLocationChange(
-    location: string
-  ): void {
+          class="cat-count"
 
-    console.log(
-      'F1 Dashboard - Selected raw site:',
-      location
-    );
+          [ngStyle]="{
+            'color': cat.color
+          }">
 
+          {{ cat.count }}
 
-    /*
-     * Empty = All My Sites.
-     */
-    if (!location) {
+        </div>
 
-      this.selectedSite = '';
 
-    }
+        <div class="cat-percent">
 
-    else {
+          {{ cat.percent }}%
+          of collected
 
-      /*
-       * Validate raw site ID.
-       */
-      const validSite =
-        this.siteList.some(
-          site =>
+        </div>
 
-            String(site)
-              .trim()
-              .toUpperCase() ===
 
-            String(location)
-              .trim()
-              .toUpperCase()
+        <div class="cat-progress-bar">
 
-        );
 
+          <div
 
-      if (validSite) {
+            class="cat-progress-fill"
 
-        /*
-         * Keep RAW site ID.
-         *
-         * 95326
-         * 69941
-         */
-        this.selectedSite =
-          String(location)
-            .trim();
+            [ngStyle]="{
+              'width':
+                cat.percent + '%',
 
-      }
+              'background-color':
+                cat.color
+            }">
 
-      else {
+          </div>
 
-        console.warn(
-          'Invalid site selected:',
-          location
-        );
 
-        this.selectedSite = '';
+        </div>
 
-      }
 
-    }
+      </div>
 
 
-    console.log(
-      'F1 Dashboard - Display site:',
-      this.selectedSite
-        ? this.getSiteName(
-            this.selectedSite
-          )
-        : 'All My Sites'
-    );
+    </div>
 
 
-    console.log(
-      'F1 Dashboard - API site:',
-      this.selectedSite || 'ALL'
-    );
+  </div>
 
 
-    /*
-     * Reload dashboard.
-     */
-    this.getDashboardData();
 
-  }
+  <!-- ============================================================
+       BOTTOM ROW
+       ============================================================ -->
 
+  <div class="bottom-row">
 
-  /* ================================================================
-     FORMAT DATE
-     ================================================================ */
 
-  private formatDate(
-    d: Date
-  ): string {
+    <!-- SUMMARY -->
 
-    if (!d) {
+    <div class="summary-card">
 
-      d = new Date();
 
-    }
+      <div class="section-title">
 
 
-    const dd =
-      ('0' + d.getDate())
-        .slice(-2);
+        <i
+          nz-icon
+          nzType="bar-chart"
+          nzTheme="outline">
+        </i>
 
 
-    const mm =
-      ('0' + (d.getMonth() + 1))
-        .slice(-2);
+        <span>
+          Meal Collection Summary
+        </span>
 
 
-    return (
+      </div>
 
-      dd +
-      '-' +
-      mm +
-      '-' +
-      d.getFullYear()
 
-    );
+      <div class="summary-body">
 
-  }
 
+        <!-- DONUT -->
 
-  /* ================================================================
-     PERCENTAGE
-     ================================================================ */
+        <div
 
-  pct(
-    n: number
-  ): number {
+          class="donut"
 
-    if (
-      !this.totalEmployees ||
-      this.totalEmployees <= 0
-    ) {
+          [style.background]="donutGradient">
 
-      return 0;
 
-    }
+          <div class="donut-hole">
 
 
-    return Math.round(
+            <div class="donut-main">
 
-      (
-        Number(n || 0) /
-        this.totalEmployees
-      ) *
+              {{ mealsCollected }}
+              /
+              {{ totalEmployees }}
 
-      100
+            </div>
 
-    );
 
-  }
+            <div class="donut-label">
+              Collected
+            </div>
 
 
-  /* ================================================================
-     GET DASHBOARD DATA
-     ================================================================ */
+          </div>
 
-  getDashboardData(): void {
 
-    const userInfo =
-      this.publicSvr
-        .getSettingUserInfo();
+        </div>
 
 
-    if (
-      !userInfo ||
-      !userInfo.eeid
-    ) {
 
-      this.resetDashboard();
+        <!-- LEGEND -->
 
-      return;
+        <div class="legend">
 
-    }
 
+          <div
 
-    if (
-      !this.siteList ||
-      this.siteList.length === 0
-    ) {
+            class="legend-row"
 
-      this.resetDashboard();
+            *ngFor="let s of summaryList">
 
-      return;
 
-    }
+            <span
 
+              class="legend-dot"
 
-    /*
-     * Validate selected site.
-     */
-    if (
-      this.selectedSite
-    ) {
+              [style.background-color]="s.color">
 
-      const validSite =
-        this.siteList.some(
-          site =>
+            </span>
 
-            site.toUpperCase() ===
-            this.selectedSite
-              .toUpperCase()
 
-        );
+            <span class="legend-name">
 
+              {{ s.label }}
 
-      if (!validSite) {
+            </span>
 
-        this.selectedSite = '';
 
-      }
+            <span class="legend-count">
 
-    }
+              {{ s.count }}
 
+            </span>
 
-    this.loading = true;
 
+            <span class="legend-pct">
 
-    /* ============================================================
-       API PARAMETER
-       ============================================================ */
+              {{ s.percent }}%
 
-    const params: any = {
+            </span>
 
-      Date:
-        this.formatDate(
-          this.selectedDate
-        ),
 
-      /*
-       * IMPORTANT:
-       *
-       * API gets raw ID.
-       *
-       * FXBL -> 95326
-       * FXCN -> 69941
-       */
-      Site:
-        this.selectedSite || '',
+          </div>
 
-      EmpId:
-        userInfo.eeid,
 
-      SystemName:
-        'CMS',
+        </div>
 
-      Func:
-        'CMS-GetMealDashboard'
 
-    };
+      </div>
 
 
-    console.log(
-      '================================================'
-    );
+    </div>
 
-    console.log(
-      'F1 DASHBOARD REQUEST'
-    );
 
-    console.log(
-      'Employee:',
-      userInfo.eeid
-    );
 
-    console.log(
-      'Display Site:',
-      this.selectedSite
-        ? this.getSiteName(
-            this.selectedSite
-          )
-        : 'All My Sites'
-    );
+    <!-- TOTAL PROCESSED -->
 
-    console.log(
-      'API Site:',
-      params.Site || 'ALL'
-    );
+    <div class="processed-card">
 
-    console.log(
-      'Date:',
-      params.Date
-    );
 
-    console.log(
-      'Params:',
-      params
-    );
+      <div class="processed-top">
 
-    console.log(
-      '================================================'
-    );
 
+        <div class="processed-icon">
 
-    this.publicSvr
-      .iwxPostF1(
 
-        params,
+          <svg
 
-        {
+            viewBox="0 0 24 24"
 
-          headers: {
+            width="28"
 
-            apiID:
-              'ffff-1789987849667-10208193125-1519',
+            height="28"
 
-            userKey:
-              'E9785F13CCEAFB251A6AB147AFD24336'
+            fill="none"
 
-          }
+            stroke="currentColor"
 
-        },
+            stroke-width="2"
 
-        true
+            stroke-linecap="round"
 
-      )
+            stroke-linejoin="round">
 
 
-      .then(
-        (res: any) => {
+            <path
+              d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
 
-          this.loading = false;
 
+            <path
+              d="M7 2v20" />
 
-          console.log(
-            'F1 DASHBOARD RESPONSE',
-            res
-          );
 
+            <path
+              d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
 
-          /*
-           * API failed.
-           */
-          if (
-            !res ||
-            String(res.IsOK) !== '1'
-          ) {
 
-            this.resetDashboard();
+          </svg>
 
-            return;
 
-          }
+        </div>
 
 
-          /* ======================================================
-             CURSOR 1
-             ====================================================== */
+        <div>
 
-          const c =
 
-            (
-              res.List &&
-              res.List.length > 0
-            )
+          <div class="processed-title">
 
-              ? res.List[0]
+            Total Meals Processed
 
-              : {};
+          </div>
 
 
-          this.totalEmployees =
-            Number(
+          <div class="processed-value">
 
-              c.TotalEmployees ||
-              c.TOTAL_EMPLOYEES ||
-              0
+            {{ totalEmployees | number }}
 
-            );
+          </div>
 
 
-          this.mealsCollected =
-            Number(
+          <div class="processed-sub">
 
-              c.MealsCollected ||
-              c.MEALS_COLLECTED ||
-              0
+            Employees on record
 
-            );
+          </div>
 
 
-          this.mealsNotCollected =
-            Number(
+        </div>
 
-              c.MealsNotCollected ||
-              c.MEALS_NOT_COLLECTED ||
-              0
 
-            );
+      </div>
 
 
-          this.noMealRequired =
-            Number(
 
-              c.NoMealRequired ||
-              c.NO_MEAL_REQUIRED ||
-              0
+      <!-- DATE -->
 
-            );
+      <div class="processed-date">
 
 
-          this.notCameToCollect =
-            Number(
+        <i
+          nz-icon
+          nzType="calendar"
+          nzTheme="outline">
+        </i>
 
-              c.NotRequiredCame ||
-              c.NOT_REQUIRED_CAME ||
-              0
 
-            );
+        <span>
 
+          For
+          {{ selectedDate | date:'dd-MM-yyyy' }}
 
-          /* ======================================================
-             CURSOR 2
-             ====================================================== */
+        </span>
 
-          const cats: any[] =
 
-            res.List2 ||
+      </div>
 
-            res.Summary ||
 
-            res.CategoryList ||
 
-            [];
+      <!-- SITE -->
 
+      <div
+        class="processed-date"
+        style="margin-top: 8px;">
 
-          if (
-            cats &&
-            cats.length > 0
-          ) {
 
-            this.categoryList =
-              cats.map(
-                (item: any) => {
+        <i
+          nz-icon
+          nzType="environment"
+          nzTheme="outline">
+        </i>
 
-                  const categoryName =
 
-                    item.Category ||
+        <span>
 
-                    item.CATEGORY ||
+          Site:
 
-                    '';
+          {{
+            selectedSite
+              ? getSiteName(selectedSite)
+              : 'All My Sites'
+          }}
 
+        </span>
 
-                  const count =
 
-                    Number(
+      </div>
 
-                      item.CollectedCount ||
 
-                      item.COLLECTED_COUNT ||
+    </div>
 
-                      0
 
-                    );
+  </div>
 
 
-                  const percentage =
 
-                    Number(
+  <!-- ============================================================
+       LOADING
+       ============================================================ -->
 
-                      item.Percentage ||
+  <div
 
-                      item.PERCENTAGE ||
+    class="dashboard-loading"
 
-                      0
+    *ngIf="loading">
 
-                    );
 
+    <nz-spin
 
-                  return {
+      nzSimple
 
-                    name:
-                      categoryName,
+      nzSize="large">
 
-                    count:
-                      count,
+    </nz-spin>
 
-                    percent:
-                      percentage,
 
-                    color:
-                      this.getColorForCategory(
-                        categoryName
-                      ),
+  </div>
 
-                    icon:
-                      this.getIconForCategory(
-                        categoryName
-                      )
 
-                  };
-
-                }
-              );
-
-          }
-
-          else {
-
-            this.resetCategories();
-
-          }
-
-
-          this.updateSummary();
-
-        }
-
-      )
-
-
-      .catch(
-        err => {
-
-          this.loading = false;
-
-
-          console.error(
-            'F1 Dashboard API error:',
-            err
-          );
-
-
-          this.resetDashboard();
-
-        }
-      );
-
-  }
-
-
-  /* ================================================================
-     RESET DASHBOARD
-     ================================================================ */
-
-  private resetDashboard(): void {
-
-    this.loading = false;
-
-    this.totalEmployees = 0;
-
-    this.mealsCollected = 0;
-
-    this.mealsNotCollected = 0;
-
-    this.noMealRequired = 0;
-
-    this.notCameToCollect = 0;
-
-    this.resetCategories();
-
-    this.updateSummary();
-
-  }
-
-
-  /* ================================================================
-     RESET CATEGORY
-     ================================================================ */
-
-  private resetCategories(): void {
-
-    this.categoryList = [
-
-      {
-        name: 'Indian Veg',
-        count: 0,
-        percent: 0,
-        color: '#52c41a',
-        icon: '🥬'
-      },
-
-      {
-        name: 'Indian Non-Veg',
-        count: 0,
-        percent: 0,
-        color: '#1890ff',
-        icon: '🍗'
-      },
-
-      {
-        name: 'Western Veg',
-        count: 0,
-        percent: 0,
-        color: '#722ed1',
-        icon: '🥗'
-      },
-
-      {
-        name: 'Western Non-Veg',
-        count: 0,
-        percent: 0,
-        color: '#faad14',
-        icon: '🍔'
-      },
-
-      {
-        name: 'Chinese Non-Veg',
-        count: 0,
-        percent: 0,
-        color: '#f8784d',
-        icon: '🥡'
-      },
-
-      {
-        name: 'Chinese Veg',
-        count: 0,
-        percent: 0,
-        color: '#a0c065',
-        icon: '🍜'
-      },
-
-      {
-        name: 'Jain',
-        count: 0,
-        percent: 0,
-        color: '#13c2c2',
-        icon: '🌿'
-      },
-
-      {
-        name: 'Vegan',
-        count: 0,
-        percent: 0,
-        color: '#eb2f96',
-        icon: '🌱'
-      }
-
-    ];
-
-  }
-
-
-  /* ================================================================
-     COLOR
-     ================================================================ */
-
-  getColorForCategory(
-    name: string
-  ): string {
-
-    if (!name) {
-
-      return '#999';
-
-    }
-
-
-    if (
-      this.colorMap[name]
-    ) {
-
-      return this.colorMap[name];
-
-    }
-
-
-    const key =
-      Object.keys(
-        this.colorMap
-      ).find(
-        x =>
-
-          x.toUpperCase() ===
-
-          String(name)
-            .trim()
-            .toUpperCase()
-
-      );
-
-
-    return key
-      ? this.colorMap[key]
-      : '#999';
-
-  }
-
-
-  /* ================================================================
-     ICON
-     ================================================================ */
-
-  getIconForCategory(
-    name: string
-  ): string {
-
-    if (!name) {
-
-      return '🍽️';
-
-    }
-
-
-    if (
-      this.iconMap[name]
-    ) {
-
-      return this.iconMap[name];
-
-    }
-
-
-    const key =
-      Object.keys(
-        this.iconMap
-      ).find(
-        x =>
-
-          x.toUpperCase() ===
-
-          String(name)
-            .trim()
-            .toUpperCase()
-
-      );
-
-
-    return key
-      ? this.iconMap[key]
-      : '🍽️';
-
-  }
-
-
-  /* ================================================================
-     UPDATE SUMMARY
-     ================================================================ */
-
-  private updateSummary(): void {
-
-    this.summaryList = [
-
-      {
-        label:
-          'Meals Collected',
-
-        count:
-          this.mealsCollected,
-
-        percent:
-          this.pct(
-            this.mealsCollected
-          ),
-
-        color:
-          '#1890ff'
-
-      },
-
-      {
-        label:
-          'Meals Not Collected',
-
-        count:
-          this.mealsNotCollected,
-
-        percent:
-          this.pct(
-            this.mealsNotCollected
-          ),
-
-        color:
-          '#b4bfd4'
-
-      },
-
-      {
-        label:
-          'No Meal Required',
-
-        count:
-          this.noMealRequired,
-
-        percent:
-          this.pct(
-            this.noMealRequired
-          ),
-
-        color:
-          '#dde3ee'
-
-      },
-
-      {
-        label:
-          'Not Required - Came to Collect',
-
-        count:
-          this.notCameToCollect,
-
-        percent:
-          this.pct(
-            this.notCameToCollect
-          ),
-
-        color:
-          '#b39ddb'
-
-      }
-
-    ];
-
-
-    const ringParts =
-      this.summaryList.slice(
-        0,
-        3
-      );
-
-
-    const sum =
-      ringParts.reduce(
-
-        (
-          total,
-          item
-        ) =>
-
-          total +
-          Number(
-            item.count || 0
-          ),
-
-        0
-
-      );
-
-
-    if (
-      sum <= 0
-    ) {
-
-      this.donutGradient =
-        'conic-gradient(#e6ebf5 0% 100%)';
-
-      return;
-
-    }
-
-
-    let acc = 0;
-
-
-    const stops =
-      ringParts.map(
-        item => {
-
-          const start =
-            acc;
-
-
-          acc +=
-
-            (
-              Number(
-                item.count || 0
-              ) /
-
-              sum
-
-            ) *
-
-            100;
-
-
-          return (
-
-            item.color +
-
-            ' ' +
-
-            start +
-
-            '%' +
-
-            ' ' +
-
-            acc +
-
-            '%'
-
-          );
-
-        }
-      );
-
-
-    this.donutGradient =
-
-      'conic-gradient(' +
-
-      stops.join(', ') +
-
-      ')';
-
-  }
-
-}
+</div>
