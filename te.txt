@@ -1,388 +1,1385 @@
-.scan-wrapper {
-  padding: 20px;
-}
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
+
+import {
+  HttpClient
+} from '@angular/common/http';
+
+import {
+  DomSanitizer,
+  SafeUrl
+} from '@angular/platform-browser';
+
+import {
+  NzMessageService
+} from 'ng-zorro-antd';
+
+import {
+  PublicNetService
+} from 'src/app/routes/a_Public_net/Public_net.service';
 
 
-/* ============================================================
-   HEADER
-   ============================================================ */
+@Component({
+  selector: 'app-Meal-scan',
 
-.header-row {
-  margin-bottom: 20px;
-}
+  templateUrl: './Meal-scan.component.html',
 
-.title-block {
+  styleUrls: ['./Meal-scan.component.less']
+})
 
-  h1 {
-    margin: 0;
-    font-size: 28px;
-    font-weight: 600;
+
+export class MealScanComponent implements OnInit {
+
+
+  /* ============================================================
+     SCAN
+     ============================================================ */
+
+  @ViewChild(
+    'scanInput',
+    { static: false }
+  )
+  scanInput: ElementRef;
+
+
+  empNo = '';
+
+  loading = false;
+
+  proceeding = false;
+
+
+  employeeDetail: any = null;
+
+  entitlementStatus = '';
+
+
+  /* ============================================================
+     PHOTO
+     ============================================================ */
+
+  employeePhotoUrl: SafeUrl | null = null;
+
+  photoLoading = false;
+
+
+  private readonly PHOTO_API_BASE =
+    'http://10.209.110.187:3000/api/image';
+
+
+  /* ============================================================
+     SITE
+     ============================================================ */
+
+  siteList: string[] = [];
+
+  selectedSite = '';
+
+  siteOptions: Array<{
+    value: string;
+    label: string;
+  }> = [];
+
+
+  /*
+   * Site ID -> Site Name
+   */
+  siteNameMap: {
+    [siteId: string]: string;
+  } = {
+
+    '69941': 'FXCN',
+
+    '95326': 'FXBL'
+
+  };
+
+
+  /* ============================================================
+     LOGGED-IN USER
+     ============================================================ */
+
+  loginEmployeeId = '';
+
+
+  /* ============================================================
+     CONSTRUCTOR
+     ============================================================ */
+
+  constructor(
+
+    private publicSvr: PublicNetService,
+
+    private msgSvr: NzMessageService,
+
+    private http: HttpClient,
+
+    private sanitizer: DomSanitizer
+
+  ) {}
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+
+  ngOnInit(): void {
+
+    this.loadLoggedInUserSite();
+
   }
 
-  p {
-    margin-top: 5px;
-    color: #777;
-  }
-}
 
+  /* ============================================================
+     LOAD LOGGED-IN USER SITE
+     ============================================================ */
 
-/* ============================================================
-   SITE FILTER
-   ============================================================ */
+  private loadLoggedInUserSite(): void {
 
-.site-filter-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 18px 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
 
-.site-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
 
-.site-filter-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    console.log(
+      'Meal Scan - Logged-in user:',
+      userInfo
+    );
 
-  font-size: 16px;
-  font-weight: 600;
-  min-width: 70px;
 
-  i {
-    font-size: 20px;
-  }
-}
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
 
-.site-select {
-  width: 280px;
-}
+      this.msgSvr.error(
+        'Logged-in employee information not found.'
+      );
 
-.selected-site-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+      return;
 
-  font-size: 15px;
-}
+    }
 
-.selected-site-label {
-  color: #777;
-}
 
-.selected-site-info strong {
-  font-size: 16px;
-}
+    /*
+     * Logged-in EEID
+     */
+    this.loginEmployeeId =
+      String(
+        userInfo.eeid
+      )
+      .trim()
+      .toUpperCase();
 
-.site-warning {
-  margin-top: 15px;
 
-  padding: 10px 14px;
+    /*
+     * Get user/site mapping
+     */
+    this.publicSvr
+      .getSitebasedUser()
+      .subscribe(
 
-  border-radius: 5px;
+        (userList: any[]) => {
 
-  display: flex;
-  align-items: center;
+          console.log(
+            'Meal Scan - User/site list:',
+            userList
+          );
 
-  gap: 8px;
 
-  background: #fff7e6;
-}
+          if (
+            !userList ||
+            userList.length === 0
+          ) {
 
+            this.msgSvr.error(
+              'No active site found for logged-in user.'
+            );
 
-/* ============================================================
-   SCAN INPUT
-   ============================================================ */
+            return;
 
-.scan-input-card {
-  background: #fff;
+          }
 
-  border-radius: 8px;
 
-  padding: 20px;
+          /*
+           * Same active-site logic as
+           * Food Time Price.
+           */
+          this.siteList =
+            this.extractAllSites(
+              userList,
+              this.loginEmployeeId
+            );
 
-  margin-bottom: 20px;
 
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.08);
-}
+          console.log(
+            'Meal Scan - Active sites:',
+            this.siteList
+          );
 
-.scan-input-row {
-  display: flex;
 
-  align-items: center;
+          if (
+            this.siteList.length === 0
+          ) {
 
-  gap: 12px;
-}
+            this.msgSvr.error(
+              'No active site assigned to logged-in user.'
+            );
 
-.scan-icon {
-  font-size: 25px;
-}
+            return;
 
-.scan-input {
-  flex: 1;
+          }
 
-  height: 45px;
 
-  font-size: 18px;
-}
+          /*
+           * Build site dropdown
+           */
+          this.siteOptions =
+            this.siteList.map(
+              siteId => {
 
+                return {
 
-/* ============================================================
-   RESULT CARD
-   ============================================================ */
+                  value: siteId,
 
-.result-card-wrapper {
-  margin-bottom: 20px;
-}
+                  label:
+                    `${siteId}-${this.getSiteName(siteId)}`
 
-.result-card {
-  background: #fff;
+                };
 
-  border-radius: 10px;
+              }
+            );
 
-  overflow: hidden;
 
-  box-shadow:
-    0 3px 12px rgba(0, 0, 0, 0.10);
+          /*
+           * Default:
+           *
+           * All My Sites
+           */
+          this.selectedSite = '';
 
-  border-left: 5px solid transparent;
-}
 
-.card-entitled {
-  border-left-color: #52c41a;
-}
+          console.log(
+            'Meal Scan - Site options:',
+            this.siteOptions
+          );
 
-.card-already {
-  border-left-color: #fa8c16;
-}
 
-.card-not-entitled {
-  border-left-color: #ff4d4f;
-}
+          /*
+           * Focus scanner
+           */
+          this.focusInput();
 
+        },
 
-/* ============================================================
-   EMPLOYEE BODY
-   ============================================================ */
 
-.result-card-body {
-  display: flex;
+        error => {
 
-  align-items: center;
+          console.error(
+            'Meal Scan - getSitebasedUser error:',
+            error
+          );
 
-  gap: 30px;
+          this.msgSvr.error(
+            'Failed to load user site information.'
+          );
 
-  padding: 25px;
-}
+        }
 
-.employee-photo {
-  width: 130px;
+      );
 
-  display: flex;
-
-  justify-content: center;
-}
-
-.avatar-circle {
-  width: 110px;
-
-  height: 110px;
-
-  border-radius: 50%;
-
-  background: #f5f5f5;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  overflow: hidden;
-}
-
-.avatar-img {
-  width: 100%;
-
-  height: 100%;
-
-  object-fit: cover;
-}
-
-.avatar-circle i {
-  font-size: 45px;
-}
-
-
-/* ============================================================
-   EMPLOYEE DETAILS
-   ============================================================ */
-
-.employee-details {
-  flex: 1;
-}
-
-.detail-row {
-  display: flex;
-
-  align-items: center;
-
-  margin-bottom: 10px;
-
-  font-size: 15px;
-}
-
-.detail-label {
-  width: 170px;
-
-  font-weight: 600;
-}
-
-.detail-colon {
-  width: 20px;
-}
-
-.detail-value {
-  flex: 1;
-}
-
-
-/* ============================================================
-   STATUS
-   ============================================================ */
-
-.status-banner {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding: 15px 20px;
-
-  font-size: 16px;
-
-  font-weight: 600;
-}
-
-.banner-green {
-  background: #f6ffed;
-}
-
-.banner-orange {
-  background: #fff7e6;
-}
-
-.banner-red {
-  background: #fff1f0;
-}
-
-.status-icon {
-  font-size: 20px;
-}
-
-.status-label {
-  font-weight: 600;
-}
-
-.status-colon {
-  margin-right: 5px;
-}
-
-.status-text {
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SITE MISMATCH
-   ============================================================ */
-
-.site-mismatch-message {
-  padding: 12px 20px;
-
-  background: #fff7e6;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-}
-
-
-/* ============================================================
-   WAITING
-   ============================================================ */
-
-.waiting-card {
-  background: #fff;
-
-  border-radius: 8px;
-
-  padding: 40px;
-
-  min-height: 250px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-}
-
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-@media (max-width: 768px) {
-
-  .scan-wrapper {
-    padding: 10px;
   }
 
-  .site-filter-row {
-    flex-direction: column;
 
-    align-items: flex-start;
+  /* ============================================================
+     GET EEID
+     ============================================================ */
+
+  private getItemEeid(
+    item: any
+  ): string {
+
+    if (!item) {
+
+      return '';
+
+    }
+
+
+    const value =
+
+      item.Eeid ||
+
+      item.EEID ||
+
+      item.EeidNo ||
+
+      item.EmpId ||
+
+      item.EMP_ID ||
+
+      item.EmployeeId ||
+
+      item.EmployeeCode ||
+
+      item.eeid ||
+
+      '';
+
+
+    return String(value)
+      .trim()
+      .toUpperCase();
+
   }
 
-  .site-select {
-    width: 100%;
+
+  /* ============================================================
+     ACTIVE USER
+     ============================================================ */
+
+  private isActiveUser(
+    item: any
+  ): boolean {
+
+    if (!item) {
+
+      return false;
+
+    }
+
+
+    let delFlag: any = 0;
+
+
+    if (
+      item.DelFlag !== undefined &&
+      item.DelFlag !== null &&
+      item.DelFlag !== ''
+    ) {
+
+      delFlag =
+        item.DelFlag;
+
+    }
+
+    else if (
+      item.DEL_FLAG !== undefined &&
+      item.DEL_FLAG !== null &&
+      item.DEL_FLAG !== ''
+    ) {
+
+      delFlag =
+        item.DEL_FLAG;
+
+    }
+
+    else if (
+      item.delFlag !== undefined &&
+      item.delFlag !== null &&
+      item.delFlag !== ''
+    ) {
+
+      delFlag =
+        item.delFlag;
+
+    }
+
+    else if (
+      item.del_flag !== undefined &&
+      item.del_flag !== null &&
+      item.del_flag !== ''
+    ) {
+
+      delFlag =
+        item.del_flag;
+
+    }
+
+
+    /*
+     * 0 / NULL = Active
+     * 1 = Deleted
+     */
+    return Number(delFlag) === 0;
+
   }
 
-  .scan-input-row {
-    flex-wrap: wrap;
+
+  /* ============================================================
+     EXTRACT ACTIVE SITES
+     ============================================================ */
+
+  private extractAllSites(
+    userList: any[],
+    eeid: string
+  ): string[] {
+
+    const loginEeid =
+      String(eeid)
+        .trim()
+        .toUpperCase();
+
+
+    const sites: string[] = [];
+
+
+    userList.forEach(
+      item => {
+
+        if (!item) {
+
+          return;
+
+        }
+
+
+        /*
+         * Employee match
+         */
+        if (
+          this.getItemEeid(item)
+          !==
+          loginEeid
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+         * Ignore deleted user
+         */
+        if (
+          !this.isActiveUser(item)
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+         * Get Site ID
+         */
+        const site =
+          this.extractSite(item);
+
+
+        if (site) {
+
+          sites.push(site);
+
+        }
+
+      }
+    );
+
+
+    /*
+     * Remove duplicates
+     */
+    const uniqueSites: string[] = [];
+
+
+    sites.forEach(
+      site => {
+
+        const normalized =
+          String(site)
+            .trim();
+
+
+        const exists =
+          uniqueSites.some(
+            x =>
+              x.toUpperCase() ===
+              normalized.toUpperCase()
+          );
+
+
+        if (!exists) {
+
+          uniqueSites.push(
+            normalized
+          );
+
+        }
+
+      }
+    );
+
+
+    return uniqueSites;
+
   }
 
-  .scan-input {
-    width: 100%;
-    flex: none;
+
+  /* ============================================================
+     EXTRACT SITE ID
+     ============================================================ */
+
+  private extractSite(
+    user: any
+  ): string {
+
+    if (!user) {
+
+      return '';
+
+    }
+
+
+    /*
+     * Prefer actual Site ID.
+     */
+    const site =
+
+      user.Site ||
+
+      user.site ||
+
+      user.SITE ||
+
+      user.SiteId ||
+
+      user.siteId ||
+
+      '';
+
+
+    return String(site)
+      .trim();
+
   }
 
-  .result-card-body {
-    flex-direction: column;
 
-    align-items: center;
+  /* ============================================================
+     SITE NAME
+     ============================================================ */
+
+  getSiteName(
+    siteId: any
+  ): string {
+
+    const id =
+      String(
+        siteId || ''
+      ).trim();
+
+
+    if (!id) {
+
+      return '';
+
+    }
+
+
+    return this.siteNameMap[id] || id;
+
   }
 
-  .employee-details {
-    width: 100%;
+
+  /* ============================================================
+     SITE CHANGE
+     ============================================================ */
+
+  onLocationChange(
+    location: string
+  ): void {
+
+    console.log(
+      'Meal Scan - Selected site:',
+      location
+    );
+
+
+    /*
+     * All My Sites
+     */
+    if (!location) {
+
+      this.selectedSite = '';
+
+    }
+
+
+    else {
+
+      /*
+       * Validate site against
+       * logged-in user's active sites.
+       */
+      const validSite =
+        this.siteList.some(
+          site =>
+            site.toUpperCase() ===
+            String(location)
+              .trim()
+              .toUpperCase()
+        );
+
+
+      if (validSite) {
+
+        this.selectedSite =
+          String(location).trim();
+
+      }
+
+      else {
+
+        this.selectedSite = '';
+
+        this.msgSvr.warning(
+          'Invalid site selected.'
+        );
+
+      }
+
+    }
+
+
+    /*
+     * Clear previous result.
+     */
+    this.employeeDetail = null;
+
+    this.entitlementStatus = '';
+
+    this.employeePhotoUrl = null;
+
+
+    /*
+     * Clear scanner.
+     */
+    this.empNo = '';
+
+
+    /*
+     * Focus scanner.
+     */
+    this.focusInput();
+
   }
 
-  .detail-row {
-    flex-wrap: wrap;
+
+  /* ============================================================
+     FOCUS INPUT
+     ============================================================ */
+
+  focusInput(): void {
+
+    setTimeout(
+      () => {
+
+        if (
+          this.scanInput
+        ) {
+
+          this.scanInput.nativeElement.focus();
+
+        }
+
+      },
+      100
+    );
+
   }
 
-  .detail-label {
-    width: 150px;
+
+  /* ============================================================
+     SCAN ENTER
+     ============================================================ */
+
+  onScanEnter(): void {
+
+    this.search();
+
+  }
+
+
+  /* ============================================================
+     SEARCH
+     ============================================================ */
+
+  search(
+    fromButton?: boolean
+  ): void {
+
+
+    /*
+     * Badge validation
+     */
+    if (
+      !this.empNo ||
+      this.empNo.trim() === ''
+    ) {
+
+      this.msgSvr.error(
+        'Please scan or enter an FX Badge.'
+      );
+
+      this.focusInput();
+
+      return;
+
+    }
+
+
+    /*
+     * Site validation
+     */
+    if (
+      this.siteList.length === 0
+    ) {
+
+      this.msgSvr.error(
+        'No active site available.'
+      );
+
+      return;
+
+    }
+
+
+    /*
+     * Selected site must belong
+     * to logged-in user.
+     */
+    if (
+      this.selectedSite
+    ) {
+
+      const validSite =
+        this.siteList.some(
+          site =>
+            site.toUpperCase() ===
+            this.selectedSite.toUpperCase()
+        );
+
+
+      if (!validSite) {
+
+        this.msgSvr.error(
+          'Selected site is not assigned to you.'
+        );
+
+        return;
+
+      }
+
+    }
+
+
+    this.loading = true;
+
+    this.employeeDetail = null;
+
+    this.entitlementStatus = '';
+
+    this.employeePhotoUrl = null;
+
+
+    /* ==========================================================
+       GET F1 MENU
+       ========================================================== */
+
+    const params: any = {
+
+      FxBadge:
+        this.empNo.trim(),
+
+      /*
+       * Raw Site ID
+       *
+       * Example:
+       * 69941
+       *
+       * Empty = All My Sites
+       */
+      Site:
+        this.selectedSite || '',
+
+      EmpId:
+        this.loginEmployeeId,
+
+      SystemName:
+        'CMS',
+
+      Func:
+        'CMS-GetF1MenuByFxbadge'
+
+    };
+
+
+    console.log(
+      '================================================'
+    );
+
+    console.log(
+      'MEAL SCAN SEARCH'
+    );
+
+    console.log(
+      'Badge:',
+      params.FxBadge
+    );
+
+    console.log(
+      'Site:',
+      params.Site || 'ALL MY SITES'
+    );
+
+    console.log(
+      'Logged-in Employee:',
+      params.EmpId
+    );
+
+    console.log(
+      'Request:',
+      params
+    );
+
+    console.log(
+      '================================================'
+    );
+
+
+    this.publicSvr
+      .iwxPostF1(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              'ffff-1789807467770-10208193125-1466',
+
+            userKey:
+              'E9785F13CCEAFB251A6AB147AFD24336'
+
+          }
+
+        },
+
+        true
+
+      )
+
+
+      .then(
+        (res: any) => {
+
+          this.loading = false;
+
+
+          console.log(
+            'Meal Scan Search Response:',
+            res
+          );
+
+
+          if (
+            res &&
+            String(res.IsOK) === '1' &&
+            res.List &&
+            res.List.length > 0
+          ) {
+
+            const data =
+              res.List[0];
+
+
+            this.employeeDetail = {
+
+              FxBadge:
+                data.FxBadge ||
+                data.FX_BADGE,
+
+              Name:
+                data.Name ||
+                data.NAME,
+
+              Site:
+                data.Site ||
+                data.SITE,
+
+              MealPreference:
+                data.MealPreference ||
+                data.MEAL_PREFERENCE,
+
+              FirstDateFxbl:
+                data.FirstDateFxbl ||
+                data.FIRST_DATE_FXBL,
+
+              LastDateFxbl:
+                data.LastDateFxbl ||
+                data.LAST_DATE_FXBL
+
+            };
+
+
+            this.entitlementStatus =
+              data.EntitlementStatus ||
+              data.ENTITLEMENT_STATUS ||
+              '';
+
+
+            /*
+             * Selected site validation
+             */
+            if (
+              this.selectedSite &&
+              this.employeeDetail.Site &&
+              this.employeeDetail.Site
+                .toUpperCase() !==
+              this.selectedSite
+                .toUpperCase()
+            ) {
+
+              this.msgSvr.error(
+                'This FX Badge does not belong to the selected site.'
+              );
+
+              this.entitlementStatus =
+                'SITE_MISMATCH';
+
+              this.fetchEmployeePhoto(
+                this.employeeDetail.FxBadge
+              );
+
+              this.clearInputOnly();
+
+              return;
+
+            }
+
+
+            /*
+             * Employee photo
+             */
+            this.fetchEmployeePhoto(
+              this.employeeDetail.FxBadge
+            );
+
+
+            /*
+             * Insert scan log
+             */
+            this.proceed();
+
+          }
+
+
+          else {
+
+            /*
+             * Badge not found
+             */
+            this.employeeDetail = {
+
+              FxBadge:
+                this.empNo.trim(),
+
+              Name: '',
+
+              Site: '',
+
+              MealPreference: '',
+
+              FirstDateFxbl: '',
+
+              LastDateFxbl: ''
+
+            };
+
+
+            this.entitlementStatus =
+              'NOT_UPDATED';
+
+
+            this.fetchEmployeePhoto(
+              this.empNo.trim()
+            );
+
+
+            this.msgSvr.error(
+              'FX Badge not found for the selected site.'
+            );
+
+
+            this.clearInputOnly();
+
+          }
+
+        }
+
+      )
+
+
+      .catch(
+        err => {
+
+          this.loading = false;
+
+
+          console.error(
+            'Meal Scan Search Error:',
+            err
+          );
+
+
+          this.msgSvr.error(
+            'Failed to fetch employee details.'
+          );
+
+
+          this.focusInput();
+
+        }
+      );
+
+  }
+
+
+  /* ============================================================
+     PHOTO
+     ============================================================ */
+
+  fetchEmployeePhoto(
+    fxBadge: string
+  ): void {
+
+    if (!fxBadge) {
+
+      return;
+
+    }
+
+
+    this.photoLoading = true;
+
+
+    this.http
+      .get(
+
+        `${this.PHOTO_API_BASE}/${fxBadge}`,
+
+        {
+          responseType: 'blob'
+        }
+
+      )
+
+
+      .subscribe({
+
+        next:
+          (blob) => {
+
+            const objectUrl =
+              URL.createObjectURL(
+                blob
+              );
+
+
+            this.employeePhotoUrl =
+              this.sanitizer
+                .bypassSecurityTrustUrl(
+                  objectUrl
+                );
+
+
+            this.photoLoading = false;
+
+          },
+
+
+        error:
+          () => {
+
+            this.employeePhotoUrl = null;
+
+            this.photoLoading = false;
+
+          }
+
+      });
+
+  }
+
+
+  /* ============================================================
+     INSERT MEAL SCAN
+     ============================================================ */
+
+  proceed(): void {
+
+    if (
+      !this.employeeDetail
+    ) {
+
+      return;
+
+    }
+
+
+    this.proceeding = true;
+
+
+    const params: any = {
+
+      FxBadge:
+        this.employeeDetail.FxBadge,
+
+      /*
+       * Raw site ID
+       */
+      Site:
+        this.selectedSite || '',
+
+      EmpId:
+        this.loginEmployeeId,
+
+      SystemName:
+        'CMS',
+
+      Func:
+        'CMS-InsertMealScanLog'
+
+    };
+
+
+    console.log(
+      '================================================'
+    );
+
+    console.log(
+      'MEAL SCAN INSERT'
+    );
+
+    console.log(
+      'Badge:',
+      params.FxBadge
+    );
+
+    console.log(
+      'Site:',
+      params.Site || 'ALL MY SITES'
+    );
+
+    console.log(
+      'Logged-in Employee:',
+      params.EmpId
+    );
+
+    console.log(
+      'Request:',
+      params
+    );
+
+    console.log(
+      '================================================'
+    );
+
+
+    this.publicSvr
+      .iwxPostF1(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              'ffff-1789818962176-10208193125-1483',
+
+            userKey:
+              'E9785F13CCEAFB251A6AB147AFD24336'
+
+          }
+
+        },
+
+        true
+
+      )
+
+
+      .then(
+        (res: any) => {
+
+          this.proceeding = false;
+
+
+          console.log(
+            'Meal Scan Insert Response:',
+            res
+          );
+
+
+          if (
+            res &&
+            String(res.IsOK) === '1' &&
+            res.List &&
+            res.List.length > 0
+          ) {
+
+            const logResult =
+              res.List[0];
+
+
+            const status =
+              logResult.Status ||
+              logResult.STATUS ||
+              '';
+
+
+            const message =
+              logResult.StatusMessage ||
+              logResult.STATUS_MESSAGE ||
+              '';
+
+
+            if (
+              status === 'SUCCESS'
+            ) {
+
+              this.entitlementStatus =
+                'ENTITLED';
+
+
+              this.msgSvr.success(
+                'Meal collection recorded successfully!'
+              );
+
+            }
+
+
+            else if (
+              status === 'ALREADY_SCANNED'
+            ) {
+
+              this.entitlementStatus =
+                'ALREADY_SCANNED';
+
+
+              this.msgSvr.error(
+                message ||
+                'Meal already collected today'
+              );
+
+            }
+
+
+            else if (
+              status === 'SITE_MISMATCH'
+            ) {
+
+              this.entitlementStatus =
+                'SITE_MISMATCH';
+
+
+              this.msgSvr.error(
+                message ||
+                'Employee does not belong to selected site.'
+              );
+
+            }
+
+
+            else {
+
+              this.msgSvr.error(
+                message ||
+                'Invalid scan.'
+              );
+
+            }
+
+
+            this.clearInputOnly();
+
+          }
+
+
+          else {
+
+            this.msgSvr.error(
+              res.Msg ||
+              'Failed to log scan.'
+            );
+
+          }
+
+        }
+
+      )
+
+
+      .catch(
+        err => {
+
+          this.proceeding = false;
+
+
+          console.error(
+            'Meal Scan Insert Error:',
+            err
+          );
+
+
+          this.msgSvr.error(
+            'Failed to log scan. Please try again.'
+          );
+
+        }
+      );
+
+  }
+
+
+  /* ============================================================
+     CLEAR INPUT
+     ============================================================ */
+
+  clearInputOnly(): void {
+
+    this.empNo = '';
+
+    this.focusInput();
+
+  }
+
+
+  /* ============================================================
+     CANCEL
+     ============================================================ */
+
+  cancelScan(): void {
+
+    this.employeeDetail = null;
+
+    this.entitlementStatus = '';
+
+    this.empNo = '';
+
+    this.employeePhotoUrl = null;
+
+    this.proceeding = false;
+
+    this.loading = false;
+
+    this.focusInput();
+
   }
 
 }
