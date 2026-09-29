@@ -2,6 +2,611 @@
 
 Meal_scan 
 
+
+
+html
+
+<div class="scan-wrapper">
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+
+  <div class="header-row">
+
+    <div class="title-block">
+
+      <h1>Meal Scan</h1>
+
+      <p>
+        Scan employee badge to mark meal collection
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       SITE FILTER
+       ============================================================ -->
+
+  <div class="site-filter-card">
+
+    <div class="site-filter-row">
+
+      <div class="site-filter-label">
+
+        <i
+          nz-icon
+          nzType="environment"
+          nzTheme="outline">
+        </i>
+
+        <span>Site</span>
+
+      </div>
+
+
+      <nz-select
+        [(ngModel)]="selectedSite"
+        name="selectedSite"
+        nzPlaceHolder="Select Site"
+        nzSize="large"
+        style="width: 260px;"
+        (ngModelChange)="onLocationChange($event)">
+
+        <nz-option
+          *ngFor="let location of locationList"
+          [nzValue]="location.value"
+          [nzLabel]="location.label">
+        </nz-option>
+
+      </nz-select>
+
+
+      <!-- Selected site display -->
+
+      <div class="selected-site-info">
+
+        <span class="selected-site-label">
+          Selected Site:
+        </span>
+
+        <strong>
+          {{ selectedSite || 'All My Sites' }}
+        </strong>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       SCAN INPUT
+       ============================================================ -->
+
+  <div class="scan-input-card">
+
+    <div class="scan-input-row">
+
+      <i
+        nz-icon
+        nzType="scan"
+        nzTheme="outline"
+        class="scan-icon">
+      </i>
+
+
+      <input
+        #scanInput
+
+        nz-input
+
+        [(ngModel)]="empNo"
+
+        name="empNo"
+
+        placeholder="Scan employee badge..."
+
+        (keyup.enter)="onScanEnter()"
+
+        autocomplete="off"
+
+        [disabled]="loading || !siteList.length"
+
+        class="scan-input"
+      />
+
+
+      <nz-spin
+        *ngIf="loading"
+        nzSimple>
+      </nz-spin>
+
+
+      <button
+        (click)="search(true)"
+
+        nz-button
+
+        nzType="primary"
+
+        nzSize="large"
+
+        [disabled]="!siteList.length">
+
+        Search
+
+      </button>
+
+    </div>
+
+
+    <!-- No site message -->
+
+    <div
+      class="site-warning"
+      *ngIf="!siteList.length">
+
+      <i
+        nz-icon
+        nzType="warning"
+        nzTheme="outline">
+      </i>
+
+      No active site assigned to the logged-in user.
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       RESULT CARD
+       ============================================================ -->
+
+  <div
+    class="result-card-wrapper"
+    *ngIf="employeeDetail">
+
+
+    <div
+      class="result-card"
+
+      [ngClass]="
+
+        entitlementStatus === 'ENTITLED'
+
+          ? 'card-entitled'
+
+          :
+
+        (
+
+          entitlementStatus === 'ALREADY_SCANNED'
+
+            ? 'card-already'
+
+            :
+
+          (
+
+            entitlementStatus === 'SITE_MISMATCH'
+
+              ? 'card-not-entitled'
+
+              :
+
+            'card-not-entitled'
+
+          )
+
+        )
+
+      ">
+
+
+      <!-- ========================================================
+           EMPLOYEE DETAILS
+           ======================================================== -->
+
+      <div class="result-card-body">
+
+
+        <!-- PHOTO -->
+
+        <div class="employee-photo">
+
+          <div class="avatar-circle">
+
+
+            <nz-spin
+              *ngIf="photoLoading">
+            </nz-spin>
+
+
+            <img
+
+              *ngIf="
+                employeePhotoUrl &&
+                !photoLoading
+              "
+
+              [src]="employeePhotoUrl"
+
+              class="avatar-img"
+
+              alt="Employee photo"
+
+            />
+
+
+            <i
+
+              *ngIf="
+                !employeePhotoUrl &&
+                !photoLoading
+              "
+
+              nz-icon
+
+              nzType="user"
+
+              nzTheme="outline">
+
+            </i>
+
+
+          </div>
+
+        </div>
+
+
+        <!-- EMPLOYEE INFORMATION -->
+
+        <div class="employee-details">
+
+
+          <!-- NAME -->
+
+          <div class="detail-row">
+
+            <span class="detail-label">
+              Employee Name
+            </span>
+
+            <span class="detail-colon">
+              :
+            </span>
+
+            <span class="detail-value">
+
+              {{
+                employeeDetail.Name ||
+                'Not Updated'
+              }}
+
+            </span>
+
+          </div>
+
+
+          <!-- BADGE -->
+
+          <div class="detail-row">
+
+            <span class="detail-label">
+              FX Badge
+            </span>
+
+            <span class="detail-colon">
+              :
+            </span>
+
+            <span class="detail-value">
+
+              {{ employeeDetail.FxBadge }}
+
+            </span>
+
+          </div>
+
+
+          <!-- SITE -->
+
+          <div class="detail-row">
+
+            <span class="detail-label">
+              Site
+            </span>
+
+            <span class="detail-colon">
+              :
+            </span>
+
+            <span class="detail-value">
+
+              {{
+                employeeDetail.Site ||
+                'Not Updated'
+              }}
+
+            </span>
+
+          </div>
+
+
+          <!-- MEAL PREFERENCE -->
+
+          <div class="detail-row">
+
+            <span class="detail-label">
+              Meal Preference
+            </span>
+
+            <span class="detail-colon">
+              :
+            </span>
+
+            <span class="detail-value">
+
+              {{
+                employeeDetail.MealPreference ||
+                'Not Updated'
+              }}
+
+            </span>
+
+          </div>
+
+
+          <!-- FIRST DATE -->
+
+          <div class="detail-row">
+
+            <span class="detail-label">
+              First Day at Factory
+            </span>
+
+            <span class="detail-colon">
+              :
+            </span>
+
+            <span class="detail-value">
+
+              {{
+                employeeDetail.FirstDateFxbl ||
+                'Not Updated'
+              }}
+
+            </span>
+
+          </div>
+
+
+          <!-- LAST DATE -->
+
+          <div class="detail-row">
+
+            <span class="detail-label">
+              Last Day at Factory
+            </span>
+
+            <span class="detail-colon">
+              :
+            </span>
+
+            <span class="detail-value">
+
+              {{
+                employeeDetail.LastDateFxbl ||
+                'Not Updated'
+              }}
+
+            </span>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+      <!-- ========================================================
+           STATUS
+           ======================================================== -->
+
+      <div
+
+        class="status-banner"
+
+        [ngClass]="
+
+          entitlementStatus === 'ENTITLED'
+
+            ? 'banner-green'
+
+            :
+
+          (
+
+            entitlementStatus ===
+            'ALREADY_SCANNED'
+
+              ? 'banner-orange'
+
+              :
+
+            'banner-red'
+
+          )
+
+        "
+
+      >
+
+
+        <i
+
+          nz-icon
+
+          [nzType]="
+
+            entitlementStatus === 'ENTITLED'
+
+              ? 'check-circle'
+
+              :
+
+            (
+
+              entitlementStatus ===
+              'ALREADY_SCANNED'
+
+                ? 'exclamation-circle'
+
+                :
+
+              'close-circle'
+
+            )
+
+          "
+
+          nzTheme="fill"
+
+          class="status-icon">
+
+        </i>
+
+
+        <span class="status-label">
+          Status
+        </span>
+
+
+        <span class="status-colon">
+          :
+        </span>
+
+
+        <span class="status-text">
+
+
+          {{
+
+            entitlementStatus ===
+            'ENTITLED'
+
+              ? 'ENTITLED FOR MEAL'
+
+              :
+
+            (
+
+              entitlementStatus ===
+              'ALREADY_SCANNED'
+
+                ? 'ALREADY COLLECTED'
+
+                :
+
+              (
+
+                entitlementStatus ===
+                'SITE_MISMATCH'
+
+                  ? 'SITE MISMATCH'
+
+                  :
+
+                entitlementStatus ===
+                'NOT_UPDATED'
+
+                  ? 'NOT UPDATED'
+
+                  :
+
+                'NOT ENTITLED'
+
+              )
+
+            )
+
+          }}
+
+
+        </span>
+
+
+      </div>
+
+
+      <!-- ========================================================
+           SITE MISMATCH MESSAGE
+           ======================================================== -->
+
+      <div
+
+        class="site-mismatch-message"
+
+        *ngIf="
+          entitlementStatus ===
+          'SITE_MISMATCH'
+        "
+
+      >
+
+        <i
+          nz-icon
+          nzType="warning"
+          nzTheme="outline">
+        </i>
+
+
+        This employee does not belong
+        to the selected site.
+
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================
+       WAITING CARD
+       ============================================================ -->
+
+  <div
+
+    class="waiting-card"
+
+    *ngIf="
+      !employeeDetail &&
+      !loading
+    "
+
+  >
+
+    <nz-empty
+
+      nzNotFoundContent="Scan an employee badge to begin">
+
+    </nz-empty>
+
+  </div>
+
+
+</div>
+
+
 import {
   Component,
   OnInit,
@@ -2466,3 +3071,151 @@ onSiteChange(siteId: string): void {
     }
   }
 }
+
+
+
+
+
+
+
+html--<page-header-wrapper
+  [(title)]="title"
+  [action]="phAction"
+  [autoBreadcrumb]="false"
+  [breadcrumb]="false">
+
+  <ng-template #phAction>
+
+    <div class="action-row">
+
+      <button
+        nz-button
+        nzType="primary"
+        (click)="search(true)">
+        {{ 'button-Search' | translate }}
+      </button>
+
+      <button
+        nz-button
+        nzType="primary"
+        (click)="add()">
+        {{ 'button-Add' | translate }}
+      </button>
+
+      <button
+        nz-button
+        nzType="primary"
+        (click)="update()">
+        {{ 'button-Update' | translate }}
+      </button>
+
+      <button
+        nz-button
+        nzType="primary"
+        (click)="delete()">
+        {{ 'button-Delete' | translate }}
+      </button>
+
+      <button
+        nz-button
+        nzType="primary"
+        (click)="importbulk()">
+        {{ 'button-Import' | translate }}
+      </button>
+
+      <button
+        nz-button
+        nzType="primary"
+        [nzLoading]="exportLoading"
+        (click)="exportData()">
+        {{ 'button-Export' | translate }}
+      </button>
+
+    </div>
+
+  </ng-template>
+
+
+  <!-- Filters -->
+  <div class="filter-row">
+
+    <!-- Site filter -->
+    <div class="site-filter-item">
+
+      <label class="filter-label">
+        Site
+      </label>
+
+      <nz-select
+        class="site-select"
+        [(ngModel)]="selectedSite"
+        name="selectedSite"
+        nzPlaceHolder="Select site"
+        [nzDisabled]="siteOptions.length === 0"
+        (ngModelChange)="onSiteChange($event)">
+
+        <nz-option
+          nzValue=""
+          nzLabel="All My Sites">
+        </nz-option>
+
+        <nz-option
+          *ngFor="let option of siteOptions"
+          [nzValue]="option.value"
+          [nzLabel]="option.label">
+        </nz-option>
+
+      </nz-select>
+
+    </div>
+
+
+    <!-- SF search fields -->
+    <div class="sf-filter-item">
+
+      <sf
+        #sf
+        *ngIf="sfSchema"
+        [schema]="sfSchema"
+        [button]="'none'"
+        mode="search">
+      </sf>
+
+    </div>
+
+  </div>
+
+
+  <!-- Table -->
+  <nz-card
+    class="meal-card"
+    [nzBordered]="false"
+    [nzBodyStyle]="{
+      'padding': '10px 0',
+      'background': 'transparent'
+    }">
+
+    <div
+      class="global_table"
+      *ngIf="columns.length > 0">
+
+      <st
+        #st
+        [data]="source"
+        [columns]="columns"
+        [pi]="pi"
+        [ps]="ps"
+        [total]="total"
+        [page]="pages"
+        [bordered]="true"
+        [scroll]="{ x: '100%' }"
+        [widthMode]="{ type: 'strict' }"
+        [loading]="loading"
+        (change)="change($event)">
+      </st>
+
+    </div>
+
+  </nz-card>
+
+</page-header-wrapper>
