@@ -1,377 +1,77 @@
 /* ============================================================
-   MAIN
+   MEAL SCAN - MAIN
    ============================================================ */
 
 .scan-wrapper {
-
-  min-height: 100vh;
-
-  background:
-    linear-gradient(
-      180deg,
-      #eef6ff 0%,
-      #f8fbff 45%,
-      #eef6ff 100%
-    );
-
-  padding-bottom: 40px;
-
+  min-height: 100%;
+  padding: 18px 24px 35px;
+  background: #f7f9fc;
 }
 
 
 /* ============================================================
-   PREMIUM HEADER
-   ============================================================ */
-
-/* ============================================================
-   HEADER - SIMPLE WHITE
+   HEADER
    ============================================================ */
 
 .header-row {
-
-  background: #fff;
-
-  padding: 20px 24px;
-
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e7edf4;
+  border-radius: 14px;
+  padding: 18px 22px;
   margin-bottom: 18px;
 
-  border-radius: 12px;
-
-  border: 1px solid #e8edf3;
-
   box-shadow:
-    0 2px 8px
-    rgba(20, 35, 63, 0.05);
-
+    0 3px 12px rgba(20, 35, 63, 0.05);
 }
 
 
 .title-block {
-
   display: flex;
-
   align-items: center;
-
   gap: 14px;
-
 }
 
 
 .title-icon {
-
-  width: 52px;
-
-  height: 52px;
-
-  min-width: 52px;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border-radius: 13px;
 
-  background: #eaf3ff;
-
+  background: #edf5ff;
   color: #1677ff;
-
 }
 
 
 .title-icon i {
-
-  font-size: 27px;
-
+  font-size: 25px;
 }
 
 
 .title-block h1 {
-
   margin: 0;
 
   color: #172b4d;
 
-  font-size: 26px;
-
+  font-size: 25px;
   font-weight: 700;
 
   line-height: 1.2;
-
 }
 
 
 .title-block p {
-
   margin: 5px 0 0;
 
-  color: #7a899f;
+  color: #7b899d;
 
   font-size: 13px;
-
-}
-
-
-/* ============================================================
-   MAIN BACKGROUND
-   ============================================================ */
-
-.scan-wrapper {
-
-  min-height: 100%;
-
-  padding: 18px 20px 30px;
-
-  background: #f7f9fc;
-
-}
-
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-@media (max-width: 700px) {
-
-  .scan-wrapper {
-
-    padding: 12px;
-
-  }
-
-  .header-row {
-
-    padding: 16px;
-
-  }
-
-  .title-icon {
-
-    width: 46px;
-
-    height: 46px;
-
-    min-width: 46px;
-
-  }
-
-  .title-block h1 {
-
-    font-size: 22px;
-
-  }
-
-  .title-block p {
-
-    font-size: 12px;
-
-  }
-
-}
-
-
-/* Decorative curve */
-
-.meal-header::after {
-
-  content: '';
-
-  position: absolute;
-
-  left: -5%;
-
-  bottom: -55px;
-
-  width: 110%;
-
-  height: 90px;
-
-  background:
-    #eef6ff;
-
-  border-radius:
-    50% 50% 0 0;
-
-}
-
-
-/* Decorative glow */
-
-.meal-header::before {
-
-  content: '';
-
-  position: absolute;
-
-  width: 500px;
-
-  height: 500px;
-
-  right: -180px;
-
-  top: -300px;
-
-  border-radius: 50%;
-
-  background:
-    rgba(255,255,255,0.10);
-
-}
-
-
-.header-content {
-
-  position: relative;
-
-  z-index: 2;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  padding: 28px 42px;
-
-}
-
-
-.header-brand {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 18px;
-
-}
-
-
-.header-icon {
-
-  width: 68px;
-
-  height: 68px;
-
-  border-radius: 18px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  background:
-    rgba(255,255,255,0.16);
-
-  border:
-    1px solid
-    rgba(255,255,255,0.25);
-
-  box-shadow:
-    inset 0 1px 0
-    rgba(255,255,255,0.25);
-
-}
-
-
-.header-icon i {
-
-  font-size: 36px;
-
-}
-
-
-.header-title h1 {
-
-  margin: 0;
-
-  font-size: 34px;
-
-  font-weight: 800;
-
-  letter-spacing: -0.5px;
-
-}
-
-
-.header-title p {
-
-  margin: 5px 0 0;
-
-  font-size: 15px;
-
-  opacity: 0.90;
-
-}
-
-
-.header-right {
-
-  display: flex;
-
-  align-items: center;
-
-}
-
-
-.header-date {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 13px;
-
-  padding: 13px 20px;
-
-  border-radius: 14px;
-
-  background:
-    rgba(255,255,255,0.18);
-
-  border:
-    1px solid
-    rgba(255,255,255,0.25);
-
-  backdrop-filter:
-    blur(10px);
-
-}
-
-
-.header-date > i {
-
-  font-size: 25px;
-
-}
-
-
-.header-date div {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 3px;
-
-}
-
-
-.header-date strong {
-
-  font-size: 14px;
-
-}
-
-
-.header-date span {
-
-  font-size: 13px;
-
-  opacity: 0.9;
-
 }
 
 
@@ -380,16 +80,7 @@
    ============================================================ */
 
 .main-content {
-
-  position: relative;
-
-  z-index: 5;
-
-  padding:
-    0 34px 30px;
-
-  margin-top: -5px;
-
+  width: 100%;
 }
 
 
@@ -398,177 +89,149 @@
    ============================================================ */
 
 .site-card {
+  width: 100%;
 
-  background: #fff;
+  background: #ffffff;
 
-  border:
-    1px solid
-    #dceaff;
+  border: 1px solid #e1eaf3;
 
-  border-radius: 18px;
+  border-radius: 14px;
 
-  padding: 22px 28px;
+  padding: 18px 22px;
 
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 
   box-shadow:
-    0 8px 28px
-    rgba(24, 90, 160, 0.08);
-
+    0 4px 14px rgba(25, 70, 120, 0.06);
 }
 
 
 .site-card-left {
-
   display: flex;
-
   align-items: center;
 
-  gap: 18px;
+  gap: 14px;
 
+  width: 100%;
 }
 
 
+/* ============================================================
+   SITE ICON
+   ============================================================ */
+
 .section-icon {
-
-  width: 56px;
-
-  height: 56px;
-
-  border-radius: 16px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
+  border-radius: 12px;
 }
 
 
 .site-icon {
-
-  background:
-    linear-gradient(
-      135deg,
-      #e7f1ff,
-      #d9eaff
-    );
-
-  color: #0969e8;
-
+  background: #edf5ff;
+  color: #1677ff;
 }
 
 
 .site-icon i {
-
-  font-size: 27px;
-
+  font-size: 22px;
 }
 
+
+/* ============================================================
+   SITE LABEL
+   ============================================================ */
 
 .site-label {
+  min-width: 42px;
 
-  font-size: 19px;
-
-  font-weight: 700;
-
-  color: #122b54;
-
-}
-
-
-.site-select {
-
-  width: 390px;
-
-}
-
-
-.site-select ::ng-deep
-.ant-select-selector {
-
-  height: 52px !important;
-
-  border-radius: 12px !important;
-
-  border:
-    1px solid
-    #cbdcf2 !important;
-
-  display: flex;
-
-  align-items: center;
-
-  padding:
-    0 18px !important;
-
-  box-shadow:
-    0 3px 10px
-    rgba(20,80,140,0.05);
-
-}
-
-
-.site-select ::ng-deep
-.ant-select-selection-item {
-
-  font-size: 16px;
-
-  font-weight: 600;
-
-  color: #17335e;
-
-}
-
-
-.site-select:hover
-::ng-deep
-.ant-select-selector {
-
-  border-color:
-    #1677ff !important;
-
-}
-
-
-.selected-site {
-
-  margin-left: 15px;
-
-  padding-left: 25px;
-
-  border-left:
-    1px solid
-    #dce6f2;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  color: #647a9b;
+  color: #263b5b;
 
   font-size: 15px;
+  font-weight: 700;
+}
 
+
+/* ============================================================
+   SITE SELECT
+   ============================================================ */
+
+.site-select {
+  width: 270px;
+  min-width: 270px;
+}
+
+
+.site-select ::ng-deep .ant-select-selector {
+  height: 44px !important;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 14px !important;
+
+  border-radius: 9px !important;
+
+  border: 1px solid #d5e0ec !important;
+
+  box-shadow: none !important;
+
+  background: #ffffff !important;
+}
+
+
+.site-select ::ng-deep .ant-select-selection-item {
+  color: #273b59;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+.site-select:hover ::ng-deep .ant-select-selector {
+  border-color: #1677ff !important;
+}
+
+
+/* ============================================================
+   SELECTED SITE
+   ============================================================ */
+
+.selected-site {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-left: 5px;
+  padding-left: 20px;
+
+  border-left: 1px solid #e0e7ef;
+
+  color: #718198;
+
+  font-size: 13px;
 }
 
 
 .selected-site strong {
+  padding: 6px 13px;
 
-  color: #086cf0;
+  border-radius: 18px;
 
-  background:
-    #e9f3ff;
+  background: #edf5ff;
 
-  padding:
-    8px 16px;
+  color: #126de5;
 
-  border-radius: 20px;
-
-  font-size: 15px;
-
+  font-size: 13px;
+  font-weight: 700;
 }
 
 
@@ -577,26 +240,22 @@
    ============================================================ */
 
 .site-warning {
-
-  margin-top: 15px;
-
-  padding:
-    10px 14px;
-
-  border-radius: 9px;
-
-  background:
-    #fff7e6;
-
-  color:
-    #ad6800;
-
   display: flex;
-
   align-items: center;
 
   gap: 8px;
 
+  margin-top: 12px;
+
+  padding: 9px 12px;
+
+  border-radius: 8px;
+
+  background: #fff7e6;
+
+  color: #ad6800;
+
+  font-size: 13px;
 }
 
 
@@ -605,207 +264,179 @@
    ============================================================ */
 
 .scan-card {
+  width: 100%;
 
-  background: #fff;
+  background: #ffffff;
 
-  border:
-    1px solid
-    #dceaff;
+  border: 1px solid #e1eaf3;
 
-  border-radius: 18px;
+  border-radius: 14px;
 
-  padding:
-    25px 30px;
+  padding: 18px 22px;
 
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 
   box-shadow:
-    0 8px 28px
-    rgba(24, 90, 160, 0.08);
-
+    0 4px 14px rgba(25, 70, 120, 0.06);
 }
 
 
 .scan-row {
-
   display: flex;
-
   align-items: center;
 
-  gap: 14px;
+  gap: 12px;
 
+  width: 100%;
 }
 
 
+/* ============================================================
+   SCAN ICON
+   ============================================================ */
+
 .scan-box {
-
-  width: 58px;
-
-  height: 58px;
-
-  min-width: 58px;
-
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  background:
-    linear-gradient(
-      135deg,
-      #edf6ff,
-      #dceeff
-    );
+  border-radius: 11px;
 
-  border:
-    1px solid
-    #bcdcff;
+  background: #edf5ff;
 
-  color: #0876ed;
+  border: 1px solid #d7e8fb;
 
+  color: #1677ff;
 }
 
 
 .scan-box i {
-
-  font-size: 27px;
-
+  font-size: 22px;
 }
 
 
-.scan-input-wrapper {
+/* ============================================================
+   SCAN INPUT
+   ============================================================ */
 
+.scan-input-wrapper {
   position: relative;
 
   flex: 1;
 
+  min-width: 0;
 }
 
 
 .scan-input {
-
   width: 100%;
 
-  height: 58px;
+  height: 48px;
 
-  border-radius: 13px;
+  padding: 0 16px;
 
-  border:
-    1px solid
-    #c9dbee;
+  border-radius: 9px;
 
-  font-size: 17px;
+  border: 1px solid #ccd9e8;
 
-  padding:
-    0 20px;
+  color: #203858;
 
-  color: #19355e;
+  font-size: 15px;
 
+  background: #ffffff;
+}
+
+
+.scan-input:hover {
+  border-color: #9bbde5;
 }
 
 
 .scan-input:focus {
-
-  border-color:
-    #1677ff;
+  border-color: #1677ff;
 
   box-shadow:
-    0 0 0 3px
-    rgba(22,119,255,0.10);
-
+    0 0 0 2px rgba(22, 119, 255, 0.08);
 }
 
 
 .scan-input::placeholder {
-
-  color: #8498b5;
-
+  color: #91a0b4;
 }
 
 
+/* ============================================================
+   SEARCH BUTTON
+   ============================================================ */
+
 .search-button {
+  height: 48px;
 
-  height: 58px;
+  min-width: 110px;
 
-  min-width: 145px;
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
 
   border: none;
 
-  border-radius: 13px;
+  border-radius: 9px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #0877ef,
-      #0862db
-    );
+  background: #1677ff;
 
-  font-size: 17px;
+  font-size: 14px;
 
-  font-weight: 700;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 10px;
+  font-weight: 600;
 
   box-shadow:
-    0 7px 18px
-    rgba(0,102,230,0.22);
-
+    0 4px 10px rgba(22, 119, 255, 0.18);
 }
 
 
 .search-button:hover {
+  background: #0958d9;
 
-  transform:
-    translateY(-1px);
-
-  box-shadow:
-    0 10px 22px
-    rgba(0,102,230,0.28);
-
+  transform: none;
 }
 
 
 .search-button i {
-
-  font-size: 21px;
-
+  font-size: 17px;
 }
 
 
+/* ============================================================
+   SCAN HINT
+   ============================================================ */
+
 .scan-hint {
-
   display: flex;
-
   align-items: center;
 
-  gap: 8px;
+  gap: 7px;
 
-  margin-top: 12px;
+  margin-top: 9px;
 
-  padding-left: 72px;
+  padding-left: 60px;
 
-  color: #627b9f;
+  color: #718198;
 
-  font-size: 14px;
-
+  font-size: 12px;
 }
 
 
 .scan-hint i {
+  color: #1677ff;
 
-  color: #0877ef;
-
-  font-size: 17px;
-
+  font-size: 15px;
 }
 
 
@@ -814,62 +445,51 @@
    ============================================================ */
 
 .result-card-wrapper {
+  width: 100%;
 
-  margin-bottom: 22px;
-
+  margin-bottom: 18px;
 }
 
 
 .result-card {
-
-  position: relative;
+  width: 100%;
 
   overflow: hidden;
 
-  background: #fff;
+  background: #ffffff;
 
-  border-radius: 20px;
+  border-radius: 15px;
 
   box-shadow:
-    0 12px 35px
-    rgba(40, 90, 150, 0.12);
+    0 5px 18px rgba(30, 70, 110, 0.08);
 
-  border:
-    2px solid
-    transparent;
+  border: 1px solid #e4eaf1;
 
+  border-left: 4px solid transparent;
 }
 
 
+/* ============================================================
+   STATUS BORDER
+   ============================================================ */
+
 .card-entitled {
-
-  border-color:
-    #73d13d;
-
+  border-left-color: #52c41a;
 }
 
 
 .card-already {
-
-  border-color:
-    #ffb366;
-
+  border-left-color: #fa8c16;
 }
 
 
 .card-mismatch {
-
-  border-color:
-    #ffd666;
-
+  border-left-color: #faad14;
 }
 
 
 .card-not-entitled {
-
-  border-color:
-    #ff7875;
-
+  border-left-color: #ff4d4f;
 }
 
 
@@ -878,132 +498,102 @@
    ============================================================ */
 
 .employee-result {
-
   display: grid;
 
   grid-template-columns:
-    260px
-    minmax(400px, 1fr)
-    minmax(340px, 0.9fr);
+    210px
+    minmax(350px, 1fr)
+    minmax(300px, 0.85fr);
 
   align-items: center;
 
-  gap: 30px;
+  gap: 25px;
 
-  padding:
-    30px 34px;
-
+  padding: 24px 28px;
 }
 
 
 /* ============================================================
-   PROFILE
+   EMPLOYEE PROFILE
    ============================================================ */
 
 .employee-profile {
-
   display: flex;
 
   flex-direction: column;
 
   align-items: center;
 
+  justify-content: center;
 }
 
 
 .photo-container {
-
-  width: 190px;
-
-  height: 190px;
-
-  border-radius: 18px;
+  width: 145px;
+  height: 145px;
 
   overflow: hidden;
 
-  background:
-    linear-gradient(
-      135deg,
-      #f2f7ff,
-      #e5efff
-    );
+  border-radius: 14px;
 
-  border:
-    3px solid
-    #e1eaf5;
+  background: #f1f5f9;
+
+  border: 2px solid #e2e9f1;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   box-shadow:
-    0 8px 22px
-    rgba(30,80,140,0.14);
-
+    0 5px 14px rgba(30, 70, 110, 0.10);
 }
 
 
 .employee-photo {
-
   width: 100%;
-
   height: 100%;
 
   object-fit: cover;
 
+  display: block;
 }
 
 
 .default-user {
+  font-size: 60px;
 
-  font-size: 75px;
-
-  color: #9cb1cc;
-
+  color: #a4b4c7;
 }
 
 
+/* ============================================================
+   PROFILE SITE
+   ============================================================ */
+
 .profile-site {
+  margin-top: 10px;
 
-  margin-top: 14px;
-
-  padding:
-    9px 25px;
-
-  border-radius: 24px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #e9f4ff,
-      #dceeff
-    );
-
-  color: #086ce8;
-
-  font-size: 16px;
-
-  font-weight: 800;
+  padding: 6px 18px;
 
   display: flex;
-
   align-items: center;
 
-  gap: 8px;
+  gap: 6px;
 
-  box-shadow:
-    0 4px 12px
-    rgba(0,100,220,0.08);
+  border-radius: 18px;
 
+  background: #edf6ff;
+
+  color: #1677ff;
+
+  font-size: 13px;
+
+  font-weight: 700;
 }
 
 
 .profile-site i {
-
-  font-size: 19px;
-
+  font-size: 15px;
 }
 
 
@@ -1012,142 +602,107 @@
    ============================================================ */
 
 .employee-details {
+  min-width: 0;
 
-  padding-right: 20px;
-
+  padding-right: 15px;
 }
 
 
 .detail-row {
-
   display: grid;
 
   grid-template-columns:
-    42px
-    185px
-    20px
+    34px
+    155px
+    15px
     1fr;
 
   align-items: center;
 
-  min-height: 48px;
-
+  min-height: 42px;
 }
 
 
 .detail-icon {
-
-  width: 34px;
-
-  height: 34px;
-
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
+  border-radius: 8px;
 }
 
 
 .detail-icon i {
-
-  font-size: 17px;
-
+  font-size: 14px;
 }
 
 
 .detail-icon.blue {
-
   color: #1677ff;
-
-  background:
-    #e7f2ff;
-
+  background: #edf5ff;
 }
 
 
 .detail-icon.purple {
-
   color: #722ed1;
-
-  background:
-    #f2eaff;
-
+  background: #f3edff;
 }
 
 
 .detail-icon.green {
-
   color: #13a87b;
-
-  background:
-    #e5fff6;
-
+  background: #e9fff7;
 }
 
 
 .detail-icon.pink {
-
   color: #eb2f96;
-
-  background:
-    #fff0f7;
-
+  background: #fff0f7;
 }
 
 
 .detail-label {
+  color: #6d7f97;
 
-  color: #667d9f;
-
-  font-size: 15px;
+  font-size: 13px;
 
   font-weight: 600;
 
+  white-space: nowrap;
 }
 
 
 .detail-colon {
+  color: #9aa9bb;
 
-  color: #8ca0ba;
-
-  font-weight: 600;
-
+  font-size: 13px;
 }
 
 
 .detail-value {
+  color: #1b3152;
 
-  color: #112e5a;
-
-  font-size: 16px;
+  font-size: 14px;
 
   font-weight: 700;
 
   word-break: break-word;
-
 }
 
 
 .site-value {
-
-  display: inline-flex;
-
   width: fit-content;
 
-  padding:
-    6px 15px;
+  padding: 4px 11px;
 
-  border-radius: 18px;
+  border-radius: 16px;
 
-  color: #0870ef;
+  background: #edf6ff;
 
-  background:
-    #e8f3ff;
-
+  color: #1677ff;
 }
 
 
@@ -1156,154 +711,115 @@
    ============================================================ */
 
 .status-section {
+  min-width: 0;
 
-  border-left:
-    1px solid
-    #e5edf6;
+  padding-left: 25px;
 
-  padding-left:
-    30px;
-
+  border-left: 1px solid #e4eaf1;
 }
 
 
+/* ============================================================
+   STATUS CARD
+   ============================================================ */
+
 .status-card {
+  min-height: 120px;
 
-  min-height: 145px;
-
-  border-radius: 17px;
-
-  padding:
-    24px;
+  padding: 20px;
 
   display: flex;
-
   align-items: center;
 
-  gap: 22px;
+  gap: 17px;
 
+  border-radius: 14px;
 }
 
 
 .status-entitled {
-
-  background:
-    linear-gradient(
-      135deg,
-      #f0ffeb,
-      #e6fbdc
-    );
-
+  background: #f6ffed;
   color: #389e0d;
-
 }
 
 
 .status-already {
-
-  background:
-    linear-gradient(
-      135deg,
-      #fff5e8,
-      #fff0d8
-    );
-
+  background: #fff7e8;
   color: #d46b08;
-
 }
 
 
 .status-mismatch {
-
-  background:
-    linear-gradient(
-      135deg,
-      #fffbe6,
-      #fff7cf
-    );
-
+  background: #fffbe6;
   color: #ad6800;
-
 }
 
 
 .status-not-entitled {
-
-  background:
-    linear-gradient(
-      135deg,
-      #fff1f0,
-      #ffe7e6
-    );
-
+  background: #fff1f0;
   color: #cf1322;
-
 }
 
 
+/* ============================================================
+   STATUS ICON
+   ============================================================ */
+
 .status-icon-wrapper {
+  width: 60px;
+  height: 60px;
 
-  width: 72px;
-
-  height: 72px;
-
-  min-width: 72px;
+  min-width: 60px;
 
   border-radius: 50%;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  background:
-    currentColor;
-
-  color: inherit;
-
+  background: currentColor;
 }
 
 
 .status-icon-wrapper i {
+  color: #ffffff;
 
-  color: #fff;
-
-  font-size: 35px;
-
-  font-weight: 800;
-
+  font-size: 28px;
 }
 
 
-.status-content {
+/* ============================================================
+   STATUS CONTENT
+   ============================================================ */
 
+.status-content {
   display: flex;
 
   flex-direction: column;
 
-  gap: 7px;
+  gap: 5px;
 
+  min-width: 0;
 }
 
 
 .status-title {
+  color: inherit;
 
-  font-size: 16px;
+  font-size: 13px;
 
   font-weight: 600;
 
-  opacity: 0.85;
-
+  opacity: 0.8;
 }
 
 
 .status-content strong {
+  color: inherit;
 
-  font-size: 25px;
+  font-size: 21px;
 
-  line-height: 1.15;
-
+  line-height: 1.2;
 }
 
 
@@ -1312,86 +828,71 @@
    ============================================================ */
 
 .status-message {
-
   display: flex;
 
   align-items: flex-start;
 
-  gap: 12px;
+  gap: 9px;
 
-  margin-top: 14px;
+  margin-top: 10px;
 
-  padding:
-    15px 17px;
+  padding: 11px 13px;
 
-  border-radius: 13px;
+  border-radius: 10px;
 
-  background:
-    #fffaf3;
+  background: #fffaf3;
 
-  border:
-    1px solid
-    #ffe0b2;
+  border: 1px solid #ffe1b5;
 
   color: #8c5a18;
-
 }
 
 
 .status-message > i {
+  margin-top: 2px;
 
   color: #fa8c16;
 
-  font-size: 20px;
-
-  margin-top: 2px;
-
+  font-size: 17px;
 }
 
 
 .status-message div {
-
   display: flex;
 
   flex-direction: column;
 
-  gap: 4px;
+  gap: 3px;
 
+  min-width: 0;
 }
 
 
 .status-message strong {
-
-  font-size: 14px;
-
+  font-size: 12px;
 }
 
 
 .status-message span {
+  font-size: 11px;
 
-  font-size: 13px;
+  line-height: 1.45;
 
-  line-height: 1.5;
-
+  color: #8b7963;
 }
 
 
 .mismatch-message {
+  background: #fffbe6;
 
-  background:
-    #fffbe6;
+  border-color: #ffe58f;
 
-  border-color:
-    #ffe58f;
-
+  color: #8c6500;
 }
 
 
 .mismatch-message > i {
-
-  color:
-    #faad14;
-
+  color: #faad14;
 }
 
 
@@ -1400,1194 +901,324 @@
    ============================================================ */
 
 .waiting-card {
+  width: 100%;
 
-  min-height: 310px;
+  min-height: 240px;
 
-  background:
-    rgba(255,255,255,0.92);
+  background: #ffffff;
 
-  border:
-    1px solid
-    #dceaff;
+  border: 1px solid #e1eaf3;
 
-  border-radius: 20px;
+  border-radius: 15px;
 
   box-shadow:
-    0 8px 28px
-    rgba(24,90,160,0.07);
+    0 4px 14px rgba(25, 70, 120, 0.05);
 
   display: flex;
 
   align-items: center;
 
   justify-content: center;
-
 }
 
 
 .waiting-content {
-
   text-align: center;
-
 }
 
 
 .waiting-icon {
+  width: 72px;
+  height: 72px;
 
-  width: 90px;
-
-  height: 90px;
-
-  margin:
-    0 auto 18px;
-
-  border-radius: 24px;
+  margin: 0 auto 14px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  background:
-    linear-gradient(
-      135deg,
-      #eaf4ff,
-      #dcecff
-    );
+  border-radius: 20px;
+
+  background: #edf5ff;
 
   color: #80b5f5;
-
 }
 
 
 .waiting-icon i {
-
-  font-size: 45px;
-
+  font-size: 36px;
 }
 
 
 .waiting-content h2 {
-
   margin: 0;
 
   color: #18355f;
 
-  font-size: 21px;
+  font-size: 18px;
 
   font-weight: 700;
-
 }
 
 
 .waiting-content p {
+  margin: 6px 0 0;
 
-  margin:
-    8px 0 0;
+  color: #8191a7;
 
-  color: #8196b3;
+  font-size: 13px;
+}
 
-  font-size: 14px;
+
+/* ============================================================
+   LARGE DESKTOP
+   ============================================================ */
+
+@media (min-width: 1500px) {
+
+  .scan-wrapper {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .employee-result {
+    grid-template-columns:
+      230px
+      minmax(450px, 1fr)
+      minmax(360px, 0.85fr);
+
+    gap: 30px;
+  }
 
 }
 
 
 /* ============================================================
-   RESPONSIVE
+   TABLET
    ============================================================ */
 
-@media (max-width: 1200px) {
-
-  .employee-result {
-
-    grid-template-columns:
-      220px
-      1fr;
-
-  }
-
-  .status-section {
-
-    grid-column:
-      1 / -1;
-
-    border-left: none;
-
-    border-top:
-      1px solid
-      #e5edf6;
-
-    padding:
-      25px 0 0;
-
-  }
-
-}
-
-
-@media (max-width: 800px) {
-
-  .header-content {
-
-    padding:
-      22px;
-
-  }
-
-  .header-right {
-
-    display: none;
-
-  }
-
-  .header-title h1 {
-
-    font-size: 27px;
-
-  }
-
-  .header-icon {
-
-    width: 55px;
-
-    height: 55px;
-
-  }
-
-  .main-content {
-
-    padding:
-      0 15px 25px;
-
-  }
+@media (max-width: 1100px) {
 
   .site-card-left {
-
     flex-wrap: wrap;
-
-  }
-
-  .site-select {
-
-    width: 100%;
-
   }
 
   .selected-site {
-
-    width: 100%;
-
-    margin-left: 0;
-
-    padding:
-      12px 0 0;
-
     border-left: none;
-
-    border-top:
-      1px solid
-      #e5edf6;
-
-  }
-
-  .scan-row {
-
-    flex-wrap: wrap;
-
-  }
-
-  .scan-box {
-
-    display: none;
-
-  }
-
-  .scan-input-wrapper {
-
-    width: 100%;
-
-    flex: none;
-
-  }
-
-  .search-button {
-
-    width: 100%;
-
-  }
-
-  .scan-hint {
 
     padding-left: 0;
 
+    margin-left: 0;
   }
+
 
   .employee-result {
-
     grid-template-columns:
+      190px
       1fr;
+  }
 
-    text-align: left;
+
+  .status-section {
+    grid-column: 1 / -1;
+
+    border-left: none;
+
+    border-top: 1px solid #e4eaf1;
 
     padding:
-      25px 20px;
-
+      18px 0 0;
   }
 
-  .employee-profile {
+}
 
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+  .scan-wrapper {
+    padding: 12px;
+  }
+
+
+  .header-row {
+    padding: 15px;
+  }
+
+
+  .title-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+
+  .title-icon i {
+    font-size: 22px;
+  }
+
+
+  .title-block h1 {
+    font-size: 21px;
+  }
+
+
+  .title-block p {
+    font-size: 11px;
+  }
+
+
+  .site-card,
+  .scan-card {
+    padding: 15px;
+  }
+
+
+  .site-card-left {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+
+  .site-select {
+    width: 100%;
+    min-width: 100%;
+  }
+
+
+  .selected-site {
     width: 100%;
 
+    padding-top: 8px;
+
+    border-top: 1px solid #e5ebf2;
   }
 
-  .employee-details {
 
+  .scan-row {
+    flex-wrap: wrap;
+  }
+
+
+  .scan-box {
+    display: none;
+  }
+
+
+  .scan-input-wrapper {
+    width: 100%;
+
+    flex: none;
+  }
+
+
+  .search-button {
+    width: 100%;
+  }
+
+
+  .scan-hint {
+    padding-left: 0;
+  }
+
+
+  .employee-result {
+    grid-template-columns: 1fr;
+
+    gap: 20px;
+
+    padding: 20px;
+  }
+
+
+  .employee-profile {
+    width: 100%;
+  }
+
+
+  .employee-details {
     width: 100%;
 
     padding-right: 0;
-
   }
+
 
   .detail-row {
-
     grid-template-columns:
-      40px
-      140px
-      15px
-      1fr;
-
-  }
-
-}
-
-
-@media (max-width: 500px) {
-
-  .header-title p {
-
-    font-size: 12px;
-
-  }
-
-  .detail-row {
-
-    grid-template-columns:
-      34px
-      125px
+      30px
+      130px
       12px
       1fr;
-
   }
+
 
   .detail-label {
-
-    font-size: 13px;
-
+    font-size: 12px;
   }
+
 
   .detail-value {
-
-    font-size: 14px;
-
+    font-size: 13px;
   }
+
+
+  .status-section {
+    width: 100%;
+  }
+
 
   .status-card {
-
-    padding: 18px;
-
+    padding: 16px;
   }
 
+
   .status-content strong {
-
-    font-size: 19px;
-
+    font-size: 18px;
   }
 
 }
 
 
+/* ============================================================
+   SMALL MOBILE
+   ============================================================ */
 
+@media (max-width: 480px) {
 
+  .detail-row {
+    grid-template-columns:
+      28px
+      115px
+      10px
+      1fr;
+  }
 
 
+  .detail-label {
+    font-size: 11px;
+  }
 
 
+  .detail-value {
+    font-size: 12px;
+  }
 
 
+  .status-icon-wrapper {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+  }
 
 
+  .status-icon-wrapper i {
+    font-size: 24px;
+  }
 
-
-
-
-
-
-<div class="scan-wrapper">
-
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
-
-<div class="header-row">
-
-  <div class="title-block">
-
-    <div class="title-icon">
-
-      <i
-        nz-icon
-        nzType="scan"
-        nzTheme="outline">
-      </i>
-
-    </div>
-
-    <div>
-
-      <h1>
-        Meal Scan
-      </h1>
-
-      <p>
-        Scan employee badge to mark meal collection
-      </p>
-
-    </div>
-
-  </div>
-
-</div>
-
-  <!-- ============================================================
-       MAIN CONTENT
-       ============================================================ -->
-
-  <div class="main-content">
-
-
-    <!-- ==========================================================
-         SITE CARD
-         ========================================================== -->
-
-    <div class="site-card">
-
-      <div class="site-card-left">
-
-        <div class="section-icon site-icon">
-
-          <i
-            nz-icon
-            nzType="environment"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <div class="site-label">
-
-          <span>
-            Site
-          </span>
-
-        </div>
-
-
-        <nz-select
-
-          [(ngModel)]="selectedSite"
-
-          name="selectedSite"
-
-          nzPlaceHolder="Select Site"
-
-          nzSize="large"
-
-          class="site-select"
-
-          [nzDisabled]="
-            siteList.length === 0 ||
-            loading ||
-            proceeding
-          "
-
-          (ngModelChange)="
-            onLocationChange($event)
-          ">
-
-
-          <!-- ALL SITES -->
-
-          <nz-option
-
-            nzValue=""
-
-            nzLabel="All My Sites">
-
-          </nz-option>
-
-
-          <!-- USER SITES -->
-
-          <nz-option
-
-            *ngFor="
-              let option of siteOptions
-            "
-
-            [nzValue]="
-              option.value
-            "
-
-            [nzLabel]="
-              option.label
-            ">
-
-          </nz-option>
-
-
-        </nz-select>
-
-
-        <!-- SELECTED SITE -->
-
-        <div class="selected-site">
-
-          <span>
-            Selected Site :
-          </span>
-
-          <strong>
-
-            {{
-              selectedSite
-                ? getSiteName(selectedSite)
-                : 'All My Sites'
-            }}
-
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- NO SITE -->
-
-      <div
-        class="site-warning"
-        *ngIf="!siteList.length">
-
-        <i
-          nz-icon
-          nzType="warning"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          No active site assigned to the logged-in user.
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         SCAN CARD
-         ========================================================== -->
-
-    <div class="scan-card">
-
-      <div class="scan-row">
-
-
-        <!-- SCAN ICON -->
-
-        <div class="scan-box">
-
-          <i
-            nz-icon
-            nzType="scan"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <!-- INPUT AREA -->
-
-        <div class="scan-input-wrapper">
-
-          <input
-
-            #scanInput
-
-            nz-input
-
-            [(ngModel)]="empNo"
-
-            name="empNo"
-
-            placeholder="Scan employee badge..."
-
-            (keyup.enter)="onScanEnter()"
-
-            autocomplete="off"
-
-            [disabled]="
-              loading ||
-              proceeding ||
-              siteList.length === 0
-            "
-
-            class="scan-input"
-
-          />
-
-
-          <!-- LOADING -->
-
-          <nz-spin
-
-            *ngIf="
-              loading ||
-              proceeding
-            "
-
-            nzSimple>
-
-          </nz-spin>
-
-        </div>
-
-
-        <!-- SEARCH -->
-
-        <button
-
-          nz-button
-
-          nzType="primary"
-
-          nzSize="large"
-
-          class="search-button"
-
-          (click)="search(true)"
-
-          [disabled]="
-            loading ||
-            proceeding ||
-            siteList.length === 0
-          ">
-
-          <i
-            nz-icon
-            nzType="search"
-            nzTheme="outline">
-          </i>
-
-          <span>
-            Search
-          </span>
-
-        </button>
-
-
-      </div>
-
-
-      <!-- HINT -->
-
-      <div class="scan-hint">
-
-        <i
-          nz-icon
-          nzType="info-circle"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          Scan the employee FX Badge or enter the badge number manually.
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         EMPLOYEE RESULT
-         ========================================================== -->
-
-    <div
-      class="result-card-wrapper"
-      *ngIf="employeeDetail">
-
-
-      <div
-
-        class="result-card"
-
-        [ngClass]="
-
-          entitlementStatus === 'ENTITLED'
-
-            ? 'card-entitled'
-
-            :
-
-          entitlementStatus === 'ALREADY_SCANNED'
-
-            ? 'card-already'
-
-            :
-
-          entitlementStatus === 'SITE_MISMATCH'
-
-            ? 'card-mismatch'
-
-            :
-
-          'card-not-entitled'
-
-        ">
-
-
-        <div class="employee-result">
-
-
-          <!-- ====================================================
-               PHOTO
-               ==================================================== -->
-
-          <div class="employee-profile">
-
-
-            <div class="photo-container">
-
-
-              <nz-spin
-                *ngIf="photoLoading">
-              </nz-spin>
-
-
-              <img
-
-                *ngIf="
-                  employeePhotoUrl &&
-                  !photoLoading
-                "
-
-                [src]="employeePhotoUrl"
-
-                class="employee-photo"
-
-                alt="Employee Photo"
-
-              />
-
-
-              <i
-
-                *ngIf="
-                  !employeePhotoUrl &&
-                  !photoLoading
-                "
-
-                nz-icon
-
-                nzType="user"
-
-                nzTheme="outline"
-
-                class="default-user">
-
-              </i>
-
-
-            </div>
-
-
-            <!-- EMPLOYEE SITE -->
-
-            <div
-
-              class="profile-site"
-
-              *ngIf="employeeDetail.Site">
-
-              <i
-                nz-icon
-                nzType="environment"
-                nzTheme="fill">
-              </i>
-
-              <span>
-
-                {{
-                  getSiteDisplayName(
-                    employeeDetail.Site
-                  )
-                }}
-
-              </span>
-
-            </div>
-
-
-          </div>
-
-
-          <!-- ====================================================
-               DETAILS
-               ==================================================== -->
-
-          <div class="employee-details">
-
-
-            <!-- NAME -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="user"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Employee Name
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.Name ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- BADGE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon purple">
-
-                <i
-                  nz-icon
-                  nzType="idcard"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                FX Badge
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.FxBadge ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- SITE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon green">
-
-                <i
-                  nz-icon
-                  nzType="bank"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Site
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value site-value">
-
-                {{
-                  getSiteDisplayName(
-                    employeeDetail.Site
-                  )
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- MEAL -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon pink">
-
-                <i
-                  nz-icon
-                  nzType="fork"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Meal Preference
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.MealPreference ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- FIRST DATE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="calendar"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                First Day at Factory
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.FirstDateFxbl ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- LAST DATE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="calendar"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Last Day at Factory
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.LastDateFxbl ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-          </div>
-
-
-          <!-- ====================================================
-               STATUS
-               ==================================================== -->
-
-          <div class="status-section">
-
-
-            <div
-
-              class="status-card"
-
-              [ngClass]="
-
-                entitlementStatus === 'ENTITLED'
-
-                  ? 'status-entitled'
-
-                  :
-
-                entitlementStatus === 'ALREADY_SCANNED'
-
-                  ? 'status-already'
-
-                  :
-
-                entitlementStatus === 'SITE_MISMATCH'
-
-                  ? 'status-mismatch'
-
-                  :
-
-                'status-not-entitled'
-
-              ">
-
-
-              <div class="status-icon-wrapper">
-
-                <i
-
-                  nz-icon
-
-                  [nzType]="
-
-                    entitlementStatus === 'ENTITLED'
-
-                      ? 'check'
-
-                      :
-
-                    entitlementStatus === 'ALREADY_SCANNED'
-
-                      ? 'exclamation'
-
-                      :
-
-                    entitlementStatus === 'SITE_MISMATCH'
-
-                      ? 'warning'
-
-                      :
-
-                    'close'
-
-                  "
-
-                  nzTheme="outline">
-
-                </i>
-
-              </div>
-
-
-              <div class="status-content">
-
-                <span class="status-title">
-                  Status
-                </span>
-
-                <strong>
-
-                  {{
-
-                    entitlementStatus === 'ENTITLED'
-
-                      ? 'ENTITLED FOR MEAL'
-
-                      :
-
-                    entitlementStatus === 'ALREADY_SCANNED'
-
-                      ? 'ALREADY COLLECTED'
-
-                      :
-
-                    entitlementStatus === 'SITE_MISMATCH'
-
-                      ? 'SITE MISMATCH'
-
-                      :
-
-                    entitlementStatus === 'NOT_UPDATED'
-
-                      ? 'NOT UPDATED'
-
-                      :
-
-                    'NOT ENTITLED'
-
-                  }}
-
-                </strong>
-
-              </div>
-
-            </div>
-
-
-            <!-- ALREADY COLLECTED MESSAGE -->
-
-            <div
-
-              class="status-message"
-
-              *ngIf="
-                entitlementStatus ===
-                'ALREADY_SCANNED'
-              ">
-
-              <i
-                nz-icon
-                nzType="calendar"
-                nzTheme="outline">
-              </i>
-
-              <div>
-
-                <strong>
-                  Meal already collected
-                </strong>
-
-                <span>
-                  This employee has already collected the meal for the selected date.
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <!-- SITE MISMATCH -->
-
-            <div
-
-              class="status-message mismatch-message"
-
-              *ngIf="
-                entitlementStatus ===
-                'SITE_MISMATCH'
-              ">
-
-              <i
-                nz-icon
-                nzType="warning"
-                nzTheme="outline">
-              </i>
-
-              <div>
-
-                <strong>
-                  Site mismatch
-                </strong>
-
-                <span>
-                  This employee does not belong to the selected site.
-                </span>
-
-              </div>
-
-            </div>
-
-
-          </div>
-
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         WAITING STATE
-         ========================================================== -->
-
-    <div
-
-      class="waiting-card"
-
-      *ngIf="
-        !employeeDetail &&
-        !loading
-      ">
-
-
-      <div class="waiting-content">
-
-        <div class="waiting-icon">
-
-          <i
-            nz-icon
-            nzType="scan"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <h2>
-          Scan an employee badge to begin
-        </h2>
-
-        <p>
-          Employee details will appear here after scanning.
-        </p>
-
-      </div>
-
-    </div>
-
-
-  </div>
-
-</div>
+}
