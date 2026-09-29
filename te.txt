@@ -1,1014 +1,583 @@
-<div
-  class="dashboard-wrapper"
-  [class.is-loading]="loading">
-
-
-  <!-- ============================================================
-       PAGE HEADER
-       ============================================================ -->
-
-  <div class="page-header">
-
-
-    <div class="page-title-wrap">
-
-
-      <div class="page-icon">
-
-        <svg
-          viewBox="0 0 24 24"
-          width="26"
-          height="26"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round">
-
-          <path
-            d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-
-          <path
-            d="M7 2v20" />
-
-          <path
-            d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-
-        </svg>
-
-      </div>
-
-
-      <div>
-
-        <h2 class="page-title">
-          F1 MEAL MANAGEMENT SYSTEM
-        </h2>
-
-
-        <p class="page-sub">
-          Your Daily Step Toward Greater Impact!
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         FILTERS
-         ========================================================== -->
-
-    <div class="filter-block">
-
-
-      <!-- ========================================================
-           SITE FILTER
-           ======================================================== -->
-
-      <div class="site-filter">
-
-
-        <div class="site-filter-label">
-
-          <i
-            nz-icon
-            nzType="environment"
-            nzTheme="outline">
-          </i>
-
-          <span>
-            Site
-          </span>
-
-        </div>
-
-
-        <nz-select
-
-          class="site-select"
-
-          [(ngModel)]="selectedSite"
-
-          name="selectedSite"
-
-          nzPlaceHolder="Select Site"
-
-          [nzDisabled]="locationList.length === 0"
-
-          (ngModelChange)="onLocationChange($event)">
-
-
-          <nz-option
-            *ngFor="
-              let location of locationList
-            "
-
-            [nzValue]="location.value"
-
-            [nzLabel]="location.label">
-
-          </nz-option>
-
-
-        </nz-select>
-
-
-        <!-- ======================================================
-             SELECTED SITE
-             ====================================================== -->
-
-        <div class="selected-site">
-
-
-          <span>
-            Selected Site:
-          </span>
-
-
-          <strong>
-
-            {{
-              selectedSite
-                ? getSiteName(selectedSite)
-                : 'All My Sites'
-            }}
-
-          </strong>
-
-
-        </div>
-
-
-      </div>
-
-
-      <!-- ========================================================
-           DATE
-           ======================================================== -->
-
-      <nz-date-picker
-
-        [(ngModel)]="selectedDate"
-
-        (ngModelChange)="onDateChange($event)"
-
-        nzFormat="DD-MMM-YYYY"
-
-        [nzAllowClear]="false">
-
-      </nz-date-picker>
-
-
-    </div>
-
-  </div>
-
-
-
-  <!-- ============================================================
-       BANNER
-       ============================================================ -->
-
-  <div class="banner-card">
-
-
-    <svg
-      class="banner-art"
-      viewBox="0 0 360 150"
-      aria-hidden="true">
-
-
-      <g
-        fill="rgba(255,255,255,0.10)"
-        stroke="rgba(255,255,255,0.35)"
-        stroke-width="1.5">
-
-
-        <ellipse
-          cx="100"
-          cy="100"
-          rx="84"
-          ry="28" />
-
-
-        <ellipse
-          cx="100"
-          cy="94"
-          rx="60"
-          ry="18" />
-
-
-        <ellipse
-          cx="250"
-          cy="82"
-          rx="64"
-          ry="21" />
-
-
-        <ellipse
-          cx="250"
-          cy="77"
-          rx="44"
-          ry="13" />
-
-
-      </g>
-
-
-      <g
-        fill="rgba(255,255,255,0.22)">
-
-
-        <circle
-          cx="92"
-          cy="90"
-          r="6" />
-
-
-        <circle
-          cx="112"
-          cy="96"
-          r="4" />
-
-
-        <circle
-          cx="244"
-          cy="74"
-          r="5" />
-
-
-      </g>
-
-
-    </svg>
-
-
-    <div class="banner-left">
-
-
-      <div class="breadcrumb">
-
-        <span>
-          Home
-        </span>
-
-        <span class="sep">
-          &rsaquo;
-        </span>
-
-        <span class="current">
-          Dashboard
-        </span>
-
-      </div>
-
-
-      <h1 class="banner-title">
-        Meal Distribution Details
-      </h1>
-
-
-      <p class="banner-subtitle">
-        Daily meal collection at a glance
-      </p>
-
-
-    </div>
-
-
-    <div class="banner-tagline">
-
-
-      <i
-        nz-icon
-        nzType="heart"
-        nzTheme="outline">
-      </i>
-
-
-      <span>
-        Healthy Food
-      </span>
-
-
-      <span class="dot">
-      </span>
-
-
-      <span>
-        Happy Workplace
-      </span>
-
-
-    </div>
-
-
-  </div>
-
-
-
-  <!-- ============================================================
-       STAT CARDS
-       ============================================================ -->
-
-  <div class="stat-cards-row">
-
-
-    <!-- TOTAL EMPLOYEES -->
-
-    <div class="stat-card card-blue">
-
-
-      <div class="stat-top">
-
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="team"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend flat">
-
-          <i
-            nz-icon
-            nzType="bar-chart"
-            nzTheme="outline">
-          </i>
-
-        </span>
-
-
-      </div>
-
-
-      <div class="stat-title">
-        Total Employees
-      </div>
-
-
-      <div class="stat-value">
-        {{ totalEmployees | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Employees on record
-      </div>
-
-
-    </div>
-
-
-
-    <!-- MEALS COLLECTED -->
-
-    <div class="stat-card card-green">
-
-
-      <div class="stat-top">
-
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="check-circle"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend up">
-
-          <i
-            nz-icon
-            nzType="arrow-up"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(mealsCollected) }}%
-
-        </span>
-
-
-      </div>
-
-
-      <div class="stat-title">
-        Meals Collected
-      </div>
-
-
-      <div class="stat-value">
-        {{ mealsCollected | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Collected meals
-      </div>
-
-
-    </div>
-
-
-
-    <!-- MEALS NOT COLLECTED -->
-
-    <div class="stat-card card-red">
-
-
-      <div class="stat-top">
-
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="close-circle"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend down">
-
-          <i
-            nz-icon
-            nzType="arrow-down"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(mealsNotCollected) }}%
-
-        </span>
-
-
-      </div>
-
-
-      <div class="stat-title">
-        Meals Not Collected
-      </div>
-
-
-      <div class="stat-value">
-        {{ mealsNotCollected | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Yet to collect
-      </div>
-
-
-    </div>
-
-
-
-    <!-- NO MEAL REQUIRED -->
-
-    <div class="stat-card card-purple">
-
-
-      <div class="stat-top">
-
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="stop"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend flat">
-
-          <i
-            nz-icon
-            nzType="arrow-right"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(noMealRequired) }}%
-
-        </span>
-
-
-      </div>
-
-
-      <div class="stat-title">
-        No Meal Required
-      </div>
-
-
-      <div class="stat-value">
-        {{ noMealRequired | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Meal not required
-      </div>
-
-
-    </div>
-
-
-
-    <!-- NOT REQUIRED BUT CAME -->
-
-    <div class="stat-card card-orange">
-
-
-      <div class="stat-top">
-
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="user"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend flat">
-
-          <i
-            nz-icon
-            nzType="arrow-right"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(notCameToCollect) }}%
-
-        </span>
-
-
-      </div>
-
-
-      <div class="stat-title">
-        Not Required - Came to Collect
-      </div>
-
-
-      <div class="stat-value">
-        {{ notCameToCollect | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        No meal, but came to collect
-      </div>
-
-
-    </div>
-
-
-  </div>
-
-
-
-  <!-- ============================================================
-       CATEGORY WISE
-       ============================================================ -->
-
-  <div class="category-card">
-
-
-    <div class="category-header">
-
-
-      <div class="category-title">
-
-
-        <i
-          nz-icon
-          nzType="bar-chart"
-          nzTheme="outline">
-        </i>
-
-
-        <span>
-          Meals Collected - Category Wise
-        </span>
-
-
-      </div>
-
-
-      <div class="category-sub">
-
-
-        <i
-          nz-icon
-          nzType="bar-chart"
-          nzTheme="outline">
-        </i>
-
-
-        Category wise distribution of collected meals
-
-
-      </div>
-
-
-    </div>
-
-
-
-    <div class="category-grid">
-
-
-      <div
-
-        class="category-item"
-
-        *ngFor="let cat of categoryList"
-
-        [ngStyle]="{
-          'border-top-color': cat.color
-        }">
-
-
-        <div class="cat-top">
-
-
-          <div
-
-            class="cat-icon"
-
-            [ngStyle]="{
-              'background-color':
-                cat.color + '22'
-            }">
-
-            {{ cat.icon }}
-
-          </div>
-
-
-          <div class="cat-name">
-
-            {{ cat.name }}
-
-          </div>
-
-
-        </div>
-
-
-        <div
-
-          class="cat-count"
-
-          [ngStyle]="{
-            'color': cat.color
-          }">
-
-          {{ cat.count }}
-
-        </div>
-
-
-        <div class="cat-percent">
-
-          {{ cat.percent }}%
-          of collected
-
-        </div>
-
-
-        <div class="cat-progress-bar">
-
-
-          <div
-
-            class="cat-progress-fill"
-
-            [ngStyle]="{
-              'width':
-                cat.percent + '%',
-
-              'background-color':
-                cat.color
-            }">
-
-          </div>
-
-
-        </div>
-
-
-      </div>
-
-
-    </div>
-
-
-  </div>
-
-
-
-  <!-- ============================================================
-       BOTTOM ROW
-       ============================================================ -->
-
-  <div class="bottom-row">
-
-
-    <!-- SUMMARY -->
-
-    <div class="summary-card">
-
-
-      <div class="section-title">
-
-
-        <i
-          nz-icon
-          nzType="bar-chart"
-          nzTheme="outline">
-        </i>
-
-
-        <span>
-          Meal Collection Summary
-        </span>
-
-
-      </div>
-
-
-      <div class="summary-body">
-
-
-        <!-- DONUT -->
-
-        <div
-
-          class="donut"
-
-          [style.background]="donutGradient">
-
-
-          <div class="donut-hole">
-
-
-            <div class="donut-main">
-
-              {{ mealsCollected }}
-              /
-              {{ totalEmployees }}
-
-            </div>
-
-
-            <div class="donut-label">
-              Collected
-            </div>
-
-
-          </div>
-
-
-        </div>
-
-
-
-        <!-- LEGEND -->
-
-        <div class="legend">
-
-
-          <div
-
-            class="legend-row"
-
-            *ngFor="let s of summaryList">
-
-
-            <span
-
-              class="legend-dot"
-
-              [style.background-color]="s.color">
-
-            </span>
-
-
-            <span class="legend-name">
-
-              {{ s.label }}
-
-            </span>
-
-
-            <span class="legend-count">
-
-              {{ s.count }}
-
-            </span>
-
-
-            <span class="legend-pct">
-
-              {{ s.percent }}%
-
-            </span>
-
-
-          </div>
-
-
-        </div>
-
-
-      </div>
-
-
-    </div>
-
-
-
-    <!-- TOTAL PROCESSED -->
-
-    <div class="processed-card">
-
-
-      <div class="processed-top">
-
-
-        <div class="processed-icon">
-
-
-          <svg
-
-            viewBox="0 0 24 24"
-
-            width="28"
-
-            height="28"
-
-            fill="none"
-
-            stroke="currentColor"
-
-            stroke-width="2"
-
-            stroke-linecap="round"
-
-            stroke-linejoin="round">
-
-
-            <path
-              d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-
-
-            <path
-              d="M7 2v20" />
-
-
-            <path
-              d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-
-
-          </svg>
-
-
-        </div>
-
-
-        <div>
-
-
-          <div class="processed-title">
-
-            Total Meals Processed
-
-          </div>
-
-
-          <div class="processed-value">
-
-            {{ totalEmployees | number }}
-
-          </div>
-
-
-          <div class="processed-sub">
-
-            Employees on record
-
-          </div>
-
-
-        </div>
-
-
-      </div>
-
-
-
-      <!-- DATE -->
-
-      <div class="processed-date">
-
-
-        <i
-          nz-icon
-          nzType="calendar"
-          nzTheme="outline">
-        </i>
-
-
-        <span>
-
-          For
-          {{ selectedDate | date:'dd-MM-yyyy' }}
-
-        </span>
-
-
-      </div>
-
-
-
-      <!-- SITE -->
-
-      <div
-        class="processed-date"
-        style="margin-top: 8px;">
-
-
-        <i
-          nz-icon
-          nzType="environment"
-          nzTheme="outline">
-        </i>
-
-
-        <span>
-
-          Site:
-
-          {{
-            selectedSite
-              ? getSiteName(selectedSite)
-              : 'All My Sites'
-          }}
-
-        </span>
-
-
-      </div>
-
-
-    </div>
-
-
-  </div>
-
-
-
-  <!-- ============================================================
-       LOADING
-       ============================================================ -->
-
-  <div
-
-    class="dashboard-loading"
-
-    *ngIf="loading">
-
-
-    <nz-spin
-
-      nzSimple
-
-      nzSize="large">
-
-    </nz-spin>
-
-
-  </div>
-
-
-</div>
+$radius: 16px;
+$text: #14233f;
+$muted: #7c879b;
+$line: rgba(20, 35, 63, 0.07);
+$card-shadow: 0 4px 16px rgba(20, 35, 63, 0.06);
+$card-shadow-hover: 0 12px 28px rgba(20, 35, 63, 0.12);
+
+// name: (main color, soft tint, number color)
+$stat-colors: (
+  blue:   (#7b86e0, #eceefe, #14233f),
+  green:  (#1fb58f, #e2f8f1, #17a07d),
+  red:    (#ee4b55, #fdeaec, #e5333f),
+  purple: (#8f6fe0, #f0eafd, #2a2a5e),
+  orange: (#f0a020, #fff3dc, #e08a00)
+);
+
+:host {
+  display: block;
+}
+
+.dashboard-wrapper {
+  padding: 20px 24px 32px;
+  background: linear-gradient(180deg, #f3f7fd 0%, #eaf0f9 100%);
+  color: $text;
+  min-height: 100%;
+
+  // soften numbers while data is loading
+  &.is-loading {
+    .stat-value,
+    .cat-count,
+    .processed-value,
+    .donut-main {
+      opacity: 0.4;
+    }
+  }
+}
+
+/* ---------------- Page header ---------------- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+
+  .page-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .page-icon {
+    flex-shrink: 0;
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: linear-gradient(135deg, #1a7fd6 0%, #38a9ee 100%);
+    box-shadow: 0 8px 18px rgba(26, 127, 214, 0.32);
+  }
+
+  .page-title {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: $text;
+  }
+
+  .page-sub {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: $muted;
+  }
+
+  .filter-block {
+    // pill style date picker
+    ::ng-deep .ant-picker {
+      min-width: 170px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1px solid $line;
+      background: #fff;
+      box-shadow: $card-shadow;
+
+      input {
+        font-weight: 600;
+        color: $text;
+      }
+    }
+  }
+}
+
+/* ---------------- Banner ---------------- */
+.banner-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 120px;
+  padding: 22px 36px;
+  margin-bottom: 20px;
+  border-radius: $radius;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 78% 20%, rgba(255, 255, 255, 0.18) 0, transparent 38%),
+    linear-gradient(105deg, #0b57b0 0%, #1478d0 50%, #2aa1ea 100%);
+  box-shadow: 0 12px 28px rgba(20, 120, 208, 0.28);
+
+  .banner-art {
+    position: absolute;
+    right: 26%;
+    bottom: -8px;
+    width: 360px;
+    height: 150px;
+    pointer-events: none;
+  }
+
+  .banner-left,
+  .banner-tagline {
+    position: relative;
+    z-index: 1;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 6px;
+
+    .current {
+      color: #fff;
+    }
+  }
+
+  .banner-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #fff;
+  }
+
+  .banner-subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .banner-tagline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(4px);
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      opacity: 0.85;
+    }
+  }
+}
+
+/* ---------------- Stat cards ---------------- */
+.stat-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+
+  .stat-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 18px 16px;
+    border-radius: $radius;
+    background: #fff;
+    border: 2px solid transparent;
+    box-shadow: $card-shadow;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: $card-shadow-hover;
+    }
+
+    .stat-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .stat-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: $muted;
+
+      &.up { color: #17a07d; }
+      &.down { color: #e5333f; }
+    }
+
+    .stat-title {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: $text;
+    }
+
+    .stat-value {
+      margin-top: 4px;
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+      transition: opacity 0.2s ease;
+    }
+
+    .stat-sub {
+      margin-top: 2px;
+      font-size: 13px;
+      color: $muted;
+    }
+  }
+
+  @each $name, $tone in $stat-colors {
+    $main: nth($tone, 1);
+    $soft: nth($tone, 2);
+    $num: nth($tone, 3);
+
+    .card-#{$name} {
+      border-color: rgba($main, 0.45);
+      background: linear-gradient(160deg, $soft 0%, #fff 62%);
+
+      .stat-icon {
+        background: $soft;
+        color: $main;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.75);
+      }
+      .stat-value {
+        color: $num;
+      }
+    }
+  }
+}
+
+/* ---------------- Category wise ---------------- */
+.category-card {
+  padding: 20px 22px 22px;
+  margin-bottom: 20px;
+  border-radius: $radius;
+  background: #fff;
+  border: 1px solid $line;
+  box-shadow: $card-shadow;
+
+  .category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+
+    .category-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: $text;
+
+      i {
+        color: #1478d0;
+        font-size: 18px;
+      }
+    }
+
+    .category-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: $muted;
+    }
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+  }
+
+  .category-item {
+    padding: 14px 16px 16px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid $line;
+    border-top: 3px solid transparent; // color comes from [ngStyle]
+    box-shadow: 0 2px 8px rgba(20, 35, 63, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: $card-shadow-hover;
+    }
+
+    .cat-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .cat-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .cat-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text;
+    }
+
+    .cat-count {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+      transition: opacity 0.2s ease;
+    }
+
+    .cat-percent {
+      margin: 2px 0 10px;
+      font-size: 12px;
+      color: $muted;
+    }
+
+    .cat-progress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: #e8edf5;
+      overflow: hidden;
+
+      .cat-progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+    }
+  }
+}
+
+/* ---------------- Summary + processed ---------------- */
+.bottom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.summary-card {
+  padding: 20px 24px 24px;
+  border-radius: $radius;
+  background: #fff;
+  border: 1px solid $line;
+  box-shadow: $card-shadow;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    color: $text;
+
+    i {
+      color: #1478d0;
+      font-size: 18px;
+    }
+  }
+
+  .summary-body {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  // ring is drawn by a conic-gradient set from the .ts file
+  .donut {
+    flex-shrink: 0;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e6ebf5;
+  }
+
+  .donut-hole {
+    width: 98px;
+    height: 98px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 0 1px $line;
+
+    .donut-main {
+      font-size: 17px;
+      font-weight: 700;
+      color: $text;
+      transition: opacity 0.2s ease;
+    }
+    .donut-label {
+      font-size: 12px;
+      color: $muted;
+    }
+  }
+
+  .legend {
+    flex: 1;
+    min-width: 260px;
+  }
+
+  .legend-row {
+    display: grid;
+    grid-template-columns: 12px 1fr 48px 52px;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 0;
+    font-size: 13px;
+    color: $text;
+
+    & + .legend-row {
+      border-top: 1px dashed $line;
+    }
+
+    .legend-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .legend-count {
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .legend-pct {
+      text-align: right;
+      color: $muted;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.processed-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: $radius;
+  background: linear-gradient(150deg, #e4f0fd 0%, #f4f9ff 70%);
+  border: 1px solid rgba(20, 120, 208, 0.16);
+  box-shadow: $card-shadow;
+
+  .processed-top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .processed-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1478d0;
+    background: #d6e8fb;
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.7);
+  }
+
+  .processed-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text;
+  }
+
+  .processed-value {
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: $text;
+    font-variant-numeric: tabular-nums;
+    transition: opacity 0.2s ease;
+  }
+
+  .processed-sub {
+    font-size: 13px;
+    color: $muted;
+  }
+
+  .processed-date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(20, 120, 208, 0.08);
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a5fa8;
+  }
+}
+
+/* ---------------- Small screens ---------------- */
+@media (max-width: 992px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .banner-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 22px;
+
+    .banner-art {
+      display: none;
+    }
+    .banner-tagline {
+      white-space: normal;
+    }
+  }
+
+  .bottom-row {
+    grid-template-columns: 1fr;
+  }
+}
