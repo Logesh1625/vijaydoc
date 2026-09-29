@@ -1,5 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { PublicNetService } from 'src/app/routes/a_Public_net/Public_net.service';
+import {
+  Component,
+  OnInit
+} from '@angular/core';
+
+import {
+  PublicNetService
+} from 'src/app/routes/a_Public_net/Public_net.service';
 
 
 /* ================================================================
@@ -69,19 +75,43 @@ export class F1DashboardComponent implements OnInit {
 
   siteList: string[] = [];
 
+  /*
+   * IMPORTANT:
+   *
+   * selectedSite stores RAW site ID.
+   *
+   * 95326 = FXBL
+   * 69941 = FXCN
+   *
+   * UI will show FXBL / FXCN.
+   */
   selectedSite: string = '';
 
   site: string = '';
 
 
-  locationList: any[] = [
+  /*
+   * Dropdown list.
+   *
+   * value = RAW site ID
+   * label = UI site name
+   */
+  locationList: any[] = [];
 
-    {
-      value: '',
-      label: 'All'
-    }
 
-  ];
+  /* ================================================================
+     SITE DISPLAY MAP
+     ================================================================ */
+
+  private siteNameMap: {
+    [key: string]: string;
+  } = {
+
+    '95326': 'FXBL',
+
+    '69941': 'FXCN'
+
+  };
 
 
   /* ================================================================
@@ -259,15 +289,8 @@ export class F1DashboardComponent implements OnInit {
 
   ngOnInit(): void {
 
-    /*
-     * Initially show zero state.
-     */
     this.resetDashboard();
 
-
-    /*
-     * Load logged-in user's sites.
-     */
     this.loadLoggedInUserSite();
 
   }
@@ -289,9 +312,6 @@ export class F1DashboardComponent implements OnInit {
     );
 
 
-    /*
-     * Employee ID is mandatory.
-     */
     if (
       !userInfo ||
       !userInfo.eeid
@@ -308,9 +328,6 @@ export class F1DashboardComponent implements OnInit {
     }
 
 
-    /*
-     * Get CMS user/site list.
-     */
     this.publicSvr
       .getSitebasedUser()
       .subscribe(
@@ -340,7 +357,8 @@ export class F1DashboardComponent implements OnInit {
 
 
           /*
-           * Extract active sites for logged-in employee.
+           * Get only active sites
+           * belonging to logged-in user.
            */
           this.siteList =
             this.extractAllSites(
@@ -350,14 +368,11 @@ export class F1DashboardComponent implements OnInit {
 
 
           console.log(
-            'F1 Dashboard - Active sites:',
+            'F1 Dashboard - Active raw sites:',
             this.siteList
           );
 
 
-          /*
-           * No active site.
-           */
           if (
             this.siteList.length === 0
           ) {
@@ -374,8 +389,7 @@ export class F1DashboardComponent implements OnInit {
 
 
           /*
-           * Default:
-           * Alls
+           * Default = All My Sites
            */
           this.selectedSite = '';
 
@@ -413,7 +427,7 @@ export class F1DashboardComponent implements OnInit {
 
 
   /* ================================================================
-     GET EMPLOYEE ID FROM USER OBJECT
+     GET EMPLOYEE ID
      ================================================================ */
 
   private getItemEeid(
@@ -479,7 +493,8 @@ export class F1DashboardComponent implements OnInit {
       item.DelFlag !== ''
     ) {
 
-      delFlag = item.DelFlag;
+      delFlag =
+        item.DelFlag;
 
     }
 
@@ -489,7 +504,8 @@ export class F1DashboardComponent implements OnInit {
       item.DEL_FLAG !== ''
     ) {
 
-      delFlag = item.DEL_FLAG;
+      delFlag =
+        item.DEL_FLAG;
 
     }
 
@@ -499,7 +515,8 @@ export class F1DashboardComponent implements OnInit {
       item.delFlag !== ''
     ) {
 
-      delFlag = item.delFlag;
+      delFlag =
+        item.delFlag;
 
     }
 
@@ -509,16 +526,12 @@ export class F1DashboardComponent implements OnInit {
       item.del_flag !== ''
     ) {
 
-      delFlag = item.del_flag;
+      delFlag =
+        item.del_flag;
 
     }
 
 
-    /*
-     * 0 / NULL = active
-     *
-     * 1 = deleted
-     */
     return Number(delFlag) === 0;
 
   }
@@ -552,9 +565,6 @@ export class F1DashboardComponent implements OnInit {
         }
 
 
-        /*
-         * Employee must match.
-         */
         const itemEeid =
           this.getItemEeid(item);
 
@@ -568,9 +578,6 @@ export class F1DashboardComponent implements OnInit {
         }
 
 
-        /*
-         * Deleted user/site must not be used.
-         */
         if (
           !this.isActiveUser(item)
         ) {
@@ -580,9 +587,6 @@ export class F1DashboardComponent implements OnInit {
         }
 
 
-        /*
-         * Extract site.
-         */
         const site =
           this.extractSite(item);
 
@@ -598,7 +602,7 @@ export class F1DashboardComponent implements OnInit {
 
 
     /*
-     * Remove duplicate sites.
+     * Remove duplicates.
      */
     const uniqueSites: string[] = [];
 
@@ -678,29 +682,86 @@ export class F1DashboardComponent implements OnInit {
 
 
   /* ================================================================
+     SITE ID -> DISPLAY NAME
+     ================================================================ */
+
+  getSiteName(
+    siteId: any
+  ): string {
+
+    const id =
+      String(siteId || '')
+        .trim()
+        .toUpperCase();
+
+
+    if (!id) {
+
+      return '';
+
+    }
+
+
+    /*
+     * Already display value.
+     */
+    if (
+      id === 'FXBL' ||
+      id === 'FXCN'
+    ) {
+
+      return id;
+
+    }
+
+
+    return (
+      this.siteNameMap[id] ||
+      id
+    );
+
+  }
+
+
+  /* ================================================================
      BUILD SITE DROPDOWN
      ================================================================ */
 
   private buildLocationList(): void {
 
+    /*
+     * All My Sites
+     */
     this.locationList = [
 
       {
         value: '',
-        label: 'All'
+        label: 'All My Sites'
       }
 
     ];
 
 
+    /*
+     * Add user's active sites.
+     *
+     * Example:
+     *
+     * value = 95326
+     * label = FXBL
+     *
+     * value = 69941
+     * label = FXCN
+     */
     this.siteList.forEach(
-      site => {
+      siteId => {
 
         this.locationList.push({
 
-          value: site,
+          value: siteId,
 
-          label: site
+          label:
+            this.getSiteName(siteId)
 
         });
 
@@ -709,7 +770,7 @@ export class F1DashboardComponent implements OnInit {
 
 
     console.log(
-      'F1 Dashboard - Dropdown:',
+      'F1 Dashboard - Site Dropdown:',
       this.locationList
     );
 
@@ -732,14 +793,17 @@ export class F1DashboardComponent implements OnInit {
 
     else {
 
-      this.selectedDate = new Date();
+      this.selectedDate =
+        new Date();
 
     }
 
 
     console.log(
       'F1 Dashboard - Date:',
-      this.formatDate(this.selectedDate)
+      this.formatDate(
+        this.selectedDate
+      )
     );
 
 
@@ -757,17 +821,15 @@ export class F1DashboardComponent implements OnInit {
   ): void {
 
     console.log(
-      'F1 Dashboard - Selected site:',
+      'F1 Dashboard - Selected raw site:',
       location
     );
 
 
     /*
-     * Empty = Alls.
+     * Empty = All My Sites.
      */
-    if (
-      !location
-    ) {
+    if (!location) {
 
       this.selectedSite = '';
 
@@ -776,23 +838,34 @@ export class F1DashboardComponent implements OnInit {
     else {
 
       /*
-       * Verify selected site belongs
-       * to logged-in user.
+       * Validate raw site ID.
        */
       const validSite =
         this.siteList.some(
           site =>
-            site.toUpperCase() ===
+
+            String(site)
+              .trim()
+              .toUpperCase() ===
+
             String(location)
               .trim()
               .toUpperCase()
+
         );
 
 
       if (validSite) {
 
+        /*
+         * Keep RAW site ID.
+         *
+         * 95326
+         * 69941
+         */
         this.selectedSite =
-          String(location).trim();
+          String(location)
+            .trim();
 
       }
 
@@ -808,6 +881,22 @@ export class F1DashboardComponent implements OnInit {
       }
 
     }
+
+
+    console.log(
+      'F1 Dashboard - Display site:',
+      this.selectedSite
+        ? this.getSiteName(
+            this.selectedSite
+          )
+        : 'All My Sites'
+    );
+
+
+    console.log(
+      'F1 Dashboard - API site:',
+      this.selectedSite || 'ALL'
+    );
 
 
     /*
@@ -844,11 +933,13 @@ export class F1DashboardComponent implements OnInit {
 
 
     return (
+
       dd +
       '-' +
       mm +
       '-' +
       d.getFullYear()
+
     );
 
   }
@@ -873,11 +964,14 @@ export class F1DashboardComponent implements OnInit {
 
 
     return Math.round(
+
       (
         Number(n || 0) /
         this.totalEmployees
       ) *
+
       100
+
     );
 
   }
@@ -894,9 +988,6 @@ export class F1DashboardComponent implements OnInit {
         .getSettingUserInfo();
 
 
-    /*
-     * Login user is mandatory.
-     */
     if (
       !userInfo ||
       !userInfo.eeid
@@ -909,9 +1000,6 @@ export class F1DashboardComponent implements OnInit {
     }
 
 
-    /*
-     * Site list must already be loaded.
-     */
     if (
       !this.siteList ||
       this.siteList.length === 0
@@ -934,9 +1022,11 @@ export class F1DashboardComponent implements OnInit {
       const validSite =
         this.siteList.some(
           site =>
+
             site.toUpperCase() ===
             this.selectedSite
               .toUpperCase()
+
         );
 
 
@@ -952,27 +1042,9 @@ export class F1DashboardComponent implements OnInit {
     this.loading = true;
 
 
-    /*
-     * ============================================================
-     * API PARAMETER
-     * ============================================================
-     *
-     * Date:
-     *     Selected dashboard date
-     *
-     * Site:
-     *     Empty = Alls
-     *     Otherwise selected site
-     *
-     * EmpId:
-     *     Logged-in employee
-     *
-     * SystemName:
-     *     CMS
-     *
-     * Func:
-     *     CMS-GetMealDashboard
-     */
+    /* ============================================================
+       API PARAMETER
+       ============================================================ */
 
     const params: any = {
 
@@ -981,6 +1053,14 @@ export class F1DashboardComponent implements OnInit {
           this.selectedDate
         ),
 
+      /*
+       * IMPORTANT:
+       *
+       * API gets raw ID.
+       *
+       * FXBL -> 95326
+       * FXCN -> 69941
+       */
       Site:
         this.selectedSite || '',
 
@@ -1010,8 +1090,17 @@ export class F1DashboardComponent implements OnInit {
     );
 
     console.log(
-      'Site:',
-      this.selectedSite || 'All'
+      'Display Site:',
+      this.selectedSite
+        ? this.getSiteName(
+            this.selectedSite
+          )
+        : 'All My Sites'
+    );
+
+    console.log(
+      'API Site:',
+      params.Site || 'ALL'
     );
 
     console.log(
@@ -1060,19 +1149,8 @@ export class F1DashboardComponent implements OnInit {
 
 
           console.log(
-            '================================================'
-          );
-
-          console.log(
-            'F1 DASHBOARD RESPONSE'
-          );
-
-          console.log(
+            'F1 DASHBOARD RESPONSE',
             res
-          );
-
-          console.log(
-            '================================================'
           );
 
 
@@ -1084,10 +1162,6 @@ export class F1DashboardComponent implements OnInit {
             String(res.IsOK) !== '1'
           ) {
 
-            console.error(
-              'Dashboard API returned failure'
-            );
-
             this.resetDashboard();
 
             return;
@@ -1097,67 +1171,72 @@ export class F1DashboardComponent implements OnInit {
 
           /* ======================================================
              CURSOR 1
-             DASHBOARD CARDS
              ====================================================== */
 
           const c =
+
             (
               res.List &&
               res.List.length > 0
             )
+
               ? res.List[0]
+
               : {};
-
-
-          console.log(
-            'Dashboard Card Cursor:',
-            c
-          );
 
 
           this.totalEmployees =
             Number(
+
               c.TotalEmployees ||
               c.TOTAL_EMPLOYEES ||
               0
+
             );
 
 
           this.mealsCollected =
             Number(
+
               c.MealsCollected ||
               c.MEALS_COLLECTED ||
               0
+
             );
 
 
           this.mealsNotCollected =
             Number(
+
               c.MealsNotCollected ||
               c.MEALS_NOT_COLLECTED ||
               0
+
             );
 
 
           this.noMealRequired =
             Number(
+
               c.NoMealRequired ||
               c.NO_MEAL_REQUIRED ||
               0
+
             );
 
 
           this.notCameToCollect =
             Number(
+
               c.NotRequiredCame ||
               c.NOT_REQUIRED_CAME ||
               0
+
             );
 
 
           /* ======================================================
              CURSOR 2
-             CATEGORY SUMMARY
              ====================================================== */
 
           const cats: any[] =
@@ -1171,12 +1250,6 @@ export class F1DashboardComponent implements OnInit {
             [];
 
 
-          console.log(
-            'Dashboard Category Cursor:',
-            cats
-          );
-
-
           if (
             cats &&
             cats.length > 0
@@ -1187,24 +1260,37 @@ export class F1DashboardComponent implements OnInit {
                 (item: any) => {
 
                   const categoryName =
+
                     item.Category ||
+
                     item.CATEGORY ||
+
                     '';
 
 
                   const count =
+
                     Number(
+
                       item.CollectedCount ||
+
                       item.COLLECTED_COUNT ||
+
                       0
+
                     );
 
 
                   const percentage =
+
                     Number(
+
                       item.Percentage ||
+
                       item.PERCENTAGE ||
+
                       0
+
                     );
 
 
@@ -1243,13 +1329,10 @@ export class F1DashboardComponent implements OnInit {
           }
 
 
-          /*
-           * Update donut/summary.
-           */
           this.updateSummary();
 
-
         }
+
       )
 
 
@@ -1281,7 +1364,6 @@ export class F1DashboardComponent implements OnInit {
 
     this.loading = false;
 
-
     this.totalEmployees = 0;
 
     this.mealsCollected = 0;
@@ -1292,9 +1374,7 @@ export class F1DashboardComponent implements OnInit {
 
     this.notCameToCollect = 0;
 
-
     this.resetCategories();
-
 
     this.updateSummary();
 
@@ -1393,9 +1473,6 @@ export class F1DashboardComponent implements OnInit {
     }
 
 
-    /*
-     * Exact match first.
-     */
     if (
       this.colorMap[name]
     ) {
@@ -1405,18 +1482,18 @@ export class F1DashboardComponent implements OnInit {
     }
 
 
-    /*
-     * Case-insensitive match.
-     */
     const key =
       Object.keys(
         this.colorMap
       ).find(
         x =>
+
           x.toUpperCase() ===
+
           String(name)
             .trim()
             .toUpperCase()
+
       );
 
 
@@ -1456,10 +1533,13 @@ export class F1DashboardComponent implements OnInit {
         this.iconMap
       ).find(
         x =>
+
           x.toUpperCase() ===
+
           String(name)
             .trim()
             .toUpperCase()
+
       );
 
 
@@ -1495,7 +1575,6 @@ export class F1DashboardComponent implements OnInit {
 
       },
 
-
       {
         label:
           'Meals Not Collected',
@@ -1513,7 +1592,6 @@ export class F1DashboardComponent implements OnInit {
 
       },
 
-
       {
         label:
           'No Meal Required',
@@ -1530,7 +1608,6 @@ export class F1DashboardComponent implements OnInit {
           '#dde3ee'
 
       },
-
 
       {
         label:
@@ -1552,17 +1629,6 @@ export class F1DashboardComponent implements OnInit {
     ];
 
 
-    /*
-     * Donut uses:
-     *
-     * Meals Collected
-     * Meals Not Collected
-     * No Meal Required
-     *
-     * Not Required - Came to Collect
-     * is a subset of No Meal Required.
-     */
-
     const ringParts =
       this.summaryList.slice(
         0,
@@ -1572,14 +1638,19 @@ export class F1DashboardComponent implements OnInit {
 
     const sum =
       ringParts.reduce(
+
         (
           total,
           item
         ) =>
+
           total +
-          Number(item.count || 0),
+          Number(
+            item.count || 0
+          ),
 
         0
+
       );
 
 
@@ -1607,21 +1678,33 @@ export class F1DashboardComponent implements OnInit {
 
 
           acc +=
+
             (
-              Number(item.count || 0) /
+              Number(
+                item.count || 0
+              ) /
+
               sum
+
             ) *
+
             100;
 
 
           return (
 
             item.color +
+
             ' ' +
+
             start +
+
             '%' +
+
             ' ' +
+
             acc +
+
             '%'
 
           );
@@ -1631,881 +1714,13 @@ export class F1DashboardComponent implements OnInit {
 
 
     this.donutGradient =
+
       'conic-gradient(' +
+
       stops.join(', ') +
+
       ')';
 
   }
 
 }
-
-
-
-
-
-<div
-  class="dashboard-wrapper"
-  [class.is-loading]="loading">
-
-
-  <!-- ============================================================
-       PAGE HEADER
-       ============================================================ -->
-
-  <div class="page-header">
-
-    <div class="page-title-wrap">
-
-      <div class="page-icon">
-
-        <svg
-          viewBox="0 0 24 24"
-          width="26"
-          height="26"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round">
-
-          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-
-          <path d="M7 2v20" />
-
-          <path
-            d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-
-        </svg>
-
-      </div>
-
-
-      <div>
-
-        <h2 class="page-title">
-          F1 MEAL MANAGEMENT SYSTEM
-        </h2>
-
-        <p class="page-sub">
-          Your Daily Step Toward Greater Impact!
-        </p>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         FILTERS
-         ========================================================== -->
-
-    <div class="filter-block">
-
-
-      <!-- SITE -->
-
-      <nz-select
-        [(ngModel)]="selectedSite"
-        (ngModelChange)="onLocationChange($event)"
-        nzPlaceHolder="Select Site"
-        nzAllowClear
-        style="width: 160px; margin-right: 10px;">
-
-        <nz-option
-          *ngFor="let location of locationList"
-          [nzValue]="location.value"
-          [nzLabel]="location.label">
-
-        </nz-option>
-
-      </nz-select>
-
-
-      <!-- DATE -->
-
-      <nz-date-picker
-        [(ngModel)]="selectedDate"
-        (ngModelChange)="onDateChange($event)"
-        nzFormat="DD-MMM-YYYY"
-        [nzAllowClear]="false">
-
-      </nz-date-picker>
-
-
-    </div>
-
-  </div>
-
-
-
-  <!-- ============================================================
-       BANNER
-       ============================================================ -->
-
-  <div class="banner-card">
-
-
-    <!-- Decorative plates -->
-
-    <svg
-      class="banner-art"
-      viewBox="0 0 360 150"
-      aria-hidden="true">
-
-      <g
-        fill="rgba(255,255,255,0.10)"
-        stroke="rgba(255,255,255,0.35)"
-        stroke-width="1.5">
-
-        <ellipse
-          cx="100"
-          cy="100"
-          rx="84"
-          ry="28" />
-
-        <ellipse
-          cx="100"
-          cy="94"
-          rx="60"
-          ry="18" />
-
-        <ellipse
-          cx="250"
-          cy="82"
-          rx="64"
-          ry="21" />
-
-        <ellipse
-          cx="250"
-          cy="77"
-          rx="44"
-          ry="13" />
-
-      </g>
-
-
-      <g
-        fill="rgba(255,255,255,0.22)">
-
-        <circle
-          cx="92"
-          cy="90"
-          r="6" />
-
-        <circle
-          cx="112"
-          cy="96"
-          r="4" />
-
-        <circle
-          cx="244"
-          cy="74"
-          r="5" />
-
-      </g>
-
-    </svg>
-
-
-
-    <div class="banner-left">
-
-
-      <div class="breadcrumb">
-
-        <span>
-          Home
-        </span>
-
-        <span class="sep">
-          &rsaquo;
-        </span>
-
-        <span class="current">
-          Dashboard
-        </span>
-
-      </div>
-
-
-      <h1 class="banner-title">
-        Meal Distribution Details
-      </h1>
-
-
-      <p class="banner-subtitle">
-        Daily meal collection at a glance
-      </p>
-
-
-    </div>
-
-
-
-    <div class="banner-tagline">
-
-      <i
-        nz-icon
-        nzType="heart"
-        nzTheme="outline">
-      </i>
-
-      <span>
-        Healthy Food
-      </span>
-
-      <span class="dot">
-      </span>
-
-      <span>
-        Happy Workplace
-      </span>
-
-    </div>
-
-  </div>
-
-
-
-  <!-- ============================================================
-       STAT CARDS
-       ============================================================ -->
-
-  <div class="stat-cards-row">
-
-
-    <!-- TOTAL EMPLOYEES -->
-
-    <div class="stat-card card-blue">
-
-      <div class="stat-top">
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="team"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend flat">
-
-          <i
-            nz-icon
-            nzType="bar-chart"
-            nzTheme="outline">
-          </i>
-
-        </span>
-
-      </div>
-
-
-      <div class="stat-title">
-        Total Employees
-      </div>
-
-
-      <div class="stat-value">
-        {{ totalEmployees | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Employees on record
-      </div>
-
-    </div>
-
-
-
-    <!-- MEALS COLLECTED -->
-
-    <div class="stat-card card-green">
-
-      <div class="stat-top">
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="check-circle"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend up">
-
-          <i
-            nz-icon
-            nzType="arrow-up"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(mealsCollected) }}%
-
-        </span>
-
-      </div>
-
-
-      <div class="stat-title">
-        Meals Collected
-      </div>
-
-
-      <div class="stat-value">
-        {{ mealsCollected | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Collected meals
-      </div>
-
-    </div>
-
-
-
-    <!-- MEALS NOT COLLECTED -->
-
-    <div class="stat-card card-red">
-
-      <div class="stat-top">
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="close-circle"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend down">
-
-          <i
-            nz-icon
-            nzType="arrow-down"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(mealsNotCollected) }}%
-
-        </span>
-
-      </div>
-
-
-      <div class="stat-title">
-        Meals Not Collected
-      </div>
-
-
-      <div class="stat-value">
-        {{ mealsNotCollected | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Yet to collect
-      </div>
-
-    </div>
-
-
-
-    <!-- NO MEAL REQUIRED -->
-
-    <div class="stat-card card-purple">
-
-      <div class="stat-top">
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="stop"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend flat">
-
-          <i
-            nz-icon
-            nzType="arrow-right"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(noMealRequired) }}%
-
-        </span>
-
-      </div>
-
-
-      <div class="stat-title">
-        No Meal Required
-      </div>
-
-
-      <div class="stat-value">
-        {{ noMealRequired | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        Meal not required
-      </div>
-
-    </div>
-
-
-
-    <!-- NOT REQUIRED BUT CAME -->
-
-    <div class="stat-card card-orange">
-
-      <div class="stat-top">
-
-        <div class="stat-icon">
-
-          <i
-            nz-icon
-            nzType="user"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <span class="stat-trend flat">
-
-          <i
-            nz-icon
-            nzType="arrow-right"
-            nzTheme="outline">
-          </i>
-
-          {{ pct(notCameToCollect) }}%
-
-        </span>
-
-      </div>
-
-
-      <div class="stat-title">
-        Not Required - Came to Collect
-      </div>
-
-
-      <div class="stat-value">
-        {{ notCameToCollect | number }}
-      </div>
-
-
-      <div class="stat-sub">
-        No meal, but came to collect
-      </div>
-
-    </div>
-
-
-  </div>
-
-
-
-  <!-- ============================================================
-       CATEGORY WISE
-       ============================================================ -->
-
-  <div class="category-card">
-
-
-    <div class="category-header">
-
-
-      <div class="category-title">
-
-        <i
-          nz-icon
-          nzType="bar-chart"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          Meals Collected - Category Wise
-        </span>
-
-      </div>
-
-
-      <div class="category-sub">
-
-        <i
-          nz-icon
-          nzType="bar-chart"
-          nzTheme="outline">
-        </i>
-
-        Category wise distribution of collected meals
-
-      </div>
-
-
-    </div>
-
-
-
-    <div class="category-grid">
-
-
-      <div
-        class="category-item"
-        *ngFor="let cat of categoryList"
-        [ngStyle]="{
-          'border-top-color': cat.color
-        }">
-
-
-        <div class="cat-top">
-
-
-          <div
-            class="cat-icon"
-            [ngStyle]="{
-              'background-color': cat.color + '22'
-            }">
-
-            {{ cat.icon }}
-
-          </div>
-
-
-          <div class="cat-name">
-
-            {{ cat.name }}
-
-          </div>
-
-
-        </div>
-
-
-
-        <div
-          class="cat-count"
-          [ngStyle]="{
-            'color': cat.color
-          }">
-
-          {{ cat.count }}
-
-        </div>
-
-
-
-        <div class="cat-percent">
-
-          {{ cat.percent }}%
-          of collected
-
-        </div>
-
-
-
-        <div class="cat-progress-bar">
-
-          <div
-            class="cat-progress-fill"
-            [ngStyle]="{
-              'width': cat.percent + '%',
-              'background-color': cat.color
-            }">
-
-          </div>
-
-        </div>
-
-
-      </div>
-
-
-    </div>
-
-  </div>
-
-
-
-  <!-- ============================================================
-       BOTTOM ROW
-       ============================================================ -->
-
-  <div class="bottom-row">
-
-
-    <!-- ==========================================================
-         SUMMARY
-         ========================================================== -->
-
-    <div class="summary-card">
-
-
-      <div class="section-title">
-
-        <i
-          nz-icon
-          nzType="bar-chart"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          Meal Collection Summary
-        </span>
-
-      </div>
-
-
-
-      <div class="summary-body">
-
-
-        <!-- DONUT -->
-
-        <div
-          class="donut"
-          [style.background]="donutGradient">
-
-
-          <div class="donut-hole">
-
-
-            <div class="donut-main">
-
-              {{ mealsCollected }}
-              /
-              {{ totalEmployees }}
-
-            </div>
-
-
-            <div class="donut-label">
-
-              Collected
-
-            </div>
-
-
-          </div>
-
-
-        </div>
-
-
-
-        <!-- LEGEND -->
-
-        <div class="legend">
-
-
-          <div
-            class="legend-row"
-            *ngFor="let s of summaryList">
-
-
-            <span
-              class="legend-dot"
-              [style.background-color]="s.color">
-            </span>
-
-
-            <span class="legend-name">
-
-              {{ s.label }}
-
-            </span>
-
-
-            <span class="legend-count">
-
-              {{ s.count }}
-
-            </span>
-
-
-            <span class="legend-pct">
-
-              {{ s.percent }}%
-
-            </span>
-
-
-          </div>
-
-
-        </div>
-
-
-      </div>
-
-
-    </div>
-
-
-
-    <!-- ==========================================================
-         TOTAL PROCESSED
-         ========================================================== -->
-
-    <div class="processed-card">
-
-
-      <div class="processed-top">
-
-
-        <div class="processed-icon">
-
-
-          <svg
-            viewBox="0 0 24 24"
-            width="28"
-            height="28"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round">
-
-            <path
-              d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
-
-            <path d="M7 2v20" />
-
-            <path
-              d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
-
-          </svg>
-
-
-        </div>
-
-
-
-        <div>
-
-
-          <div class="processed-title">
-
-            Total Meals Processed
-
-          </div>
-
-
-          <div class="processed-value">
-
-            {{ totalEmployees | number }}
-
-          </div>
-
-
-          <div class="processed-sub">
-
-            Employees on record
-
-          </div>
-
-
-        </div>
-
-
-      </div>
-
-
-
-      <!-- DATE -->
-
-      <div class="processed-date">
-
-
-        <i
-          nz-icon
-          nzType="calendar"
-          nzTheme="outline">
-        </i>
-
-
-        <span>
-
-          For
-          {{ selectedDate | date:'dd-MM-yyyy' }}
-
-        </span>
-
-
-      </div>
-
-
-
-      <!-- SITE -->
-
-      <div
-        class="processed-date"
-        style="margin-top: 8px;">
-
-
-        <i
-          nz-icon
-          nzType="environment"
-          nzTheme="outline">
-        </i>
-
-
-        <span>
-
-          Site:
-          {{
-            selectedSite
-              ? selectedSite
-              : 'All'
-          }}
-
-        </span>
-
-
-      </div>
-
-
-    </div>
-
-
-  </div>
-
-
-
-  <!-- ============================================================
-       LOADING
-       ============================================================ -->
-
-  <div
-    class="dashboard-loading"
-    *ngIf="loading">
-
-    <nz-spin
-      nzSimple
-      nzSize="large">
-    </nz-spin>
-
-  </div>
-
-
-</div>
