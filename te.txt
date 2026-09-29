@@ -1,208 +1,307 @@
-import {
-  Component,
-  OnInit,
-  ViewChild,
-  ElementRef
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { PublicNetService } from 'src/app/routes/a_Public_net/Public_net.service';
 
-import {
-  HttpClient
-} from '@angular/common/http';
 
-import {
-  DomSanitizer,
-  SafeUrl
-} from '@angular/platform-browser';
+/* ================================================================
+   CATEGORY MODEL
+   ================================================================ */
 
-import {
-  NzMessageService
-} from 'ng-zorro-antd';
+interface CategoryItem {
 
-import {
-  PublicNetService
-} from 'src/app/routes/a_Public_net/Public_net.service';
+  name: string;
 
+  count: number;
+
+  percent: number;
+
+  color: string;
+
+  icon: string;
+
+}
+
+
+/* ================================================================
+   SUMMARY MODEL
+   ================================================================ */
+
+interface SummaryItem {
+
+  label: string;
+
+  count: number;
+
+  percent: number;
+
+  color: string;
+
+}
+
+
+/* ================================================================
+   COMPONENT
+   ================================================================ */
 
 @Component({
-  selector: 'app-Meal-scan',
 
-  templateUrl:
-    './Meal-scan.component.html',
+  selector: 'app-dashboard',
 
-  styleUrls:
-    ['./Meal-scan.component.less']
+  templateUrl: './dashboard.component.html',
+
+  styleUrls: ['./dashboard.component.scss']
+
 })
 
 
-export class MealScanComponent
-  implements OnInit {
+export class F1DashboardComponent implements OnInit {
 
 
-  /* ============================================================
-     SCAN INPUT
-     ============================================================ */
+  /* ================================================================
+     DATE
+     ================================================================ */
 
-  @ViewChild(
-    'scanInput',
-    { static: false }
-  )
-
-  scanInput:
-    ElementRef;
+  selectedDate: Date = new Date();
 
 
-  empNo: string = '';
+  /* ================================================================
+     SITE
+     ================================================================ */
+
+  siteList: string[] = [];
+
+  selectedSite: string = '';
+
+  site: string = '';
+
+
+  locationList: any[] = [
+
+    {
+      value: '',
+      label: 'All'
+    }
+
+  ];
+
+
+  /* ================================================================
+     DASHBOARD CARD VALUES
+     ================================================================ */
+
+  totalEmployees: number = 0;
+
+  mealsCollected: number = 0;
+
+  mealsNotCollected: number = 0;
+
+  noMealRequired: number = 0;
+
+  notCameToCollect: number = 0;
+
+
+  /* ================================================================
+     CATEGORY LIST
+     ================================================================ */
+
+  categoryList: CategoryItem[] = [
+
+    {
+      name: 'Indian Veg',
+      count: 0,
+      percent: 0,
+      color: '#52c41a',
+      icon: '🥬'
+    },
+
+    {
+      name: 'Indian Non-Veg',
+      count: 0,
+      percent: 0,
+      color: '#1890ff',
+      icon: '🍗'
+    },
+
+    {
+      name: 'Western Veg',
+      count: 0,
+      percent: 0,
+      color: '#722ed1',
+      icon: '🥗'
+    },
+
+    {
+      name: 'Western Non-Veg',
+      count: 0,
+      percent: 0,
+      color: '#faad14',
+      icon: '🍔'
+    },
+
+    {
+      name: 'Chinese Non-Veg',
+      count: 0,
+      percent: 0,
+      color: '#f8784d',
+      icon: '🥡'
+    },
+
+    {
+      name: 'Chinese Veg',
+      count: 0,
+      percent: 0,
+      color: '#a0c065',
+      icon: '🍜'
+    },
+
+    {
+      name: 'Jain',
+      count: 0,
+      percent: 0,
+      color: '#13c2c2',
+      icon: '🌿'
+    },
+
+    {
+      name: 'Vegan',
+      count: 0,
+      percent: 0,
+      color: '#eb2f96',
+      icon: '🌱'
+    }
+
+  ];
+
+
+  /* ================================================================
+     SUMMARY
+     ================================================================ */
+
+  summaryList: SummaryItem[] = [];
+
+
+  donutGradient: string =
+    'conic-gradient(#e6ebf5 0% 100%)';
+
+
+  /* ================================================================
+     LOADING
+     ================================================================ */
 
   loading: boolean = false;
 
-  proceeding: boolean = false;
 
+  /* ================================================================
+     COLOR MAP
+     ================================================================ */
 
-  employeeDetail:
-    any = null;
-
-  entitlementStatus:
-    string = '';
-
-
-  /* ============================================================
-     PHOTO
-     ============================================================ */
-
-  employeePhotoUrl:
-    SafeUrl | null = null;
-
-  photoLoading:
-    boolean = false;
-
-
-  private readonly PHOTO_API_BASE =
-    'http://10.209.110.187:3000/api/image';
-
-
-  /* ============================================================
-     SITE
-     ============================================================ */
-
-  siteList:
-    string[] = [];
-
-
-  selectedSite:
-    string = '';
-
-
-  siteOptions:
-    Array<{
-      value: string;
-      label: string;
-    }> = [];
-
-
-  /*
-   * ==========================================================
-   * SITE NAME MAPPING
-   * ==========================================================
-   *
-   * API Site ID
-   *      ↓
-   * UI Site Name
-   *
-   * 69941 → FXCN
-   * 95326 → FXBL
-   */
-
-  siteNameMap: {
-    [siteId: string]: string;
+  private colorMap: {
+    [key: string]: string
   } = {
 
-    '69941': 'FXCN',
+    'Indian Veg': '#52c41a',
 
-    '95326': 'FXBL'
+    'Indian Non-Veg': '#1890ff',
+
+    'Western Veg': '#722ed1',
+
+    'Western Non-Veg': '#faad14',
+
+    'Chinese Non-Veg': '#f8784d',
+
+    'Chinese Veg': '#a0c065',
+
+    'Jain': '#13c2c2',
+
+    'Vegan': '#eb2f96'
 
   };
 
 
-  /* ============================================================
-     LOGGED-IN USER
-     ============================================================ */
+  /* ================================================================
+     ICON MAP
+     ================================================================ */
 
-  loginEmployeeId:
-    string = '';
+  private iconMap: {
+    [key: string]: string
+  } = {
+
+    'Indian Veg': '🥬',
+
+    'Indian Non-Veg': '🍗',
+
+    'Western Veg': '🥗',
+
+    'Western Non-Veg': '🍔',
+
+    'Chinese Non-Veg': '🥡',
+
+    'Chinese Veg': '🍜',
+
+    'Jain': '🌿',
+
+    'Vegan': '🌱'
+
+  };
 
 
-  /* ============================================================
+  /* ================================================================
      CONSTRUCTOR
-     ============================================================ */
+     ================================================================ */
 
   constructor(
-
-    private publicSvr:
-      PublicNetService,
-
-    private msgSvr:
-      NzMessageService,
-
-    private http:
-      HttpClient,
-
-    private sanitizer:
-      DomSanitizer
-
+    private publicSvr: PublicNetService
   ) {}
 
 
-  /* ============================================================
+  /* ================================================================
      INIT
-     ============================================================ */
+     ================================================================ */
 
   ngOnInit(): void {
 
+    /*
+     * Initially show zero state.
+     */
+    this.resetDashboard();
+
+
+    /*
+     * Load logged-in user's sites.
+     */
     this.loadLoggedInUserSite();
 
   }
 
 
-  /* ============================================================
+  /* ================================================================
      LOAD LOGGED-IN USER SITE
-     ============================================================ */
+     ================================================================ */
 
   private loadLoggedInUserSite(): void {
 
     const userInfo =
-      this.publicSvr
-        .getSettingUserInfo();
+      this.publicSvr.getSettingUserInfo();
 
 
     console.log(
-      '===================================='
-    );
-
-    console.log(
-      'MEAL SCAN - LOGGED USER'
-    );
-
-    console.log(
+      'F1 Dashboard - Logged in user:',
       userInfo
-    );
-
-    console.log(
-      '===================================='
     );
 
 
     /*
-     * EEID mandatory
+     * Employee ID is mandatory.
      */
-
     if (
       !userInfo ||
       !userInfo.eeid
     ) {
 
-      this.msgSvr.error(
-        'Logged-in employee information not found.'
+      console.error(
+        'F1 Dashboard - EEID not found'
       );
+
+      this.resetDashboard();
 
       return;
 
@@ -210,30 +309,16 @@ export class MealScanComponent
 
 
     /*
-     * Logged-in EEID
+     * Get CMS user/site list.
      */
-
-    this.loginEmployeeId =
-      String(
-        userInfo.eeid
-      )
-      .trim()
-      .toUpperCase();
-
-
-    /*
-     * Get user/site mapping
-     */
-
     this.publicSvr
       .getSitebasedUser()
       .subscribe(
 
         (userList: any[]) => {
 
-
           console.log(
-            'Meal Scan - User/site list:',
+            'F1 Dashboard - User site list:',
             userList
           );
 
@@ -243,9 +328,11 @@ export class MealScanComponent
             userList.length === 0
           ) {
 
-            this.msgSvr.error(
-              'No active site found for logged-in user.'
+            console.error(
+              'F1 Dashboard - No user/site data'
             );
+
+            this.resetDashboard();
 
             return;
 
@@ -253,32 +340,33 @@ export class MealScanComponent
 
 
           /*
-           * Extract active sites
-           *
-           * Same concept as
-           * Food Time Price.
+           * Extract active sites for logged-in employee.
            */
-
           this.siteList =
             this.extractAllSites(
               userList,
-              this.loginEmployeeId
+              userInfo.eeid
             );
 
 
           console.log(
-            'Meal Scan - Active sites:',
+            'F1 Dashboard - Active sites:',
             this.siteList
           );
 
 
+          /*
+           * No active site.
+           */
           if (
             this.siteList.length === 0
           ) {
 
-            this.msgSvr.error(
-              'No active site assigned to the logged-in user.'
+            console.error(
+              'F1 Dashboard - No active site found'
             );
+
+            this.resetDashboard();
 
             return;
 
@@ -286,49 +374,24 @@ export class MealScanComponent
 
 
           /*
-           * Build dropdown
+           * Default:
+           * Alls
            */
-
-          this.siteOptions =
-            this.siteList.map(
-              siteId => {
-
-                return {
-
-                  value:
-                    siteId,
-
-                  label:
-                    this.getSiteDisplayName(
-                      siteId
-                    )
-
-                };
-
-              }
-            );
-
-
-          /*
-           * Default
-           *
-           * All My Sites
-           */
-
           this.selectedSite = '';
 
-
-          console.log(
-            'Meal Scan - Site Options:',
-            this.siteOptions
-          );
+          this.site = '';
 
 
           /*
-           * Focus scanner
+           * Build dropdown.
            */
+          this.buildLocationList();
 
-          this.focusInput();
+
+          /*
+           * Load dashboard.
+           */
+          this.getDashboardData();
 
         },
 
@@ -336,14 +399,11 @@ export class MealScanComponent
         error => {
 
           console.error(
-            'Meal Scan - getSitebasedUser error:',
+            'F1 Dashboard - getSitebasedUser error:',
             error
           );
 
-
-          this.msgSvr.error(
-            'Failed to load user site information.'
-          );
+          this.resetDashboard();
 
         }
 
@@ -352,9 +412,9 @@ export class MealScanComponent
   }
 
 
-  /* ============================================================
-     GET EMPLOYEE ID
-     ============================================================ */
+  /* ================================================================
+     GET EMPLOYEE ID FROM USER OBJECT
+     ================================================================ */
 
   private getItemEeid(
     item: any
@@ -389,17 +449,15 @@ export class MealScanComponent
 
 
     return String(value)
-
       .trim()
-
       .toUpperCase();
 
   }
 
 
-  /* ============================================================
-     ACTIVE USER CHECK
-     ============================================================ */
+  /* ================================================================
+     CHECK ACTIVE USER
+     ================================================================ */
 
   private isActiveUser(
     item: any
@@ -421,8 +479,7 @@ export class MealScanComponent
       item.DelFlag !== ''
     ) {
 
-      delFlag =
-        item.DelFlag;
+      delFlag = item.DelFlag;
 
     }
 
@@ -432,8 +489,7 @@ export class MealScanComponent
       item.DEL_FLAG !== ''
     ) {
 
-      delFlag =
-        item.DEL_FLAG;
+      delFlag = item.DEL_FLAG;
 
     }
 
@@ -443,8 +499,7 @@ export class MealScanComponent
       item.delFlag !== ''
     ) {
 
-      delFlag =
-        item.delFlag;
+      delFlag = item.delFlag;
 
     }
 
@@ -454,47 +509,41 @@ export class MealScanComponent
       item.del_flag !== ''
     ) {
 
-      delFlag =
-        item.del_flag;
+      delFlag = item.del_flag;
 
     }
 
 
     /*
-     * 0 / NULL = ACTIVE
-     * 1 = DELETED
+     * 0 / NULL = active
+     *
+     * 1 = deleted
      */
-
     return Number(delFlag) === 0;
 
   }
 
 
-  /* ============================================================
+  /* ================================================================
      EXTRACT ALL ACTIVE SITES
-     ============================================================ */
+     ================================================================ */
 
   private extractAllSites(
     userList: any[],
     eeid: string
   ): string[] {
 
-
     const loginEeid =
       String(eeid)
-
         .trim()
-
         .toUpperCase();
 
 
-    const sites:
-      string[] = [];
+    const sites: string[] = [];
 
 
     userList.forEach(
       item => {
-
 
         if (!item) {
 
@@ -504,13 +553,14 @@ export class MealScanComponent
 
 
         /*
-         * Employee match
+         * Employee must match.
          */
+        const itemEeid =
+          this.getItemEeid(item);
+
 
         if (
-          this.getItemEeid(item)
-          !==
-          loginEeid
+          itemEeid !== loginEeid
         ) {
 
           return;
@@ -519,9 +569,8 @@ export class MealScanComponent
 
 
         /*
-         * Ignore deleted user
+         * Deleted user/site must not be used.
          */
-
         if (
           !this.isActiveUser(item)
         ) {
@@ -532,18 +581,15 @@ export class MealScanComponent
 
 
         /*
-         * Extract site
+         * Extract site.
          */
-
         const site =
           this.extractSite(item);
 
 
         if (site) {
 
-          sites.push(
-            site
-          );
+          sites.push(site);
 
         }
 
@@ -552,37 +598,25 @@ export class MealScanComponent
 
 
     /*
-     * Remove duplicate sites
+     * Remove duplicate sites.
      */
-
-    const uniqueSites:
-      string[] = [];
+    const uniqueSites: string[] = [];
 
 
     sites.forEach(
       site => {
 
-
-        const normalized =
-          String(site)
-            .trim();
-
-
         const exists =
           uniqueSites.some(
             x =>
-
               x.toUpperCase() ===
-
-              normalized.toUpperCase()
+              site.toUpperCase()
           );
 
 
         if (!exists) {
 
-          uniqueSites.push(
-            normalized
-          );
+          uniqueSites.push(site);
 
         }
 
@@ -595,9 +629,9 @@ export class MealScanComponent
   }
 
 
-  /* ============================================================
+  /* ================================================================
      EXTRACT SITE
-     ============================================================ */
+     ================================================================ */
 
   private extractSite(
     user: any
@@ -610,10 +644,6 @@ export class MealScanComponent
     }
 
 
-    /*
-     * Prefer actual Site ID.
-     */
-
     const site =
 
       user.Site ||
@@ -622,9 +652,21 @@ export class MealScanComponent
 
       user.SITE ||
 
-      user.SiteId ||
+      user.SiteName ||
 
-      user.siteId ||
+      user.siteName ||
+
+      user.WorkSite ||
+
+      user.Worksite ||
+
+      user.BasicCode ||
+
+      user.Basiccode ||
+
+      user.Location ||
+
+      user.location ||
 
       '';
 
@@ -635,154 +677,133 @@ export class MealScanComponent
   }
 
 
-  /* ============================================================
-     GET SITE NAME
-     ============================================================ */
+  /* ================================================================
+     BUILD SITE DROPDOWN
+     ================================================================ */
 
-  getSiteName(
-    siteId: any
-  ): string {
+  private buildLocationList(): void {
 
-    const id =
-      String(
-        siteId || ''
-      )
-      .trim();
+    this.locationList = [
 
+      {
+        value: '',
+        label: 'All'
+      }
 
-    if (!id) {
-
-      return '';
-
-    }
+    ];
 
 
-    return (
-      this.siteNameMap[id] ||
-      id
+    this.siteList.forEach(
+      site => {
+
+        this.locationList.push({
+
+          value: site,
+
+          label: site
+
+        });
+
+      }
+    );
+
+
+    console.log(
+      'F1 Dashboard - Dropdown:',
+      this.locationList
     );
 
   }
 
 
-  /* ============================================================
-     GET SITE DISPLAY NAME
-     ============================================================ */
+  /* ================================================================
+     DATE CHANGE
+     ================================================================ */
 
-  getSiteDisplayName(
-    siteId: any
-  ): string {
+  onDateChange(
+    date: Date
+  ): void {
 
-    const id =
-      String(
-        siteId || ''
-      )
-      .trim();
+    if (date) {
 
+      this.selectedDate = date;
 
-    if (!id) {
+    }
 
-      return 'All My Sites';
+    else {
+
+      this.selectedDate = new Date();
 
     }
 
 
-    const name =
-      this.getSiteName(id);
+    console.log(
+      'F1 Dashboard - Date:',
+      this.formatDate(this.selectedDate)
+    );
 
 
-    /*
-     * Example:
-     *
-     * 95326-FXBL
-     * 69941-FXCN
-     */
-
-    return `${id}-${name}`;
+    this.getDashboardData();
 
   }
 
 
-  /* ============================================================
+  /* ================================================================
      SITE CHANGE
-     ============================================================ */
+     ================================================================ */
 
   onLocationChange(
     location: string
   ): void {
 
-
     console.log(
-      '===================================='
-    );
-
-    console.log(
-      'MEAL SCAN SITE CHANGE'
-    );
-
-    console.log(
-      'Selected:',
+      'F1 Dashboard - Selected site:',
       location
-    );
-
-    console.log(
-      '===================================='
     );
 
 
     /*
-     * ALL MY SITES
+     * Empty = Alls.
      */
-
-    if (!location) {
+    if (
+      !location
+    ) {
 
       this.selectedSite = '';
 
     }
 
-
     else {
 
-
       /*
-       * Validate selected site
-       *
-       * Only sites assigned to
-       * logged-in user are allowed.
+       * Verify selected site belongs
+       * to logged-in user.
        */
-
       const validSite =
         this.siteList.some(
-
           site =>
-
             site.toUpperCase() ===
-
             String(location)
               .trim()
               .toUpperCase()
-
         );
 
 
       if (validSite) {
 
         this.selectedSite =
-          String(location)
-            .trim();
+          String(location).trim();
 
       }
 
-
       else {
 
-        this.selectedSite = '';
-
-        this.msgSvr.warning(
-          'Invalid site selected.'
+        console.warn(
+          'Invalid site selected:',
+          location
         );
 
-        return;
+        this.selectedSite = '';
 
       }
 
@@ -790,92 +811,98 @@ export class MealScanComponent
 
 
     /*
-     * Clear previous result
+     * Reload dashboard.
      */
-
-    this.employeeDetail = null;
-
-    this.entitlementStatus = '';
-
-    this.employeePhotoUrl = null;
-
-
-    /*
-     * Clear badge
-     */
-
-    this.empNo = '';
-
-
-    /*
-     * Focus scanner
-     */
-
-    this.focusInput();
+    this.getDashboardData();
 
   }
 
 
-  /* ============================================================
-     FOCUS INPUT
-     ============================================================ */
+  /* ================================================================
+     FORMAT DATE
+     ================================================================ */
 
-  focusInput(): void {
+  private formatDate(
+    d: Date
+  ): string {
 
-    setTimeout(
-      () => {
+    if (!d) {
 
-        if (
-          this.scanInput
-        ) {
+      d = new Date();
 
-          this.scanInput
-            .nativeElement
-            .focus();
+    }
 
-        }
 
-      },
+    const dd =
+      ('0' + d.getDate())
+        .slice(-2);
+
+
+    const mm =
+      ('0' + (d.getMonth() + 1))
+        .slice(-2);
+
+
+    return (
+      dd +
+      '-' +
+      mm +
+      '-' +
+      d.getFullYear()
+    );
+
+  }
+
+
+  /* ================================================================
+     PERCENTAGE
+     ================================================================ */
+
+  pct(
+    n: number
+  ): number {
+
+    if (
+      !this.totalEmployees ||
+      this.totalEmployees <= 0
+    ) {
+
+      return 0;
+
+    }
+
+
+    return Math.round(
+      (
+        Number(n || 0) /
+        this.totalEmployees
+      ) *
       100
     );
 
   }
 
 
-  /* ============================================================
-     ENTER
-     ============================================================ */
+  /* ================================================================
+     GET DASHBOARD DATA
+     ================================================================ */
 
-  onScanEnter(): void {
+  getDashboardData(): void {
 
-    this.search();
-
-  }
-
-
-  /* ============================================================
-     SEARCH
-     ============================================================ */
-
-  search(
-    fromButton?: boolean
-  ): void {
+    const userInfo =
+      this.publicSvr
+        .getSettingUserInfo();
 
 
     /*
-     * Badge validation
+     * Login user is mandatory.
      */
-
     if (
-      !this.empNo ||
-      this.empNo.trim() === ''
+      !userInfo ||
+      !userInfo.eeid
     ) {
 
-      this.msgSvr.error(
-        'Please scan or enter an FX Badge.'
-      );
-
-      this.focusInput();
+      this.resetDashboard();
 
       return;
 
@@ -883,16 +910,14 @@ export class MealScanComponent
 
 
     /*
-     * Site validation
+     * Site list must already be loaded.
      */
-
     if (
+      !this.siteList ||
       this.siteList.length === 0
     ) {
 
-      this.msgSvr.error(
-        'No active site available.'
-      );
+      this.resetDashboard();
 
       return;
 
@@ -900,134 +925,107 @@ export class MealScanComponent
 
 
     /*
-     * If a specific site is selected,
-     * validate against user's sites.
+     * Validate selected site.
      */
-
     if (
       this.selectedSite
     ) {
 
-
       const validSite =
         this.siteList.some(
-
           site =>
-
             site.toUpperCase() ===
-
             this.selectedSite
               .toUpperCase()
-
         );
 
 
       if (!validSite) {
 
-        this.msgSvr.error(
-          'Selected site is not assigned to you.'
-        );
-
-        return;
+        this.selectedSite = '';
 
       }
 
     }
 
 
-    /*
-     * Loading
-     */
-
     this.loading = true;
 
 
-    this.employeeDetail = null;
-
-    this.entitlementStatus = '';
-
-    this.employeePhotoUrl = null;
-
-
-    /* ==========================================================
-       GET F1 MENU
-       ========================================================== */
+    /*
+     * ============================================================
+     * API PARAMETER
+     * ============================================================
+     *
+     * Date:
+     *     Selected dashboard date
+     *
+     * Site:
+     *     Empty = Alls
+     *     Otherwise selected site
+     *
+     * EmpId:
+     *     Logged-in employee
+     *
+     * SystemName:
+     *     CMS
+     *
+     * Func:
+     *     CMS-GetMealDashboard
+     */
 
     const params: any = {
 
-
-      /*
-       * Badge
-       */
-
-      FxBadge:
-        this.empNo.trim(),
-
-
-      /*
-       * RAW SITE ID
-       *
-       * Example:
-       *
-       * 95326
-       * 69941
-       *
-       * Empty = All My Sites
-       */
+      Date:
+        this.formatDate(
+          this.selectedDate
+        ),
 
       Site:
         this.selectedSite || '',
 
-
-      /*
-       * Logged-in user
-       */
-
       EmpId:
-        this.loginEmployeeId,
-
+        userInfo.eeid,
 
       SystemName:
         'CMS',
 
-
       Func:
-        'CMS-GetF1MenuByFxbadge'
+        'CMS-GetMealDashboard'
 
     };
 
 
     console.log(
-      '===================================='
+      '================================================'
     );
 
     console.log(
-      'MEAL SCAN SEARCH'
+      'F1 DASHBOARD REQUEST'
     );
 
     console.log(
-      'Badge:',
-      params.FxBadge
+      'Employee:',
+      userInfo.eeid
     );
 
     console.log(
       'Site:',
-      params.Site ||
-      'ALL MY SITES'
+      this.selectedSite || 'All'
     );
 
     console.log(
-      'Logged-in Employee:',
-      params.EmpId
+      'Date:',
+      params.Date
     );
 
     console.log(
-      'Request:',
+      'Params:',
       params
     );
 
     console.log(
-      '===================================='
+      '================================================'
     );
 
 
@@ -1041,7 +1039,7 @@ export class MealScanComponent
           headers: {
 
             apiID:
-              'ffff-1789807467770-10208193125-1466',
+              'ffff-1789987849667-10208193125-1519',
 
             userKey:
               'E9785F13CCEAFB251A6AB147AFD24336'
@@ -1058,239 +1056,216 @@ export class MealScanComponent
       .then(
         (res: any) => {
 
-
           this.loading = false;
 
 
           console.log(
-            'Meal Scan Search Response:',
+            '================================================'
+          );
+
+          console.log(
+            'F1 DASHBOARD RESPONSE'
+          );
+
+          console.log(
             res
           );
 
+          console.log(
+            '================================================'
+          );
 
-          /* ==================================================
-             SUCCESS
-             ================================================== */
 
+          /*
+           * API failed.
+           */
           if (
-
-            res &&
-
-            String(res.IsOK) === '1' &&
-
-            res.List &&
-
-            res.List.length > 0
-
+            !res ||
+            String(res.IsOK) !== '1'
           ) {
 
-
-            const data =
-              res.List[0];
-
-
-            /*
-             * Employee data
-             */
-
-            this.employeeDetail = {
-
-              FxBadge:
-
-                data.FxBadge ||
-
-                data.FX_BADGE,
-
-
-              Name:
-
-                data.Name ||
-
-                data.NAME,
-
-
-              Site:
-
-                data.Site ||
-
-                data.SITE,
-
-
-              MealPreference:
-
-                data.MealPreference ||
-
-                data.MEAL_PREFERENCE,
-
-
-              FirstDateFxbl:
-
-                data.FirstDateFxbl ||
-
-                data.FIRST_DATE_FXBL,
-
-
-              LastDateFxbl:
-
-                data.LastDateFxbl ||
-
-                data.LAST_DATE_FXBL
-
-            };
-
-
-            /*
-             * Entitlement
-             */
-
-            this.entitlementStatus =
-
-              data.EntitlementStatus ||
-
-              data.ENTITLEMENT_STATUS ||
-
-              '';
-
-
-            /*
-             * Selected site mismatch
-             */
-
-            if (
-
-              this.selectedSite &&
-
-              this.employeeDetail.Site &&
-
-              this.employeeDetail.Site
-                .toUpperCase() !==
-
-              this.selectedSite
-                .toUpperCase()
-
-            ) {
-
-
-              this.entitlementStatus =
-                'SITE_MISMATCH';
-
-
-              this.msgSvr.error(
-                'This FX Badge does not belong to the selected site.'
-              );
-
-
-              /*
-               * Still show photo
-               */
-
-              this.fetchEmployeePhoto(
-                this.employeeDetail.FxBadge
-              );
-
-
-              this.clearInputOnly();
-
-
-              return;
-
-            }
-
-
-            /*
-             * Fetch photo
-             */
-
-            this.fetchEmployeePhoto(
-              this.employeeDetail.FxBadge
+            console.error(
+              'Dashboard API returned failure'
             );
 
+            this.resetDashboard();
 
-            /*
-             * Insert scan log
-             */
-
-            this.proceed();
+            return;
 
           }
 
 
-          /* ==================================================
-             BADGE NOT FOUND
-             ================================================== */
+          /* ======================================================
+             CURSOR 1
+             DASHBOARD CARDS
+             ====================================================== */
+
+          const c =
+            (
+              res.List &&
+              res.List.length > 0
+            )
+              ? res.List[0]
+              : {};
+
+
+          console.log(
+            'Dashboard Card Cursor:',
+            c
+          );
+
+
+          this.totalEmployees =
+            Number(
+              c.TotalEmployees ||
+              c.TOTAL_EMPLOYEES ||
+              0
+            );
+
+
+          this.mealsCollected =
+            Number(
+              c.MealsCollected ||
+              c.MEALS_COLLECTED ||
+              0
+            );
+
+
+          this.mealsNotCollected =
+            Number(
+              c.MealsNotCollected ||
+              c.MEALS_NOT_COLLECTED ||
+              0
+            );
+
+
+          this.noMealRequired =
+            Number(
+              c.NoMealRequired ||
+              c.NO_MEAL_REQUIRED ||
+              0
+            );
+
+
+          this.notCameToCollect =
+            Number(
+              c.NotRequiredCame ||
+              c.NOT_REQUIRED_CAME ||
+              0
+            );
+
+
+          /* ======================================================
+             CURSOR 2
+             CATEGORY SUMMARY
+             ====================================================== */
+
+          const cats: any[] =
+
+            res.List2 ||
+
+            res.Summary ||
+
+            res.CategoryList ||
+
+            [];
+
+
+          console.log(
+            'Dashboard Category Cursor:',
+            cats
+          );
+
+
+          if (
+            cats &&
+            cats.length > 0
+          ) {
+
+            this.categoryList =
+              cats.map(
+                (item: any) => {
+
+                  const categoryName =
+                    item.Category ||
+                    item.CATEGORY ||
+                    '';
+
+
+                  const count =
+                    Number(
+                      item.CollectedCount ||
+                      item.COLLECTED_COUNT ||
+                      0
+                    );
+
+
+                  const percentage =
+                    Number(
+                      item.Percentage ||
+                      item.PERCENTAGE ||
+                      0
+                    );
+
+
+                  return {
+
+                    name:
+                      categoryName,
+
+                    count:
+                      count,
+
+                    percent:
+                      percentage,
+
+                    color:
+                      this.getColorForCategory(
+                        categoryName
+                      ),
+
+                    icon:
+                      this.getIconForCategory(
+                        categoryName
+                      )
+
+                  };
+
+                }
+              );
+
+          }
 
           else {
 
-
-            this.employeeDetail = {
-
-              FxBadge:
-                this.empNo.trim(),
-
-              Name:
-                '',
-
-              Site:
-                '',
-
-              MealPreference:
-                '',
-
-              FirstDateFxbl:
-                '',
-
-              LastDateFxbl:
-                ''
-
-            };
-
-
-            this.entitlementStatus =
-              'NOT_UPDATED';
-
-
-            /*
-             * Photo
-             */
-
-            this.fetchEmployeePhoto(
-              this.empNo.trim()
-            );
-
-
-            this.msgSvr.error(
-              'FX Badge not found for the selected site.'
-            );
-
-
-            this.clearInputOnly();
+            this.resetCategories();
 
           }
 
-        }
 
+          /*
+           * Update donut/summary.
+           */
+          this.updateSummary();
+
+
+        }
       )
 
 
       .catch(
         err => {
 
-
           this.loading = false;
 
 
           console.error(
-            'Meal Scan Search Error:',
+            'F1 Dashboard API error:',
             err
           );
 
 
-          this.msgSvr.error(
-            'Failed to fetch employee details.'
-          );
-
-
-          this.focusInput();
+          this.resetDashboard();
 
         }
       );
@@ -1298,461 +1273,1239 @@ export class MealScanComponent
   }
 
 
-  /* ============================================================
-     FETCH EMPLOYEE PHOTO
-     ============================================================ */
+  /* ================================================================
+     RESET DASHBOARD
+     ================================================================ */
 
-  fetchEmployeePhoto(
-    fxBadge: string
-  ): void {
+  private resetDashboard(): void {
 
-
-    if (!fxBadge) {
-
-      return;
-
-    }
+    this.loading = false;
 
 
-    this.photoLoading = true;
+    this.totalEmployees = 0;
+
+    this.mealsCollected = 0;
+
+    this.mealsNotCollected = 0;
+
+    this.noMealRequired = 0;
+
+    this.notCameToCollect = 0;
 
 
-    this.http
-      .get(
-
-        `${this.PHOTO_API_BASE}/${fxBadge}`,
-
-        {
-
-          responseType:
-            'blob'
-
-        }
-
-      )
+    this.resetCategories();
 
 
-      .subscribe({
-
-        next:
-          (blob) => {
-
-
-            /*
-             * Create object URL
-             */
-
-            const objectUrl =
-              URL.createObjectURL(
-                blob
-              );
-
-
-            /*
-             * Safe URL
-             */
-
-            this.employeePhotoUrl =
-              this.sanitizer
-                .bypassSecurityTrustUrl(
-                  objectUrl
-                );
-
-
-            this.photoLoading = false;
-
-          },
-
-
-        error:
-          (error) => {
-
-
-            console.error(
-              'Employee photo error:',
-              error
-            );
-
-
-            this.employeePhotoUrl =
-              null;
-
-
-            this.photoLoading =
-              false;
-
-          }
-
-      });
+    this.updateSummary();
 
   }
 
 
-  /* ============================================================
-     INSERT MEAL SCAN
-     ============================================================ */
+  /* ================================================================
+     RESET CATEGORY
+     ================================================================ */
 
-  proceed(): void {
+  private resetCategories(): void {
+
+    this.categoryList = [
+
+      {
+        name: 'Indian Veg',
+        count: 0,
+        percent: 0,
+        color: '#52c41a',
+        icon: '🥬'
+      },
+
+      {
+        name: 'Indian Non-Veg',
+        count: 0,
+        percent: 0,
+        color: '#1890ff',
+        icon: '🍗'
+      },
+
+      {
+        name: 'Western Veg',
+        count: 0,
+        percent: 0,
+        color: '#722ed1',
+        icon: '🥗'
+      },
+
+      {
+        name: 'Western Non-Veg',
+        count: 0,
+        percent: 0,
+        color: '#faad14',
+        icon: '🍔'
+      },
+
+      {
+        name: 'Chinese Non-Veg',
+        count: 0,
+        percent: 0,
+        color: '#f8784d',
+        icon: '🥡'
+      },
+
+      {
+        name: 'Chinese Veg',
+        count: 0,
+        percent: 0,
+        color: '#a0c065',
+        icon: '🍜'
+      },
+
+      {
+        name: 'Jain',
+        count: 0,
+        percent: 0,
+        color: '#13c2c2',
+        icon: '🌿'
+      },
+
+      {
+        name: 'Vegan',
+        count: 0,
+        percent: 0,
+        color: '#eb2f96',
+        icon: '🌱'
+      }
+
+    ];
+
+  }
+
+
+  /* ================================================================
+     COLOR
+     ================================================================ */
+
+  getColorForCategory(
+    name: string
+  ): string {
+
+    if (!name) {
+
+      return '#999';
+
+    }
+
+
+    /*
+     * Exact match first.
+     */
+    if (
+      this.colorMap[name]
+    ) {
+
+      return this.colorMap[name];
+
+    }
+
+
+    /*
+     * Case-insensitive match.
+     */
+    const key =
+      Object.keys(
+        this.colorMap
+      ).find(
+        x =>
+          x.toUpperCase() ===
+          String(name)
+            .trim()
+            .toUpperCase()
+      );
+
+
+    return key
+      ? this.colorMap[key]
+      : '#999';
+
+  }
+
+
+  /* ================================================================
+     ICON
+     ================================================================ */
+
+  getIconForCategory(
+    name: string
+  ): string {
+
+    if (!name) {
+
+      return '🍽️';
+
+    }
 
 
     if (
-      !this.employeeDetail
+      this.iconMap[name]
     ) {
+
+      return this.iconMap[name];
+
+    }
+
+
+    const key =
+      Object.keys(
+        this.iconMap
+      ).find(
+        x =>
+          x.toUpperCase() ===
+          String(name)
+            .trim()
+            .toUpperCase()
+      );
+
+
+    return key
+      ? this.iconMap[key]
+      : '🍽️';
+
+  }
+
+
+  /* ================================================================
+     UPDATE SUMMARY
+     ================================================================ */
+
+  private updateSummary(): void {
+
+    this.summaryList = [
+
+      {
+        label:
+          'Meals Collected',
+
+        count:
+          this.mealsCollected,
+
+        percent:
+          this.pct(
+            this.mealsCollected
+          ),
+
+        color:
+          '#1890ff'
+
+      },
+
+
+      {
+        label:
+          'Meals Not Collected',
+
+        count:
+          this.mealsNotCollected,
+
+        percent:
+          this.pct(
+            this.mealsNotCollected
+          ),
+
+        color:
+          '#b4bfd4'
+
+      },
+
+
+      {
+        label:
+          'No Meal Required',
+
+        count:
+          this.noMealRequired,
+
+        percent:
+          this.pct(
+            this.noMealRequired
+          ),
+
+        color:
+          '#dde3ee'
+
+      },
+
+
+      {
+        label:
+          'Not Required - Came to Collect',
+
+        count:
+          this.notCameToCollect,
+
+        percent:
+          this.pct(
+            this.notCameToCollect
+          ),
+
+        color:
+          '#b39ddb'
+
+      }
+
+    ];
+
+
+    /*
+     * Donut uses:
+     *
+     * Meals Collected
+     * Meals Not Collected
+     * No Meal Required
+     *
+     * Not Required - Came to Collect
+     * is a subset of No Meal Required.
+     */
+
+    const ringParts =
+      this.summaryList.slice(
+        0,
+        3
+      );
+
+
+    const sum =
+      ringParts.reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(item.count || 0),
+
+        0
+      );
+
+
+    if (
+      sum <= 0
+    ) {
+
+      this.donutGradient =
+        'conic-gradient(#e6ebf5 0% 100%)';
 
       return;
 
     }
 
 
-    this.proceeding = true;
+    let acc = 0;
 
 
-    /*
-     * Insert parameters
-     */
+    const stops =
+      ringParts.map(
+        item => {
 
-    const params: any = {
+          const start =
+            acc;
 
 
-      /*
-       * Employee badge
-       */
+          acc +=
+            (
+              Number(item.count || 0) /
+              sum
+            ) *
+            100;
 
-      FxBadge:
-        this.employeeDetail.FxBadge,
 
+          return (
 
-      /*
-       * RAW SITE ID
-       *
-       * 95326
-       * 69941
-       */
+            item.color +
+            ' ' +
+            start +
+            '%' +
+            ' ' +
+            acc +
+            '%'
 
-      Site:
-        this.selectedSite || '',
-
-
-      /*
-       * Logged-in user
-       */
-
-      EmpId:
-        this.loginEmployeeId,
-
-
-      SystemName:
-        'CMS',
-
-
-      Func:
-        'CMS-InsertMealScanLog'
-
-    };
-
-
-    console.log(
-      '===================================='
-    );
-
-    console.log(
-      'MEAL SCAN INSERT'
-    );
-
-    console.log(
-      'Badge:',
-      params.FxBadge
-    );
-
-    console.log(
-      'Site:',
-      params.Site ||
-      'ALL MY SITES'
-    );
-
-    console.log(
-      'Logged-in Employee:',
-      params.EmpId
-    );
-
-    console.log(
-      'Request:',
-      params
-    );
-
-    console.log(
-      '===================================='
-    );
-
-
-    this.publicSvr
-      .iwxPostF1(
-
-        params,
-
-        {
-
-          headers: {
-
-            apiID:
-              'ffff-1789818962176-10208193125-1483',
-
-            userKey:
-              'E9785F13CCEAFB251A6AB147AFD24336'
-
-          }
-
-        },
-
-        true
-
-      )
-
-
-      .then(
-        (res: any) => {
-
-
-          this.proceeding =
-            false;
-
-
-          console.log(
-            'Meal Scan Insert Response:',
-            res
-          );
-
-
-          if (
-
-            res &&
-
-            String(res.IsOK) === '1' &&
-
-            res.List &&
-
-            res.List.length > 0
-
-          ) {
-
-
-            const logResult =
-              res.List[0];
-
-
-            const status =
-
-              logResult.Status ||
-
-              logResult.STATUS ||
-
-              '';
-
-
-            const message =
-
-              logResult.StatusMessage ||
-
-              logResult.STATUS_MESSAGE ||
-
-              '';
-
-
-            /* ==================================================
-               SUCCESS
-               ================================================== */
-
-            if (
-              status === 'SUCCESS'
-            ) {
-
-
-              this.entitlementStatus =
-                'ENTITLED';
-
-
-              this.msgSvr.success(
-                'Meal collection recorded successfully!'
-              );
-
-            }
-
-
-            /* ==================================================
-               ALREADY SCANNED
-               ================================================== */
-
-            else if (
-
-              status ===
-              'ALREADY_SCANNED'
-
-            ) {
-
-
-              this.entitlementStatus =
-                'ALREADY_SCANNED';
-
-
-              this.msgSvr.error(
-
-                message ||
-
-                'Meal already collected today'
-
-              );
-
-            }
-
-
-            /* ==================================================
-               SITE MISMATCH
-               ================================================== */
-
-            else if (
-
-              status ===
-              'SITE_MISMATCH'
-
-            ) {
-
-
-              this.entitlementStatus =
-                'SITE_MISMATCH';
-
-
-              this.msgSvr.error(
-
-                message ||
-
-                'Employee does not belong to selected site.'
-
-              );
-
-            }
-
-
-            /* ==================================================
-               INVALID
-               ================================================== */
-
-            else {
-
-
-              this.msgSvr.error(
-
-                message ||
-
-                'Invalid scan.'
-
-              );
-
-            }
-
-
-            /*
-             * Clear badge only.
-             *
-             * Employee information remains.
-             */
-
-            this.clearInputOnly();
-
-          }
-
-
-          else {
-
-
-            this.msgSvr.error(
-
-              res.Msg ||
-
-              'Failed to log scan.'
-
-            );
-
-          }
-
-        }
-
-      )
-
-
-      .catch(
-        err => {
-
-
-          this.proceeding =
-            false;
-
-
-          console.error(
-            'Meal Scan Insert Error:',
-            err
-          );
-
-
-          this.msgSvr.error(
-            'Failed to log scan. Please try again.'
           );
 
         }
       );
 
-  }
 
-
-  /* ============================================================
-     CLEAR INPUT ONLY
-     ============================================================ */
-
-  clearInputOnly(): void {
-
-    this.empNo = '';
-
-    /*
-     * Keep employee result visible.
-     */
-
-    this.focusInput();
-
-  }
-
-
-  /* ============================================================
-     CANCEL
-     ============================================================ */
-
-  cancelScan(): void {
-
-
-    this.employeeDetail =
-      null;
-
-
-    this.entitlementStatus =
-      '';
-
-
-    this.empNo =
-      '';
-
-
-    this.employeePhotoUrl =
-      null;
-
-
-    this.proceeding =
-      false;
-
-
-    this.loading =
-      false;
-
-
-    this.focusInput();
+    this.donutGradient =
+      'conic-gradient(' +
+      stops.join(', ') +
+      ')';
 
   }
 
 }
+
+
+
+
+
+<div
+  class="dashboard-wrapper"
+  [class.is-loading]="loading">
+
+
+  <!-- ============================================================
+       PAGE HEADER
+       ============================================================ -->
+
+  <div class="page-header">
+
+    <div class="page-title-wrap">
+
+      <div class="page-icon">
+
+        <svg
+          viewBox="0 0 24 24"
+          width="26"
+          height="26"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round">
+
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+
+          <path d="M7 2v20" />
+
+          <path
+            d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+
+        </svg>
+
+      </div>
+
+
+      <div>
+
+        <h2 class="page-title">
+          F1 MEAL MANAGEMENT SYSTEM
+        </h2>
+
+        <p class="page-sub">
+          Your Daily Step Toward Greater Impact!
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         FILTERS
+         ========================================================== -->
+
+    <div class="filter-block">
+
+
+      <!-- SITE -->
+
+      <nz-select
+        [(ngModel)]="selectedSite"
+        (ngModelChange)="onLocationChange($event)"
+        nzPlaceHolder="Select Site"
+        nzAllowClear
+        style="width: 160px; margin-right: 10px;">
+
+        <nz-option
+          *ngFor="let location of locationList"
+          [nzValue]="location.value"
+          [nzLabel]="location.label">
+
+        </nz-option>
+
+      </nz-select>
+
+
+      <!-- DATE -->
+
+      <nz-date-picker
+        [(ngModel)]="selectedDate"
+        (ngModelChange)="onDateChange($event)"
+        nzFormat="DD-MMM-YYYY"
+        [nzAllowClear]="false">
+
+      </nz-date-picker>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ============================================================
+       BANNER
+       ============================================================ -->
+
+  <div class="banner-card">
+
+
+    <!-- Decorative plates -->
+
+    <svg
+      class="banner-art"
+      viewBox="0 0 360 150"
+      aria-hidden="true">
+
+      <g
+        fill="rgba(255,255,255,0.10)"
+        stroke="rgba(255,255,255,0.35)"
+        stroke-width="1.5">
+
+        <ellipse
+          cx="100"
+          cy="100"
+          rx="84"
+          ry="28" />
+
+        <ellipse
+          cx="100"
+          cy="94"
+          rx="60"
+          ry="18" />
+
+        <ellipse
+          cx="250"
+          cy="82"
+          rx="64"
+          ry="21" />
+
+        <ellipse
+          cx="250"
+          cy="77"
+          rx="44"
+          ry="13" />
+
+      </g>
+
+
+      <g
+        fill="rgba(255,255,255,0.22)">
+
+        <circle
+          cx="92"
+          cy="90"
+          r="6" />
+
+        <circle
+          cx="112"
+          cy="96"
+          r="4" />
+
+        <circle
+          cx="244"
+          cy="74"
+          r="5" />
+
+      </g>
+
+    </svg>
+
+
+
+    <div class="banner-left">
+
+
+      <div class="breadcrumb">
+
+        <span>
+          Home
+        </span>
+
+        <span class="sep">
+          &rsaquo;
+        </span>
+
+        <span class="current">
+          Dashboard
+        </span>
+
+      </div>
+
+
+      <h1 class="banner-title">
+        Meal Distribution Details
+      </h1>
+
+
+      <p class="banner-subtitle">
+        Daily meal collection at a glance
+      </p>
+
+
+    </div>
+
+
+
+    <div class="banner-tagline">
+
+      <i
+        nz-icon
+        nzType="heart"
+        nzTheme="outline">
+      </i>
+
+      <span>
+        Healthy Food
+      </span>
+
+      <span class="dot">
+      </span>
+
+      <span>
+        Happy Workplace
+      </span>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ============================================================
+       STAT CARDS
+       ============================================================ -->
+
+  <div class="stat-cards-row">
+
+
+    <!-- TOTAL EMPLOYEES -->
+
+    <div class="stat-card card-blue">
+
+      <div class="stat-top">
+
+        <div class="stat-icon">
+
+          <i
+            nz-icon
+            nzType="team"
+            nzTheme="outline">
+          </i>
+
+        </div>
+
+
+        <span class="stat-trend flat">
+
+          <i
+            nz-icon
+            nzType="bar-chart"
+            nzTheme="outline">
+          </i>
+
+        </span>
+
+      </div>
+
+
+      <div class="stat-title">
+        Total Employees
+      </div>
+
+
+      <div class="stat-value">
+        {{ totalEmployees | number }}
+      </div>
+
+
+      <div class="stat-sub">
+        Employees on record
+      </div>
+
+    </div>
+
+
+
+    <!-- MEALS COLLECTED -->
+
+    <div class="stat-card card-green">
+
+      <div class="stat-top">
+
+        <div class="stat-icon">
+
+          <i
+            nz-icon
+            nzType="check-circle"
+            nzTheme="outline">
+          </i>
+
+        </div>
+
+
+        <span class="stat-trend up">
+
+          <i
+            nz-icon
+            nzType="arrow-up"
+            nzTheme="outline">
+          </i>
+
+          {{ pct(mealsCollected) }}%
+
+        </span>
+
+      </div>
+
+
+      <div class="stat-title">
+        Meals Collected
+      </div>
+
+
+      <div class="stat-value">
+        {{ mealsCollected | number }}
+      </div>
+
+
+      <div class="stat-sub">
+        Collected meals
+      </div>
+
+    </div>
+
+
+
+    <!-- MEALS NOT COLLECTED -->
+
+    <div class="stat-card card-red">
+
+      <div class="stat-top">
+
+        <div class="stat-icon">
+
+          <i
+            nz-icon
+            nzType="close-circle"
+            nzTheme="outline">
+          </i>
+
+        </div>
+
+
+        <span class="stat-trend down">
+
+          <i
+            nz-icon
+            nzType="arrow-down"
+            nzTheme="outline">
+          </i>
+
+          {{ pct(mealsNotCollected) }}%
+
+        </span>
+
+      </div>
+
+
+      <div class="stat-title">
+        Meals Not Collected
+      </div>
+
+
+      <div class="stat-value">
+        {{ mealsNotCollected | number }}
+      </div>
+
+
+      <div class="stat-sub">
+        Yet to collect
+      </div>
+
+    </div>
+
+
+
+    <!-- NO MEAL REQUIRED -->
+
+    <div class="stat-card card-purple">
+
+      <div class="stat-top">
+
+        <div class="stat-icon">
+
+          <i
+            nz-icon
+            nzType="stop"
+            nzTheme="outline">
+          </i>
+
+        </div>
+
+
+        <span class="stat-trend flat">
+
+          <i
+            nz-icon
+            nzType="arrow-right"
+            nzTheme="outline">
+          </i>
+
+          {{ pct(noMealRequired) }}%
+
+        </span>
+
+      </div>
+
+
+      <div class="stat-title">
+        No Meal Required
+      </div>
+
+
+      <div class="stat-value">
+        {{ noMealRequired | number }}
+      </div>
+
+
+      <div class="stat-sub">
+        Meal not required
+      </div>
+
+    </div>
+
+
+
+    <!-- NOT REQUIRED BUT CAME -->
+
+    <div class="stat-card card-orange">
+
+      <div class="stat-top">
+
+        <div class="stat-icon">
+
+          <i
+            nz-icon
+            nzType="user"
+            nzTheme="outline">
+          </i>
+
+        </div>
+
+
+        <span class="stat-trend flat">
+
+          <i
+            nz-icon
+            nzType="arrow-right"
+            nzTheme="outline">
+          </i>
+
+          {{ pct(notCameToCollect) }}%
+
+        </span>
+
+      </div>
+
+
+      <div class="stat-title">
+        Not Required - Came to Collect
+      </div>
+
+
+      <div class="stat-value">
+        {{ notCameToCollect | number }}
+      </div>
+
+
+      <div class="stat-sub">
+        No meal, but came to collect
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+
+  <!-- ============================================================
+       CATEGORY WISE
+       ============================================================ -->
+
+  <div class="category-card">
+
+
+    <div class="category-header">
+
+
+      <div class="category-title">
+
+        <i
+          nz-icon
+          nzType="bar-chart"
+          nzTheme="outline">
+        </i>
+
+        <span>
+          Meals Collected - Category Wise
+        </span>
+
+      </div>
+
+
+      <div class="category-sub">
+
+        <i
+          nz-icon
+          nzType="bar-chart"
+          nzTheme="outline">
+        </i>
+
+        Category wise distribution of collected meals
+
+      </div>
+
+
+    </div>
+
+
+
+    <div class="category-grid">
+
+
+      <div
+        class="category-item"
+        *ngFor="let cat of categoryList"
+        [ngStyle]="{
+          'border-top-color': cat.color
+        }">
+
+
+        <div class="cat-top">
+
+
+          <div
+            class="cat-icon"
+            [ngStyle]="{
+              'background-color': cat.color + '22'
+            }">
+
+            {{ cat.icon }}
+
+          </div>
+
+
+          <div class="cat-name">
+
+            {{ cat.name }}
+
+          </div>
+
+
+        </div>
+
+
+
+        <div
+          class="cat-count"
+          [ngStyle]="{
+            'color': cat.color
+          }">
+
+          {{ cat.count }}
+
+        </div>
+
+
+
+        <div class="cat-percent">
+
+          {{ cat.percent }}%
+          of collected
+
+        </div>
+
+
+
+        <div class="cat-progress-bar">
+
+          <div
+            class="cat-progress-fill"
+            [ngStyle]="{
+              'width': cat.percent + '%',
+              'background-color': cat.color
+            }">
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ============================================================
+       BOTTOM ROW
+       ============================================================ -->
+
+  <div class="bottom-row">
+
+
+    <!-- ==========================================================
+         SUMMARY
+         ========================================================== -->
+
+    <div class="summary-card">
+
+
+      <div class="section-title">
+
+        <i
+          nz-icon
+          nzType="bar-chart"
+          nzTheme="outline">
+        </i>
+
+        <span>
+          Meal Collection Summary
+        </span>
+
+      </div>
+
+
+
+      <div class="summary-body">
+
+
+        <!-- DONUT -->
+
+        <div
+          class="donut"
+          [style.background]="donutGradient">
+
+
+          <div class="donut-hole">
+
+
+            <div class="donut-main">
+
+              {{ mealsCollected }}
+              /
+              {{ totalEmployees }}
+
+            </div>
+
+
+            <div class="donut-label">
+
+              Collected
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- LEGEND -->
+
+        <div class="legend">
+
+
+          <div
+            class="legend-row"
+            *ngFor="let s of summaryList">
+
+
+            <span
+              class="legend-dot"
+              [style.background-color]="s.color">
+            </span>
+
+
+            <span class="legend-name">
+
+              {{ s.label }}
+
+            </span>
+
+
+            <span class="legend-count">
+
+              {{ s.count }}
+
+            </span>
+
+
+            <span class="legend-pct">
+
+              {{ s.percent }}%
+
+            </span>
+
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+    </div>
+
+
+
+    <!-- ==========================================================
+         TOTAL PROCESSED
+         ========================================================== -->
+
+    <div class="processed-card">
+
+
+      <div class="processed-top">
+
+
+        <div class="processed-icon">
+
+
+          <svg
+            viewBox="0 0 24 24"
+            width="28"
+            height="28"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round">
+
+            <path
+              d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+
+            <path d="M7 2v20" />
+
+            <path
+              d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+
+          </svg>
+
+
+        </div>
+
+
+
+        <div>
+
+
+          <div class="processed-title">
+
+            Total Meals Processed
+
+          </div>
+
+
+          <div class="processed-value">
+
+            {{ totalEmployees | number }}
+
+          </div>
+
+
+          <div class="processed-sub">
+
+            Employees on record
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- DATE -->
+
+      <div class="processed-date">
+
+
+        <i
+          nz-icon
+          nzType="calendar"
+          nzTheme="outline">
+        </i>
+
+
+        <span>
+
+          For
+          {{ selectedDate | date:'dd-MM-yyyy' }}
+
+        </span>
+
+
+      </div>
+
+
+
+      <!-- SITE -->
+
+      <div
+        class="processed-date"
+        style="margin-top: 8px;">
+
+
+        <i
+          nz-icon
+          nzType="environment"
+          nzTheme="outline">
+        </i>
+
+
+        <span>
+
+          Site:
+          {{
+            selectedSite
+              ? selectedSite
+              : 'All'
+          }}
+
+        </span>
+
+
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+
+  <!-- ============================================================
+       LOADING
+       ============================================================ -->
+
+  <div
+    class="dashboard-loading"
+    *ngIf="loading">
+
+    <nz-spin
+      nzSimple
+      nzSize="large">
+    </nz-spin>
+
+  </div>
+
+
+</div>
