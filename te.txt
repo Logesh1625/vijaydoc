@@ -1,33 +1,146 @@
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
+/* ============================================================
+   HEADER - SIMPLE WHITE
+   ============================================================ */
 
-<div class="header-row">
+.header-row {
 
-  <div class="title-block">
+  background: #fff;
 
-    <div class="title-icon">
+  padding: 20px 24px;
 
-      <i
-        nz-icon
-        nzType="scan"
-        nzTheme="outline">
-      </i>
+  margin-bottom: 18px;
 
-    </div>
+  border-radius: 12px;
 
-    <div>
+  border: 1px solid #e8edf3;
 
-      <h1>
-        Meal Scan
-      </h1>
+  box-shadow:
+    0 2px 8px
+    rgba(20, 35, 63, 0.05);
 
-      <p>
-        Scan employee badge to mark meal collection
-      </p>
+}
 
-    </div>
 
-  </div>
+.title-block {
 
-</div>
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+
+}
+
+
+.title-icon {
+
+  width: 52px;
+
+  height: 52px;
+
+  min-width: 52px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background: #eaf3ff;
+
+  color: #1677ff;
+
+}
+
+
+.title-icon i {
+
+  font-size: 27px;
+
+}
+
+
+.title-block h1 {
+
+  margin: 0;
+
+  color: #172b4d;
+
+  font-size: 26px;
+
+  font-weight: 700;
+
+  line-height: 1.2;
+
+}
+
+
+.title-block p {
+
+  margin: 5px 0 0;
+
+  color: #7a899f;
+
+  font-size: 13px;
+
+}
+
+
+/* ============================================================
+   MAIN BACKGROUND
+   ============================================================ */
+
+.scan-wrapper {
+
+  min-height: 100%;
+
+  padding: 18px 20px 30px;
+
+  background: #f7f9fc;
+
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+  .scan-wrapper {
+
+    padding: 12px;
+
+  }
+
+  .header-row {
+
+    padding: 16px;
+
+  }
+
+  .title-icon {
+
+    width: 46px;
+
+    height: 46px;
+
+    min-width: 46px;
+
+  }
+
+  .title-block h1 {
+
+    font-size: 22px;
+
+  }
+
+  .title-block p {
+
+    font-size: 12px;
+
+  }
+
+}
