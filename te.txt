@@ -1,1385 +1,683 @@
-import {
-  Component,
-  OnInit,
-  ViewChild,
-  ElementRef
-} from '@angular/core';
+<div class="scan-wrapper">
 
-import {
-  HttpClient
-} from '@angular/common/http';
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
 
-import {
-  DomSanitizer,
-  SafeUrl
-} from '@angular/platform-browser';
+  <div class="header-row">
 
-import {
-  NzMessageService
-} from 'ng-zorro-antd';
+    <div class="title-block">
 
-import {
-  PublicNetService
-} from 'src/app/routes/a_Public_net/Public_net.service';
+      <h1>
+        Meal Scan
+      </h1>
 
+      <p>
+        Scan employee badge to mark meal collection
+      </p>
 
-@Component({
-  selector: 'app-Meal-scan',
+    </div>
 
-  templateUrl: './Meal-scan.component.html',
+  </div>
 
-  styleUrls: ['./Meal-scan.component.less']
-})
 
+  <!-- ============================================================
+       SITE FILTER
+       ============================================================ -->
 
-export class MealScanComponent implements OnInit {
+  <div class="site-filter-card">
 
+    <div class="site-filter-row">
 
-  /* ============================================================
-     SCAN
-     ============================================================ */
+      <!-- SITE LABEL -->
 
-  @ViewChild(
-    'scanInput',
-    { static: false }
-  )
-  scanInput: ElementRef;
+      <div class="site-filter-label">
 
+        <i
+          nz-icon
+          nzType="environment"
+          nzTheme="outline">
+        </i>
 
-  empNo = '';
+        <span>
+          Site
+        </span>
 
-  loading = false;
+      </div>
 
-  proceeding = false;
 
+      <!-- SITE DROPDOWN -->
 
-  employeeDetail: any = null;
+      <nz-select
 
-  entitlementStatus = '';
+        [(ngModel)]="selectedSite"
 
+        name="selectedSite"
 
-  /* ============================================================
-     PHOTO
-     ============================================================ */
+        nzPlaceHolder="Select Site"
 
-  employeePhotoUrl: SafeUrl | null = null;
+        nzSize="large"
 
-  photoLoading = false;
+        class="site-select"
 
+        [nzDisabled]="siteList.length === 0"
 
-  private readonly PHOTO_API_BASE =
-    'http://10.209.110.187:3000/api/image';
+        (ngModelChange)="onLocationChange($event)">
 
+        <!-- ALL SITES -->
 
-  /* ============================================================
-     SITE
-     ============================================================ */
+        <nz-option
+          nzValue=""
+          nzLabel="All My Sites">
+        </nz-option>
 
-  siteList: string[] = [];
 
-  selectedSite = '';
+        <!-- USER ACTIVE SITES -->
 
-  siteOptions: Array<{
-    value: string;
-    label: string;
-  }> = [];
+        <nz-option
 
+          *ngFor="
+            let option of siteOptions
+          "
 
-  /*
-   * Site ID -> Site Name
-   */
-  siteNameMap: {
-    [siteId: string]: string;
-  } = {
+          [nzValue]="option.value"
 
-    '69941': 'FXCN',
+          [nzLabel]="option.label">
 
-    '95326': 'FXBL'
+        </nz-option>
 
-  };
+      </nz-select>
 
 
-  /* ============================================================
-     LOGGED-IN USER
-     ============================================================ */
+      <!-- SELECTED SITE -->
 
-  loginEmployeeId = '';
+      <div class="selected-site-info">
 
+        <span class="selected-site-label">
+          Selected Site:
+        </span>
 
-  /* ============================================================
-     CONSTRUCTOR
-     ============================================================ */
+        <strong>
 
-  constructor(
+          {{
+            selectedSite
+              ? getSiteDisplayName(selectedSite)
+              : 'All My Sites'
+          }}
 
-    private publicSvr: PublicNetService,
+        </strong>
 
-    private msgSvr: NzMessageService,
+      </div>
 
-    private http: HttpClient,
+    </div>
 
-    private sanitizer: DomSanitizer
 
-  ) {}
+    <!-- NO ACTIVE SITE -->
 
+    <div
+      class="site-warning"
 
-  /* ============================================================
-     INIT
-     ============================================================ */
+      *ngIf="
+        !siteList.length
+      ">
 
-  ngOnInit(): void {
+      <i
+        nz-icon
+        nzType="warning"
+        nzTheme="outline">
+      </i>
 
-    this.loadLoggedInUserSite();
+      <span>
+        No active site assigned to the logged-in user.
+      </span>
 
-  }
+    </div>
 
+  </div>
 
-  /* ============================================================
-     LOAD LOGGED-IN USER SITE
-     ============================================================ */
 
-  private loadLoggedInUserSite(): void {
+  <!-- ============================================================
+       SCAN INPUT
+       ============================================================ -->
 
-    const userInfo =
-      this.publicSvr.getSettingUserInfo();
+  <div class="scan-input-card">
 
+    <div class="scan-input-row">
 
-    console.log(
-      'Meal Scan - Logged-in user:',
-      userInfo
-    );
+      <!-- SCAN ICON -->
 
+      <i
+        nz-icon
+        nzType="scan"
+        nzTheme="outline"
+        class="scan-icon">
+      </i>
 
-    if (
-      !userInfo ||
-      !userInfo.eeid
-    ) {
 
-      this.msgSvr.error(
-        'Logged-in employee information not found.'
-      );
+      <!-- INPUT -->
 
-      return;
+      <input
 
-    }
+        #scanInput
 
+        nz-input
 
-    /*
-     * Logged-in EEID
-     */
-    this.loginEmployeeId =
-      String(
-        userInfo.eeid
-      )
-      .trim()
-      .toUpperCase();
+        [(ngModel)]="empNo"
 
+        name="empNo"
 
-    /*
-     * Get user/site mapping
-     */
-    this.publicSvr
-      .getSitebasedUser()
-      .subscribe(
+        placeholder="Scan employee badge..."
 
-        (userList: any[]) => {
+        (keyup.enter)="onScanEnter()"
 
-          console.log(
-            'Meal Scan - User/site list:',
-            userList
-          );
+        autocomplete="off"
 
+        [disabled]="
+          loading ||
+          siteList.length === 0
+        "
 
-          if (
-            !userList ||
-            userList.length === 0
-          ) {
+        class="scan-input"
+      />
 
-            this.msgSvr.error(
-              'No active site found for logged-in user.'
-            );
 
-            return;
+      <!-- LOADING -->
 
-          }
+      <nz-spin
 
+        *ngIf="loading"
 
-          /*
-           * Same active-site logic as
-           * Food Time Price.
-           */
-          this.siteList =
-            this.extractAllSites(
-              userList,
-              this.loginEmployeeId
-            );
+        nzSimple>
+      </nz-spin>
 
 
-          console.log(
-            'Meal Scan - Active sites:',
-            this.siteList
-          );
+      <!-- SEARCH -->
 
+      <button
 
-          if (
-            this.siteList.length === 0
-          ) {
+        nz-button
 
-            this.msgSvr.error(
-              'No active site assigned to logged-in user.'
-            );
+        nzType="primary"
 
-            return;
+        nzSize="large"
 
-          }
+        (click)="search(true)"
 
+        [disabled]="
+          loading ||
+          siteList.length === 0
+        ">
 
-          /*
-           * Build site dropdown
-           */
-          this.siteOptions =
-            this.siteList.map(
-              siteId => {
+        Search
 
-                return {
+      </button>
 
-                  value: siteId,
+    </div>
 
-                  label:
-                    `${siteId}-${this.getSiteName(siteId)}`
+  </div>
 
-                };
 
-              }
-            );
+  <!-- ============================================================
+       RESULT CARD
+       ============================================================ -->
 
+  <div
 
-          /*
-           * Default:
-           *
-           * All My Sites
-           */
-          this.selectedSite = '';
+    class="result-card-wrapper"
 
+    *ngIf="employeeDetail">
 
-          console.log(
-            'Meal Scan - Site options:',
-            this.siteOptions
-          );
 
+    <div
 
-          /*
-           * Focus scanner
-           */
-          this.focusInput();
+      class="result-card"
 
-        },
+      [ngClass]="
 
+        entitlementStatus === 'ENTITLED'
 
-        error => {
+          ? 'card-entitled'
 
-          console.error(
-            'Meal Scan - getSitebasedUser error:',
-            error
-          );
+          :
 
-          this.msgSvr.error(
-            'Failed to load user site information.'
-          );
+        entitlementStatus === 'ALREADY_SCANNED'
 
-        }
+          ? 'card-already'
 
-      );
+          :
 
-  }
+        entitlementStatus === 'SITE_MISMATCH'
 
+          ? 'card-mismatch'
 
-  /* ============================================================
-     GET EEID
-     ============================================================ */
+          :
 
-  private getItemEeid(
-    item: any
-  ): string {
+        'card-not-entitled'
 
-    if (!item) {
+      ">
 
-      return '';
 
-    }
+      <!-- ========================================================
+           EMPLOYEE PROFILE AREA
+           ======================================================== -->
 
+      <div class="result-card-body">
 
-    const value =
 
-      item.Eeid ||
+        <!-- ======================================================
+             PHOTO + SITE
+             ====================================================== -->
 
-      item.EEID ||
+        <div class="employee-photo-section">
 
-      item.EeidNo ||
 
-      item.EmpId ||
+          <!-- LARGE PHOTO -->
 
-      item.EMP_ID ||
+          <div class="employee-photo-large">
 
-      item.EmployeeId ||
 
-      item.EmployeeCode ||
+            <!-- PHOTO LOADING -->
 
-      item.eeid ||
+            <nz-spin
 
-      '';
+              *ngIf="
+                photoLoading
+              ">
 
+            </nz-spin>
 
-    return String(value)
-      .trim()
-      .toUpperCase();
 
-  }
+            <!-- PHOTO -->
 
+            <img
 
-  /* ============================================================
-     ACTIVE USER
-     ============================================================ */
+              *ngIf="
+                employeePhotoUrl &&
+                !photoLoading
+              "
 
-  private isActiveUser(
-    item: any
-  ): boolean {
+              [src]="employeePhotoUrl"
 
-    if (!item) {
+              class="employee-photo-img"
 
-      return false;
+              alt="Employee Photo"
 
-    }
+            />
 
 
-    let delFlag: any = 0;
+            <!-- DEFAULT USER -->
 
+            <i
 
-    if (
-      item.DelFlag !== undefined &&
-      item.DelFlag !== null &&
-      item.DelFlag !== ''
-    ) {
+              *ngIf="
+                !employeePhotoUrl &&
+                !photoLoading
+              "
 
-      delFlag =
-        item.DelFlag;
+              nz-icon
 
-    }
+              nzType="user"
 
-    else if (
-      item.DEL_FLAG !== undefined &&
-      item.DEL_FLAG !== null &&
-      item.DEL_FLAG !== ''
-    ) {
+              nzTheme="outline"
 
-      delFlag =
-        item.DEL_FLAG;
+              class="default-user-icon">
 
-    }
+            </i>
 
-    else if (
-      item.delFlag !== undefined &&
-      item.delFlag !== null &&
-      item.delFlag !== ''
-    ) {
+          </div>
 
-      delFlag =
-        item.delFlag;
 
-    }
+          <!-- SITE BADGE -->
 
-    else if (
-      item.del_flag !== undefined &&
-      item.del_flag !== null &&
-      item.del_flag !== ''
-    ) {
+          <div
 
-      delFlag =
-        item.del_flag;
+            class="employee-site-badge"
 
-    }
+            *ngIf="
+              employeeDetail
+            ">
 
+            {{
+              getSiteDisplayName(
+                employeeDetail.Site
+              )
+            }}
 
-    /*
-     * 0 / NULL = Active
-     * 1 = Deleted
-     */
-    return Number(delFlag) === 0;
+          </div>
 
-  }
+        </div>
 
 
-  /* ============================================================
-     EXTRACT ACTIVE SITES
-     ============================================================ */
+        <!-- ======================================================
+             EMPLOYEE INFORMATION
+             ====================================================== -->
 
-  private extractAllSites(
-    userList: any[],
-    eeid: string
-  ): string[] {
+        <div class="employee-details">
 
-    const loginEeid =
-      String(eeid)
-        .trim()
-        .toUpperCase();
 
+          <!-- NAME -->
 
-    const sites: string[] = [];
+          <div class="detail-row">
 
+            <span class="detail-label">
+              Employee Name
+            </span>
 
-    userList.forEach(
-      item => {
+            <span class="detail-colon">
+              :
+            </span>
 
-        if (!item) {
+            <span class="detail-value">
 
-          return;
+              {{
+                employeeDetail.Name ||
+                'Not Updated'
+              }}
 
-        }
+            </span>
 
+          </div>
 
-        /*
-         * Employee match
-         */
-        if (
-          this.getItemEeid(item)
-          !==
-          loginEeid
-        ) {
 
-          return;
+          <!-- BADGE -->
 
-        }
+          <div class="detail-row">
 
+            <span class="detail-label">
+              FX Badge
+            </span>
 
-        /*
-         * Ignore deleted user
-         */
-        if (
-          !this.isActiveUser(item)
-        ) {
+            <span class="detail-colon">
+              :
+            </span>
 
-          return;
+            <span class="detail-value">
 
-        }
+              {{
+                employeeDetail.FxBadge ||
+                'Not Updated'
+              }}
 
+            </span>
 
-        /*
-         * Get Site ID
-         */
-        const site =
-          this.extractSite(item);
+          </div>
 
 
-        if (site) {
+          <!-- SITE -->
 
-          sites.push(site);
+          <div class="detail-row">
 
-        }
+            <span class="detail-label">
+              Site
+            </span>
 
-      }
-    );
+            <span class="detail-colon">
+              :
+            </span>
 
+            <span
+              class="detail-value site-value">
 
-    /*
-     * Remove duplicates
-     */
-    const uniqueSites: string[] = [];
+              {{
+                getSiteDisplayName(
+                  employeeDetail.Site
+                )
+              }}
 
+            </span>
 
-    sites.forEach(
-      site => {
+          </div>
 
-        const normalized =
-          String(site)
-            .trim();
 
+          <!-- MEAL -->
 
-        const exists =
-          uniqueSites.some(
-            x =>
-              x.toUpperCase() ===
-              normalized.toUpperCase()
-          );
+          <div class="detail-row">
 
+            <span class="detail-label">
+              Meal Preference
+            </span>
 
-        if (!exists) {
+            <span class="detail-colon">
+              :
+            </span>
 
-          uniqueSites.push(
-            normalized
-          );
+            <span class="detail-value">
 
-        }
+              {{
+                employeeDetail.MealPreference ||
+                'Not Updated'
+              }}
 
-      }
-    );
+            </span>
 
+          </div>
 
-    return uniqueSites;
 
-  }
+          <!-- FIRST DATE -->
 
+          <div class="detail-row">
 
-  /* ============================================================
-     EXTRACT SITE ID
-     ============================================================ */
+            <span class="detail-label">
+              First Day at Factory
+            </span>
 
-  private extractSite(
-    user: any
-  ): string {
+            <span class="detail-colon">
+              :
+            </span>
 
-    if (!user) {
+            <span class="detail-value">
 
-      return '';
+              {{
+                employeeDetail.FirstDateFxbl ||
+                'Not Updated'
+              }}
 
-    }
+            </span>
 
+          </div>
 
-    /*
-     * Prefer actual Site ID.
-     */
-    const site =
 
-      user.Site ||
+          <!-- LAST DATE -->
 
-      user.site ||
+          <div class="detail-row">
 
-      user.SITE ||
+            <span class="detail-label">
+              Last Day at Factory
+            </span>
 
-      user.SiteId ||
+            <span class="detail-colon">
+              :
+            </span>
 
-      user.siteId ||
+            <span class="detail-value">
 
-      '';
+              {{
+                employeeDetail.LastDateFxbl ||
+                'Not Updated'
+              }}
 
+            </span>
 
-    return String(site)
-      .trim();
+          </div>
 
-  }
 
+        </div>
 
-  /* ============================================================
-     SITE NAME
-     ============================================================ */
+      </div>
 
-  getSiteName(
-    siteId: any
-  ): string {
 
-    const id =
-      String(
-        siteId || ''
-      ).trim();
+      <!-- ========================================================
+           STATUS
+           ======================================================== -->
 
+      <div
 
-    if (!id) {
+        class="status-banner"
 
-      return '';
+        [ngClass]="
 
-    }
+          entitlementStatus === 'ENTITLED'
 
+            ? 'banner-green'
 
-    return this.siteNameMap[id] || id;
+            :
 
-  }
+          entitlementStatus === 'ALREADY_SCANNED'
 
+            ? 'banner-orange'
 
-  /* ============================================================
-     SITE CHANGE
-     ============================================================ */
+            :
 
-  onLocationChange(
-    location: string
-  ): void {
+          entitlementStatus === 'SITE_MISMATCH'
 
-    console.log(
-      'Meal Scan - Selected site:',
-      location
-    );
+            ? 'banner-yellow'
 
+            :
 
-    /*
-     * All My Sites
-     */
-    if (!location) {
+          'banner-red'
 
-      this.selectedSite = '';
+        ">
 
-    }
 
+        <!-- ICON -->
 
-    else {
+        <i
 
-      /*
-       * Validate site against
-       * logged-in user's active sites.
-       */
-      const validSite =
-        this.siteList.some(
-          site =>
-            site.toUpperCase() ===
-            String(location)
-              .trim()
-              .toUpperCase()
-        );
+          nz-icon
 
+          [nzType]="
 
-      if (validSite) {
+            entitlementStatus === 'ENTITLED'
 
-        this.selectedSite =
-          String(location).trim();
+              ? 'check-circle'
 
-      }
+              :
 
-      else {
+            entitlementStatus === 'ALREADY_SCANNED'
 
-        this.selectedSite = '';
+              ? 'exclamation-circle'
 
-        this.msgSvr.warning(
-          'Invalid site selected.'
-        );
+              :
 
-      }
+            entitlementStatus === 'SITE_MISMATCH'
 
-    }
+              ? 'warning'
 
+              :
 
-    /*
-     * Clear previous result.
-     */
-    this.employeeDetail = null;
+            'close-circle'
 
-    this.entitlementStatus = '';
+          "
 
-    this.employeePhotoUrl = null;
+          nzTheme="fill"
 
+          class="status-icon">
 
-    /*
-     * Clear scanner.
-     */
-    this.empNo = '';
+        </i>
 
 
-    /*
-     * Focus scanner.
-     */
-    this.focusInput();
+        <span class="status-label">
+          Status
+        </span>
 
-  }
 
+        <span class="status-colon">
+          :
+        </span>
 
-  /* ============================================================
-     FOCUS INPUT
-     ============================================================ */
 
-  focusInput(): void {
+        <span class="status-text">
 
-    setTimeout(
-      () => {
+          {{
 
-        if (
-          this.scanInput
-        ) {
+            entitlementStatus === 'ENTITLED'
 
-          this.scanInput.nativeElement.focus();
+              ? 'ENTITLED FOR MEAL'
 
-        }
+              :
 
-      },
-      100
-    );
+            entitlementStatus === 'ALREADY_SCANNED'
 
-  }
+              ? 'ALREADY COLLECTED'
 
+              :
 
-  /* ============================================================
-     SCAN ENTER
-     ============================================================ */
+            entitlementStatus === 'SITE_MISMATCH'
 
-  onScanEnter(): void {
+              ? 'SITE MISMATCH'
 
-    this.search();
+              :
 
-  }
+            entitlementStatus === 'NOT_UPDATED'
 
+              ? 'NOT UPDATED'
 
-  /* ============================================================
-     SEARCH
-     ============================================================ */
+              :
 
-  search(
-    fromButton?: boolean
-  ): void {
+            'NOT ENTITLED'
 
+          }}
 
-    /*
-     * Badge validation
-     */
-    if (
-      !this.empNo ||
-      this.empNo.trim() === ''
-    ) {
+        </span>
 
-      this.msgSvr.error(
-        'Please scan or enter an FX Badge.'
-      );
+      </div>
 
-      this.focusInput();
 
-      return;
+      <!-- ========================================================
+           SITE MISMATCH MESSAGE
+           ======================================================== -->
 
-    }
+      <div
 
+        class="site-mismatch-message"
 
-    /*
-     * Site validation
-     */
-    if (
-      this.siteList.length === 0
-    ) {
+        *ngIf="
+          entitlementStatus ===
+          'SITE_MISMATCH'
+        ">
 
-      this.msgSvr.error(
-        'No active site available.'
-      );
+        <i
 
-      return;
+          nz-icon
 
-    }
+          nzType="warning"
 
+          nzTheme="outline">
 
-    /*
-     * Selected site must belong
-     * to logged-in user.
-     */
-    if (
-      this.selectedSite
-    ) {
+        </i>
 
-      const validSite =
-        this.siteList.some(
-          site =>
-            site.toUpperCase() ===
-            this.selectedSite.toUpperCase()
-        );
+        <span>
+          This employee does not belong
+          to the selected site.
+        </span>
 
+      </div>
 
-      if (!validSite) {
 
-        this.msgSvr.error(
-          'Selected site is not assigned to you.'
-        );
+    </div>
 
-        return;
+  </div>
 
-      }
 
-    }
+  <!-- ============================================================
+       WAITING CARD
+       ============================================================ -->
 
+  <div
 
-    this.loading = true;
+    class="waiting-card"
 
-    this.employeeDetail = null;
+    *ngIf="
+      !employeeDetail &&
+      !loading
+    ">
 
-    this.entitlementStatus = '';
+    <nz-empty
 
-    this.employeePhotoUrl = null;
+      nzNotFoundContent="Scan an employee badge to begin">
 
+    </nz-empty>
 
-    /* ==========================================================
-       GET F1 MENU
-       ========================================================== */
+  </div>
 
-    const params: any = {
-
-      FxBadge:
-        this.empNo.trim(),
-
-      /*
-       * Raw Site ID
-       *
-       * Example:
-       * 69941
-       *
-       * Empty = All My Sites
-       */
-      Site:
-        this.selectedSite || '',
-
-      EmpId:
-        this.loginEmployeeId,
-
-      SystemName:
-        'CMS',
-
-      Func:
-        'CMS-GetF1MenuByFxbadge'
-
-    };
-
-
-    console.log(
-      '================================================'
-    );
-
-    console.log(
-      'MEAL SCAN SEARCH'
-    );
-
-    console.log(
-      'Badge:',
-      params.FxBadge
-    );
-
-    console.log(
-      'Site:',
-      params.Site || 'ALL MY SITES'
-    );
-
-    console.log(
-      'Logged-in Employee:',
-      params.EmpId
-    );
-
-    console.log(
-      'Request:',
-      params
-    );
-
-    console.log(
-      '================================================'
-    );
-
-
-    this.publicSvr
-      .iwxPostF1(
-
-        params,
-
-        {
-
-          headers: {
-
-            apiID:
-              'ffff-1789807467770-10208193125-1466',
-
-            userKey:
-              'E9785F13CCEAFB251A6AB147AFD24336'
-
-          }
-
-        },
-
-        true
-
-      )
-
-
-      .then(
-        (res: any) => {
-
-          this.loading = false;
-
-
-          console.log(
-            'Meal Scan Search Response:',
-            res
-          );
-
-
-          if (
-            res &&
-            String(res.IsOK) === '1' &&
-            res.List &&
-            res.List.length > 0
-          ) {
-
-            const data =
-              res.List[0];
-
-
-            this.employeeDetail = {
-
-              FxBadge:
-                data.FxBadge ||
-                data.FX_BADGE,
-
-              Name:
-                data.Name ||
-                data.NAME,
-
-              Site:
-                data.Site ||
-                data.SITE,
-
-              MealPreference:
-                data.MealPreference ||
-                data.MEAL_PREFERENCE,
-
-              FirstDateFxbl:
-                data.FirstDateFxbl ||
-                data.FIRST_DATE_FXBL,
-
-              LastDateFxbl:
-                data.LastDateFxbl ||
-                data.LAST_DATE_FXBL
-
-            };
-
-
-            this.entitlementStatus =
-              data.EntitlementStatus ||
-              data.ENTITLEMENT_STATUS ||
-              '';
-
-
-            /*
-             * Selected site validation
-             */
-            if (
-              this.selectedSite &&
-              this.employeeDetail.Site &&
-              this.employeeDetail.Site
-                .toUpperCase() !==
-              this.selectedSite
-                .toUpperCase()
-            ) {
-
-              this.msgSvr.error(
-                'This FX Badge does not belong to the selected site.'
-              );
-
-              this.entitlementStatus =
-                'SITE_MISMATCH';
-
-              this.fetchEmployeePhoto(
-                this.employeeDetail.FxBadge
-              );
-
-              this.clearInputOnly();
-
-              return;
-
-            }
-
-
-            /*
-             * Employee photo
-             */
-            this.fetchEmployeePhoto(
-              this.employeeDetail.FxBadge
-            );
-
-
-            /*
-             * Insert scan log
-             */
-            this.proceed();
-
-          }
-
-
-          else {
-
-            /*
-             * Badge not found
-             */
-            this.employeeDetail = {
-
-              FxBadge:
-                this.empNo.trim(),
-
-              Name: '',
-
-              Site: '',
-
-              MealPreference: '',
-
-              FirstDateFxbl: '',
-
-              LastDateFxbl: ''
-
-            };
-
-
-            this.entitlementStatus =
-              'NOT_UPDATED';
-
-
-            this.fetchEmployeePhoto(
-              this.empNo.trim()
-            );
-
-
-            this.msgSvr.error(
-              'FX Badge not found for the selected site.'
-            );
-
-
-            this.clearInputOnly();
-
-          }
-
-        }
-
-      )
-
-
-      .catch(
-        err => {
-
-          this.loading = false;
-
-
-          console.error(
-            'Meal Scan Search Error:',
-            err
-          );
-
-
-          this.msgSvr.error(
-            'Failed to fetch employee details.'
-          );
-
-
-          this.focusInput();
-
-        }
-      );
-
-  }
-
-
-  /* ============================================================
-     PHOTO
-     ============================================================ */
-
-  fetchEmployeePhoto(
-    fxBadge: string
-  ): void {
-
-    if (!fxBadge) {
-
-      return;
-
-    }
-
-
-    this.photoLoading = true;
-
-
-    this.http
-      .get(
-
-        `${this.PHOTO_API_BASE}/${fxBadge}`,
-
-        {
-          responseType: 'blob'
-        }
-
-      )
-
-
-      .subscribe({
-
-        next:
-          (blob) => {
-
-            const objectUrl =
-              URL.createObjectURL(
-                blob
-              );
-
-
-            this.employeePhotoUrl =
-              this.sanitizer
-                .bypassSecurityTrustUrl(
-                  objectUrl
-                );
-
-
-            this.photoLoading = false;
-
-          },
-
-
-        error:
-          () => {
-
-            this.employeePhotoUrl = null;
-
-            this.photoLoading = false;
-
-          }
-
-      });
-
-  }
-
-
-  /* ============================================================
-     INSERT MEAL SCAN
-     ============================================================ */
-
-  proceed(): void {
-
-    if (
-      !this.employeeDetail
-    ) {
-
-      return;
-
-    }
-
-
-    this.proceeding = true;
-
-
-    const params: any = {
-
-      FxBadge:
-        this.employeeDetail.FxBadge,
-
-      /*
-       * Raw site ID
-       */
-      Site:
-        this.selectedSite || '',
-
-      EmpId:
-        this.loginEmployeeId,
-
-      SystemName:
-        'CMS',
-
-      Func:
-        'CMS-InsertMealScanLog'
-
-    };
-
-
-    console.log(
-      '================================================'
-    );
-
-    console.log(
-      'MEAL SCAN INSERT'
-    );
-
-    console.log(
-      'Badge:',
-      params.FxBadge
-    );
-
-    console.log(
-      'Site:',
-      params.Site || 'ALL MY SITES'
-    );
-
-    console.log(
-      'Logged-in Employee:',
-      params.EmpId
-    );
-
-    console.log(
-      'Request:',
-      params
-    );
-
-    console.log(
-      '================================================'
-    );
-
-
-    this.publicSvr
-      .iwxPostF1(
-
-        params,
-
-        {
-
-          headers: {
-
-            apiID:
-              'ffff-1789818962176-10208193125-1483',
-
-            userKey:
-              'E9785F13CCEAFB251A6AB147AFD24336'
-
-          }
-
-        },
-
-        true
-
-      )
-
-
-      .then(
-        (res: any) => {
-
-          this.proceeding = false;
-
-
-          console.log(
-            'Meal Scan Insert Response:',
-            res
-          );
-
-
-          if (
-            res &&
-            String(res.IsOK) === '1' &&
-            res.List &&
-            res.List.length > 0
-          ) {
-
-            const logResult =
-              res.List[0];
-
-
-            const status =
-              logResult.Status ||
-              logResult.STATUS ||
-              '';
-
-
-            const message =
-              logResult.StatusMessage ||
-              logResult.STATUS_MESSAGE ||
-              '';
-
-
-            if (
-              status === 'SUCCESS'
-            ) {
-
-              this.entitlementStatus =
-                'ENTITLED';
-
-
-              this.msgSvr.success(
-                'Meal collection recorded successfully!'
-              );
-
-            }
-
-
-            else if (
-              status === 'ALREADY_SCANNED'
-            ) {
-
-              this.entitlementStatus =
-                'ALREADY_SCANNED';
-
-
-              this.msgSvr.error(
-                message ||
-                'Meal already collected today'
-              );
-
-            }
-
-
-            else if (
-              status === 'SITE_MISMATCH'
-            ) {
-
-              this.entitlementStatus =
-                'SITE_MISMATCH';
-
-
-              this.msgSvr.error(
-                message ||
-                'Employee does not belong to selected site.'
-              );
-
-            }
-
-
-            else {
-
-              this.msgSvr.error(
-                message ||
-                'Invalid scan.'
-              );
-
-            }
-
-
-            this.clearInputOnly();
-
-          }
-
-
-          else {
-
-            this.msgSvr.error(
-              res.Msg ||
-              'Failed to log scan.'
-            );
-
-          }
-
-        }
-
-      )
-
-
-      .catch(
-        err => {
-
-          this.proceeding = false;
-
-
-          console.error(
-            'Meal Scan Insert Error:',
-            err
-          );
-
-
-          this.msgSvr.error(
-            'Failed to log scan. Please try again.'
-          );
-
-        }
-      );
-
-  }
-
-
-  /* ============================================================
-     CLEAR INPUT
-     ============================================================ */
-
-  clearInputOnly(): void {
-
-    this.empNo = '';
-
-    this.focusInput();
-
-  }
-
-
-  /* ============================================================
-     CANCEL
-     ============================================================ */
-
-  cancelScan(): void {
-
-    this.employeeDetail = null;
-
-    this.entitlementStatus = '';
-
-    this.empNo = '';
-
-    this.employeePhotoUrl = null;
-
-    this.proceeding = false;
-
-    this.loading = false;
-
-    this.focusInput();
-
-  }
-
-}
+</div>
