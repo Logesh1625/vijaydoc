@@ -1,395 +1,2468 @@
-PROCEDURE GET_MEAL_DASHBOARD(
-    V_EMP_ID            IN VARCHAR2,
-    V_DATE              IN VARCHAR2,
-    V_SITE              IN VARCHAR2,
-    V_RES               OUT VARCHAR2,
-    V_RESULT            OUT VARCHAR2,
-    P_CURSOR            OUT SYS_REFCURSOR,
-    P_SUMMARY_CURSOR    OUT SYS_REFCURSOR
-) IS
 
-    V_DAY DATE;
 
-    V_TOTAL NUMBER := 0;
-    V_NO_MEAL NUMBER := 0;
-    V_COLLECTED NUMBER := 0;
-    V_NOT_REQ_CAME NUMBER := 0;
-    V_NOT_COLLECTED NUMBER := 0;
+Meal_scan 
 
-BEGIN
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef
+} from '@angular/core';
 
-    /* ============================================================
-       DATE
-       ============================================================ */
+import { HttpClient } from '@angular/common/http';
 
-    V_DAY :=
-        TO_DATE(
-            V_DATE,
-            'DD-MM-YYYY'
+import {
+  DomSanitizer,
+  SafeUrl
+} from '@angular/platform-browser';
+
+import { NzMessageService } from 'ng-zorro-antd';
+
+import {
+  PublicNetService
+} from 'src/app/routes/a_Public_net/Public_net.service';
+
+
+@Component({
+  selector: 'app-Meal-scan',
+
+  templateUrl: './Meal-scan.component.html',
+
+  styleUrls: ['./Meal-scan.component.less']
+})
+
+
+export class MealScanComponent implements OnInit {
+
+
+  /* ============================================================
+     SCAN INPUT
+     ============================================================ */
+
+  @ViewChild(
+    'scanInput',
+    { static: false }
+  )
+  scanInput: ElementRef;
+
+
+  empNo: string = '';
+
+  loading: boolean = false;
+
+  proceeding: boolean = false;
+
+
+  employeeDetail: any = null;
+
+  entitlementStatus: string = '';
+
+
+  /* ============================================================
+     PHOTO
+     ============================================================ */
+
+  employeePhotoUrl: SafeUrl | null = null;
+
+  photoLoading: boolean = false;
+
+
+  private readonly PHOTO_API_BASE =
+    'http://10.209.110.187:3000/api/image';
+
+
+  /* ============================================================
+     SITE
+     ============================================================ */
+
+  siteList: string[] = [];
+
+  selectedSite: string = '';
+
+  locationList: any[] = [];
+
+
+  /* ============================================================
+     LOGGED-IN USER
+     ============================================================ */
+
+  loginEmployeeId: string = '';
+
+
+  /* ============================================================
+     CONSTRUCTOR
+     ============================================================ */
+
+  constructor(
+
+    private publicSvr: PublicNetService,
+
+    private msgSvr: NzMessageService,
+
+    private http: HttpClient,
+
+    private sanitizer: DomSanitizer
+
+  ) {}
+
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+
+  ngOnInit(): void {
+
+    /*
+     * Get logged-in employee
+     * and load active sites.
+     */
+    this.loadLoggedInUserSite();
+
+  }
+
+
+  /* ============================================================
+     LOAD LOGGED-IN USER SITE
+     ============================================================ */
+
+  private loadLoggedInUserSite(): void {
+
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
+
+
+    console.log(
+      'Meal Scan - Logged-in user:',
+      userInfo
+    );
+
+
+    /*
+     * Employee ID mandatory.
+     */
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
+
+      this.msgSvr.error(
+        'Logged-in employee information not found.'
+      );
+
+      return;
+
+    }
+
+
+    this.loginEmployeeId =
+      String(
+        userInfo.eeid
+      )
+      .trim()
+      .toUpperCase();
+
+
+    /*
+     * Get CMS user/site list.
+     */
+    this.publicSvr
+      .getSitebasedUser()
+      .subscribe(
+
+        (userList: any[]) => {
+
+          console.log(
+            'Meal Scan - User/site list:',
+            userList
+          );
+
+
+          if (
+            !userList ||
+            userList.length === 0
+          ) {
+
+            this.msgSvr.error(
+              'No active site found for logged-in user.'
+            );
+
+            return;
+
+          }
+
+
+          /*
+           * Extract only active sites
+           * belonging to logged-in employee.
+           */
+          this.siteList =
+            this.extractAllSites(
+              userList,
+              this.loginEmployeeId
+            );
+
+
+          console.log(
+            'Meal Scan - Active sites:',
+            this.siteList
+          );
+
+
+          if (
+            this.siteList.length === 0
+          ) {
+
+            this.msgSvr.error(
+              'No active site assigned to logged-in user.'
+            );
+
+            return;
+
+          }
+
+
+          /*
+           * Default:
+           *
+           * Empty = All My Sites
+           */
+          this.selectedSite = '';
+
+
+          /*
+           * Build dropdown.
+           */
+          this.buildLocationList();
+
+
+          /*
+           * Focus scan input.
+           */
+          this.focusInput();
+
+        },
+
+
+        error => {
+
+          console.error(
+            'Meal Scan - getSitebasedUser error:',
+            error
+          );
+
+          this.msgSvr.error(
+            'Failed to load user site information.'
+          );
+
+        }
+
+      );
+
+  }
+
+
+  /* ============================================================
+     GET EEID FROM USER OBJECT
+     ============================================================ */
+
+  private getItemEeid(
+    item: any
+  ): string {
+
+    if (!item) {
+
+      return '';
+
+    }
+
+
+    const value =
+
+      item.Eeid ||
+
+      item.EEID ||
+
+      item.EeidNo ||
+
+      item.EmpId ||
+
+      item.EMP_ID ||
+
+      item.EmployeeId ||
+
+      item.EmployeeCode ||
+
+      item.eeid ||
+
+      '';
+
+
+    return String(value)
+      .trim()
+      .toUpperCase();
+
+  }
+
+
+  /* ============================================================
+     ACTIVE USER CHECK
+     ============================================================ */
+
+  private isActiveUser(
+    item: any
+  ): boolean {
+
+    if (!item) {
+
+      return false;
+
+    }
+
+
+    let delFlag: any = 0;
+
+
+    if (
+      item.DelFlag !== undefined &&
+      item.DelFlag !== null &&
+      item.DelFlag !== ''
+    ) {
+
+      delFlag =
+        item.DelFlag;
+
+    }
+
+    else if (
+      item.DEL_FLAG !== undefined &&
+      item.DEL_FLAG !== null &&
+      item.DEL_FLAG !== ''
+    ) {
+
+      delFlag =
+        item.DEL_FLAG;
+
+    }
+
+    else if (
+      item.delFlag !== undefined &&
+      item.delFlag !== null &&
+      item.delFlag !== ''
+    ) {
+
+      delFlag =
+        item.delFlag;
+
+    }
+
+    else if (
+      item.del_flag !== undefined &&
+      item.del_flag !== null &&
+      item.del_flag !== ''
+    ) {
+
+      delFlag =
+        item.del_flag;
+
+    }
+
+
+    /*
+     * 0 / NULL = active
+     * 1 = deleted
+     */
+    return Number(delFlag) === 0;
+
+  }
+
+
+  /* ============================================================
+     EXTRACT ALL ACTIVE SITES
+     ============================================================ */
+
+  private extractAllSites(
+    userList: any[],
+    eeid: string
+  ): string[] {
+
+    const loginEeid =
+      String(eeid)
+        .trim()
+        .toUpperCase();
+
+
+    const sites: string[] = [];
+
+
+    userList.forEach(
+      item => {
+
+        if (!item) {
+
+          return;
+
+        }
+
+
+        /*
+         * Employee match.
+         */
+        if (
+          this.getItemEeid(item)
+          !==
+          loginEeid
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+         * Deleted user must not be used.
+         */
+        if (
+          !this.isActiveUser(item)
+        ) {
+
+          return;
+
+        }
+
+
+        /*
+         * Extract site.
+         */
+        const site =
+          this.extractSite(item);
+
+
+        if (site) {
+
+          sites.push(site);
+
+        }
+
+      }
+    );
+
+
+    /*
+     * Remove duplicate sites.
+     */
+    const uniqueSites: string[] = [];
+
+
+    sites.forEach(
+      site => {
+
+        const exists =
+          uniqueSites.some(
+            x =>
+              x.toUpperCase() ===
+              site.toUpperCase()
+          );
+
+
+        if (!exists) {
+
+          uniqueSites.push(site);
+
+        }
+
+      }
+    );
+
+
+    return uniqueSites;
+
+  }
+
+
+  /* ============================================================
+     EXTRACT SITE
+     ============================================================ */
+
+  private extractSite(
+    user: any
+  ): string {
+
+    if (!user) {
+
+      return '';
+
+    }
+
+
+    const site =
+
+      user.Site ||
+
+      user.site ||
+
+      user.SITE ||
+
+      user.SiteName ||
+
+      user.siteName ||
+
+      user.WorkSite ||
+
+      user.Worksite ||
+
+      user.BasicCode ||
+
+      user.Basiccode ||
+
+      user.Location ||
+
+      user.location ||
+
+      '';
+
+
+    return String(site)
+      .trim();
+
+  }
+
+
+  /* ============================================================
+     BUILD SITE DROPDOWN
+     ============================================================ */
+
+  private buildLocationList(): void {
+
+    this.locationList = [
+
+      {
+        value: '',
+        label: 'All My Sites'
+      }
+
+    ];
+
+
+    this.siteList.forEach(
+      site => {
+
+        this.locationList.push({
+
+          value: site,
+
+          label: site
+
+        });
+
+      }
+    );
+
+
+    console.log(
+      'Meal Scan - Site dropdown:',
+      this.locationList
+    );
+
+  }
+
+
+  /* ============================================================
+     SITE CHANGE
+     ============================================================ */
+
+  onLocationChange(
+    location: string
+  ): void {
+
+    console.log(
+      'Meal Scan - Selected site:',
+      location
+    );
+
+
+    /*
+     * Empty = All My Sites.
+     */
+    if (
+      !location
+    ) {
+
+      this.selectedSite = '';
+
+    }
+
+    else {
+
+      /*
+       * Validate selected site.
+       */
+      const validSite =
+        this.siteList.some(
+          site =>
+            site.toUpperCase() ===
+            String(location)
+              .trim()
+              .toUpperCase()
         );
 
 
+      if (validSite) {
+
+        this.selectedSite =
+          String(location).trim();
+
+      }
+
+      else {
+
+        this.selectedSite = '';
+
+        this.msgSvr.warning(
+          'Invalid site selected.'
+        );
+
+      }
+
+    }
+
+
+    /*
+     * Clear current employee.
+     */
+    this.employeeDetail = null;
+
+    this.entitlementStatus = '';
+
+    this.employeePhotoUrl = null;
+
+
+    /*
+     * Clear badge input.
+     */
+    this.empNo = '';
+
+
+    /*
+     * Focus scanner.
+     */
+    this.focusInput();
+
+  }
+
+
+  /* ============================================================
+     FOCUS INPUT
+     * ============================================================ */
+
+  focusInput(): void {
+
+    setTimeout(
+      () => {
+
+        if (
+          this.scanInput
+        ) {
+
+          this.scanInput.nativeElement.focus();
+
+        }
+
+      },
+      100
+    );
+
+  }
+
+
+  /* ============================================================
+     SCAN ENTER
+     * ============================================================ */
+
+  onScanEnter(): void {
+
+    this.search();
+
+  }
+
+
+  /* ============================================================
+     SEARCH / GET EMPLOYEE
+     * ============================================================ */
+
+  search(
+    fromButton?: boolean
+  ): void {
+
+
     /* ============================================================
-       EMPLOYEE DATA
-
-       Employee is valid when:
-
-       DEL_FLAG = 0
-       AND selected date is between
-           FIRST_DATE_FXBL and LAST_DATE_FXBL
-
-       User can see only sites assigned to him.
+       CHECK BADGE
        ============================================================ */
 
-    WITH EMP AS
-    (
-        SELECT
-            M.FX_BADGE,
-            M.MEAL_PREFERENCE,
-            BC.NAME AS MEAL_PREFERENCE_NAME,
-            M.PROPERTY_01 AS SITE
-        FROM CMS.C_F1_MEAL_INFO M
+    if (
+      !this.empNo ||
+      this.empNo.trim() === ''
+    ) {
 
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(M.MEAL_PREFERENCE)
-               =
-               TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 81
+      this.msgSvr.error(
+        'Please scan or enter an FX Badge.'
+      );
 
-        WHERE NVL(M.DEL_FLAG, 0) = 0
+      this.focusInput();
 
-          /* DATE FILTER */
-          AND V_DAY BETWEEN
-              TRUNC(M.FIRST_DATE_FXBL)
-              AND
-              TRUNC(M.LAST_DATE_FXBL)
+      return;
 
-          /* ======================================================
-             USER SITE AUTHORIZATION
-             ====================================================== */
+    }
 
-          AND EXISTS
-          (
-              SELECT 1
-              FROM CMS.C_USER_MANAGE_T U
-
-              WHERE UPPER(TRIM(U.EMP_ID))
-                    =
-                    UPPER(TRIM(V_EMP_ID))
-
-                AND U.SYSTEM_TYPE = 'CMS'
-
-                AND NVL(U.DEL_FLAG, 0) = 0
-
-                AND UPPER(TRIM(U.SITE))
-                    =
-                    UPPER(TRIM(M.PROPERTY_01))
-
-                /* Selected site */
-                AND
-                (
-                    V_SITE IS NULL
-                    OR V_SITE = ''
-                    OR UPPER(TRIM(V_SITE)) = 'ALL'
-                    OR UPPER(TRIM(U.SITE))
-                       =
-                       UPPER(TRIM(V_SITE))
-                )
-          )
-    ),
 
     /* ============================================================
-       COLLECTED EMPLOYEES
+       CHECK SITE
        ============================================================ */
 
-    COLLECTED AS
-    (
-        SELECT DISTINCT
-            S.FX_BADGE
+    if (
+      this.siteList.length === 0
+    ) {
 
-        FROM CMS.C_F1_SCAN_LOG S
+      this.msgSvr.error(
+        'No active site available.'
+      );
 
-        WHERE NVL(S.DEL_FLAG, 0) = 0
+      return;
 
-          AND TRUNC(S.MEAL_DATE) = V_DAY
+    }
 
-          AND S.COLLECTED_DATA = 'SUCCESS'
 
-          /* USER SITE */
-          AND EXISTS
-          (
-              SELECT 1
-              FROM CMS.C_USER_MANAGE_T U
+    /*
+     * If selectedSite is specified,
+     * it must belong to logged-in user.
+     */
+    if (
+      this.selectedSite
+    ) {
 
-              WHERE UPPER(TRIM(U.EMP_ID))
-                    =
-                    UPPER(TRIM(V_EMP_ID))
+      const validSite =
+        this.siteList.some(
+          site =>
+            site.toUpperCase() ===
+            this.selectedSite.toUpperCase()
+        );
 
-                AND U.SYSTEM_TYPE = 'CMS'
 
-                AND NVL(U.DEL_FLAG, 0) = 0
+      if (!validSite) {
 
-                AND UPPER(TRIM(U.SITE))
-                    =
-                    UPPER(TRIM(S.PROPERTY_01))
+        this.msgSvr.error(
+          'Selected site is not assigned to you.'
+        );
 
-                AND
-                (
-                    V_SITE IS NULL
-                    OR V_SITE = ''
-                    OR UPPER(TRIM(V_SITE)) = 'ALL'
-                    OR UPPER(TRIM(U.SITE))
-                       =
-                       UPPER(TRIM(V_SITE))
-                )
-          )
+        return;
+
+      }
+
+    }
+
+
+    /* ============================================================
+       START LOADING
+       ============================================================ */
+
+    this.loading = true;
+
+    this.employeeDetail = null;
+
+    this.entitlementStatus = '';
+
+    this.employeePhotoUrl = null;
+
+
+    /* ============================================================
+       GET F1 MENU
+       ============================================================ */
+
+    const params: any = {
+
+      FxBadge:
+        this.empNo.trim(),
+
+      /*
+       * Empty = All My Sites
+       */
+      Site:
+        this.selectedSite || '',
+
+      /*
+       * Logged-in employee.
+       */
+      EmpId:
+        this.loginEmployeeId,
+
+      SystemName:
+        'CMS',
+
+      Func:
+        'CMS-GetF1MenuByFxbadge'
+
+    };
+
+
+    console.log(
+      '================================================'
+    );
+
+    console.log(
+      'MEAL SCAN SEARCH'
+    );
+
+    console.log(
+      'Badge:',
+      params.FxBadge
+    );
+
+    console.log(
+      'Site:',
+      params.Site || 'ALL MY SITES'
+    );
+
+    console.log(
+      'Logged-in Employee:',
+      params.EmpId
+    );
+
+    console.log(
+      'Request:',
+      params
+    );
+
+    console.log(
+      '================================================'
+    );
+
+
+    this.publicSvr
+      .iwxPostF1(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              'ffff-1789807467770-10208193125-1466',
+
+            userKey:
+              'E9785F13CCEAFB251A6AB147AFD24336'
+
+          }
+
+        },
+
+        true
+
+      )
+
+
+      .then(
+        (res: any) => {
+
+          this.loading = false;
+
+
+          console.log(
+            'Meal Scan Search Response:',
+            res
+          );
+
+
+          /*
+           * ======================================================
+           * SUCCESS
+           * ======================================================
+           */
+
+          if (
+            res &&
+            String(res.IsOK) === '1' &&
+            res.List &&
+            res.List.length > 0
+          ) {
+
+            const data =
+              res.List[0];
+
+
+            this.employeeDetail = {
+
+              FxBadge:
+                data.FxBadge ||
+                data.FX_BADGE,
+
+              Name:
+                data.Name ||
+                data.NAME,
+
+              Site:
+                data.Site ||
+                data.SITE,
+
+              MealPreference:
+                data.MealPreference ||
+                data.MEAL_PREFERENCE,
+
+              FirstDateFxbl:
+                data.FirstDateFxbl ||
+                data.FIRST_DATE_FXBL,
+
+              LastDateFxbl:
+                data.LastDateFxbl ||
+                data.LAST_DATE_FXBL
+
+            };
+
+
+            this.entitlementStatus =
+              data.EntitlementStatus ||
+              data.ENTITLEMENT_STATUS ||
+              '';
+
+
+            /*
+             * Safety check:
+             *
+             * If selected site is specified,
+             * returned employee site must match.
+             */
+            if (
+              this.selectedSite &&
+              this.employeeDetail.Site &&
+              this.employeeDetail.Site
+                .toUpperCase() !==
+              this.selectedSite
+                .toUpperCase()
+            ) {
+
+              this.loading = false;
+
+              this.msgSvr.error(
+                'This FX Badge does not belong to the selected site.'
+              );
+
+              this.employeeDetail = null;
+
+              this.entitlementStatus = '';
+
+              this.fetchEmployeePhoto(
+                this.empNo.trim()
+              );
+
+              this.clearInputOnly();
+
+              return;
+
+            }
+
+
+            /*
+             * Fetch employee photo.
+             */
+            this.fetchEmployeePhoto(
+              this.employeeDetail.FxBadge
+            );
+
+
+            /*
+             * Insert scan log.
+             */
+            this.proceed();
+
+          }
+
+          else {
+
+            /*
+             * Badge not found.
+             */
+            this.employeeDetail = {
+
+              FxBadge:
+                this.empNo.trim(),
+
+              Name: '',
+
+              Site: '',
+
+              MealPreference: '',
+
+              FirstDateFxbl: '',
+
+              LastDateFxbl: ''
+
+            };
+
+
+            this.entitlementStatus =
+              'NOT_UPDATED';
+
+
+            this.fetchEmployeePhoto(
+              this.empNo.trim()
+            );
+
+
+            this.msgSvr.error(
+              'FX Badge not found for the selected site.'
+            );
+
+
+            this.clearInputOnly();
+
+          }
+
+        }
+
+      )
+
+
+      .catch(
+        err => {
+
+          this.loading = false;
+
+
+          console.error(
+            'Meal Scan Search Error:',
+            err
+          );
+
+
+          this.msgSvr.error(
+            'Failed to fetch employee details.'
+          );
+
+
+          this.focusInput();
+
+        }
+      );
+
+  }
+
+
+  /* ============================================================
+     FETCH EMPLOYEE PHOTO
+     ============================================================ */
+
+  fetchEmployeePhoto(
+    fxBadge: string
+  ): void {
+
+    if (!fxBadge) {
+
+      return;
+
+    }
+
+
+    this.photoLoading = true;
+
+
+    this.http
+      .get(
+
+        `${this.PHOTO_API_BASE}/${fxBadge}`,
+
+        {
+          responseType: 'blob'
+        }
+
+      )
+
+
+      .subscribe({
+
+        next:
+          (blob) => {
+
+            const objectUrl =
+              URL.createObjectURL(
+                blob
+              );
+
+
+            this.employeePhotoUrl =
+              this.sanitizer
+                .bypassSecurityTrustUrl(
+                  objectUrl
+                );
+
+
+            this.photoLoading = false;
+
+          },
+
+
+        error:
+          () => {
+
+            this.employeePhotoUrl = null;
+
+            this.photoLoading = false;
+
+          }
+
+      });
+
+  }
+
+
+  /* ============================================================
+     PROCEED / INSERT SCAN LOG
+     ============================================================ */
+
+  proceed(): void {
+
+    if (
+      !this.employeeDetail
+    ) {
+
+      return;
+
+    }
+
+
+    this.proceeding = true;
+
+
+    /* ============================================================
+       INSERT SCAN LOG
+       ============================================================ */
+
+    const params: any = {
+
+      FxBadge:
+        this.employeeDetail.FxBadge,
+
+      /*
+       * Selected site.
+       *
+       * Empty = All My Sites.
+       */
+      Site:
+        this.selectedSite || '',
+
+      /*
+       * Logged-in user.
+       */
+      EmpId:
+        this.loginEmployeeId,
+
+      SystemName:
+        'CMS',
+
+      Func:
+        'CMS-InsertMealScanLog'
+
+    };
+
+
+    console.log(
+      '================================================'
+    );
+
+    console.log(
+      'MEAL SCAN INSERT'
+    );
+
+    console.log(
+      'Badge:',
+      params.FxBadge
+    );
+
+    console.log(
+      'Site:',
+      params.Site || 'ALL MY SITES'
+    );
+
+    console.log(
+      'Logged-in Employee:',
+      params.EmpId
+    );
+
+    console.log(
+      'Request:',
+      params
+    );
+
+    console.log(
+      '================================================'
+    );
+
+
+    this.publicSvr
+      .iwxPostF1(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              'ffff-1789818962176-10208193125-1483',
+
+            userKey:
+              'E9785F13CCEAFB251A6AB147AFD24336'
+
+          }
+
+        },
+
+        true
+
+      )
+
+
+      .then(
+        (res: any) => {
+
+          this.proceeding = false;
+
+
+          console.log(
+            'Meal Scan Insert Response:',
+            res
+          );
+
+
+          if (
+            res &&
+            String(res.IsOK) === '1' &&
+            res.List &&
+            res.List.length > 0
+          ) {
+
+            const logResult =
+              res.List[0];
+
+
+            const status =
+              logResult.Status ||
+              logResult.STATUS ||
+              '';
+
+
+            const message =
+              logResult.StatusMessage ||
+              logResult.STATUS_MESSAGE ||
+              '';
+
+
+            /* ==================================================
+               SUCCESS
+               ================================================== */
+
+            if (
+              status === 'SUCCESS'
+            ) {
+
+              this.msgSvr.success(
+                'Meal collection recorded successfully!'
+              );
+
+            }
+
+
+            /* ==================================================
+               ALREADY SCANNED
+               ================================================== */
+
+            else if (
+              status ===
+              'ALREADY_SCANNED'
+            ) {
+
+              this.entitlementStatus =
+                'ALREADY_SCANNED';
+
+
+              this.msgSvr.error(
+
+                message ||
+                'Meal already collected today'
+
+              );
+
+            }
+
+
+            /* ==================================================
+               SITE MISMATCH
+               ================================================== */
+
+            else if (
+              status ===
+              'SITE_MISMATCH'
+            ) {
+
+              this.entitlementStatus =
+                'SITE_MISMATCH';
+
+
+              this.msgSvr.error(
+
+                message ||
+                'Employee does not belong to selected site.'
+
+              );
+
+            }
+
+
+            /* ==================================================
+               INVALID
+               ================================================== */
+
+            else {
+
+              this.msgSvr.error(
+
+                message ||
+                'Invalid scan.'
+
+              );
+
+            }
+
+
+            /*
+             * Clear scanner.
+             */
+            this.clearInputOnly();
+
+          }
+
+          else {
+
+            this.msgSvr.error(
+
+              res.Msg ||
+              'Failed to log scan.'
+
+            );
+
+          }
+
+        }
+
+      )
+
+
+      .catch(
+        err => {
+
+          this.proceeding = false;
+
+
+          console.error(
+            'Meal Scan Insert Error:',
+            err
+          );
+
+
+          this.msgSvr.error(
+            'Failed to log scan. Please try again.'
+          );
+
+        }
+      );
+
+  }
+
+
+  /* ============================================================
+     CLEAR INPUT ONLY
+     ============================================================ */
+
+  clearInputOnly(): void {
+
+    this.empNo = '';
+
+
+    /*
+     * Keep employee detail visible
+     * after scan result.
+     *
+     * Only clear scanner input.
+     */
+
+
+    this.focusInput();
+
+  }
+
+
+  /* ============================================================
+     CANCEL
+     ============================================================ */
+
+  cancelScan(): void {
+
+    this.employeeDetail = null;
+
+    this.entitlementStatus = '';
+
+    this.empNo = '';
+
+    this.employeePhotoUrl = null;
+
+
+    this.proceeding = false;
+
+    this.loading = false;
+
+
+    this.focusInput();
+
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+food-time-price.component
+
+import {
+  STColumn,
+  STComponent,
+  STChange,
+  STPage
+} from '@delon/abc';
+
+import {
+  Component,
+  OnInit,
+  ViewChild
+} from '@angular/core';
+
+import {
+  SFComponent,
+  SFSchema
+} from '@delon/form';
+
+import { SettingsService } from '@delon/theme';
+import { deepMerge } from '@delon/util';
+
+import {
+  NzMessageService,
+  NzModalService
+} from 'ng-zorro-antd';
+
+import { ActivatedRoute } from '@angular/router';
+
+import { Observable } from 'rxjs';
+
+import { I18NService } from '@core/i18n/i18n.service';
+import { SharedModule } from '@shared';
+
+import {
+  PublicNetService
+} from '@../../src/app/routes/a_Public_net/Public_net.service';
+
+import {
+  AddDetailsDrawComponent
+} from './F1-Deatails-add/F1-Details-add';
+
+import {
+  F1ManageImportComponent
+} from '../food-time-price/F1-Details-import/F1-Details-import';
+
+
+@Component({
+  selector: 'app-food-time-price',
+  templateUrl: './food-time-price.component.html',
+  styleUrls: ['./food-time-price.component.scss']
+})
+export class FoodTimePriceComponent implements OnInit {
+
+  @ViewChild('sf', { static: false })
+  sf: SFComponent;
+
+  @ViewChild('st', { static: false })
+  private st: STComponent;
+
+  constructor(
+    private publicSvr: PublicNetService,
+    public settings: SettingsService,
+    private msgSvr: NzMessageService,
+    private shareSvr: SharedModule,
+    private modelSvr: NzModalService,
+    private router: ActivatedRoute,
+    private i18n: I18NService
+  ) {}
+
+  title = 'F1 Meal Management';
+
+  sfSchema: SFSchema;
+
+  source: any[] = [];
+
+  loading = false;
+
+  exportLoading = false;
+
+  pi = 1;
+
+  ps = 10;
+
+  total = 0;
+
+  /**
+   * Default site ID.
+   *
+   * Example:
+   * 69941
+   */
+  site = '';
+
+  /**
+   * Active site IDs of logged-in user.
+   */
+  siteList: string[] = [];
+
+  /**
+   * Dropdown options.
+   *
+   * value = API value
+   * label = UI value
+   */
+  siteOptions: Array<{
+    value: string;
+    label: string;
+  }> = [];
+
+  /**
+   * Selected raw site ID.
+   *
+   * Example:
+   * 69941
+   */
+  selectedSite = '';
+
+  /**
+   * Selected display value.
+   *
+   * Example:
+   * 69941-FXCN
+   */
+  siteDisplay = '';
+
+  /**
+   * Site display mapping.
+   */
+siteNameMap: {
+  [siteId: string]: string;
+} = {
+  '69941': 'FXCN',
+  '95326': 'FXBL'
+};
+
+  groups = '';
+
+  fxBadge = '';
+
+  groupsList: any[] = [];
+
+  checkedTableData: any[] = [];
+
+  delIdx = 0;
+
+  pages: STPage = {
+    show: true,
+    front: false,
+    showSize: true
+  };
+
+  columns: STColumn[] = [
+    {
+      title: '',
+      type: 'checkbox',
+      fixed: 'left',
+      width: '50px',
+      className: 'text-center'
+    },
+
+    {
+      title: 'Item',
+      index: 'Rn',
+      className: 'text-center',
+      width: '80px'
+    },
+
+    {
+      title: 'Group',
+      index: 'Groups',
+      className: 'text-center',
+      width: '100px'
+    },
+
+    {
+      title: 'FX Badge',
+      index: 'FxBadge',
+      className: 'text-center',
+      width: '120px'
+    },
+
+    {
+      title: 'Name',
+      index: 'Name',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'Meal Preference',
+      index: 'MealPreference',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'First Date at FXBL',
+      index: 'FirstDateFxbl',
+      className: 'text-center',
+      width: '160px'
+    },
+
+    {
+      title: 'Last Date at FXBL',
+      index: 'LastDateFxbl',
+      className: 'text-center',
+      width: '160px'
+    },
+
+    {
+      title: 'Add By',
+      index: 'AddBy',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'Add Date',
+      index: 'AddDate',
+      className: 'text-center',
+      width: '160px'
+    },
+
+    {
+      title: 'Last Edit By',
+      index: 'EditBy',
+      className: 'text-center',
+      width: '150px'
+    },
+
+    {
+      title: 'Last Edit Date',
+      index: 'EditDate',
+      className: 'text-center',
+      width: '160px'
+    }
+  ];
+
+  ngOnInit(): void {
+    const form = [
+      {
+        key: 'Groups',
+        name: 'Group',
+        type: 'string'
+      },
+
+      {
+        key: 'FxBadge',
+        name: 'FX Badge',
+        type: 'string'
+      },
+
+      {
+        key: 'AddBy',
+        name: 'Add By',
+        type: 'string'
+      }
+    ];
+
+    this.sfSchema =
+      this.publicSvr.jointSchema(form);
+
+    console.log(
+      'Current user:',
+      this.publicSvr.getSettingUserInfo()
+    );
+
+    this.loadLoggedInUserSite();
+  }
+
+  /**
+   * Load active sites for logged-in user.
+   */
+  private loadLoggedInUserSite(): void {
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
+
+    console.log(
+      'Logged-in user information:',
+      userInfo
+    );
+
+    if (!userInfo || !userInfo.eeid) {
+      this.msgSvr.error(
+        'Logged-in user EEID is missing'
+      );
+
+      return;
+    }
+
+    this.publicSvr.getSitebasedUser().subscribe(
+      (userList: any[]) => {
+        console.log(
+          'User manage response:',
+          userList
+        );
+
+        if (
+          !userList ||
+          userList.length === 0
+        ) {
+          this.msgSvr.error(
+            'No active user data returned'
+          );
+
+          return;
+        }
+
+        this.siteList =
+          this.extractAllSites(
+            userList,
+            userInfo.eeid
+          );
+
+        console.log(
+          'Active site IDs:',
+          this.siteList
+        );
+
+        if (
+          !this.siteList ||
+          this.siteList.length === 0
+        ) {
+          this.msgSvr.error(
+            'No active site found for logged-in user'
+          );
+
+          this.source = [];
+          this.total = 0;
+
+          return;
+        }
+
+this.siteOptions = this.siteList.map(siteId => {
+  return {
+    value: siteId,
+    label: this.getSiteName(siteId)
+  };
+});
+
+        /*
+         * Default selected site.
+         */
+        this.site =
+          this.siteList[0];
+
+        this.selectedSite =
+          this.site;
+
+        this.siteDisplay =
+          this.getSiteName(this.site);
+
+        console.log(
+          'Site options:',
+          this.siteOptions
+        );
+
+        console.log(
+          'API site:',
+          this.selectedSite
+        );
+
+        console.log(
+          'Display site:',
+          this.siteDisplay
+        );
+
+        this.search(true);
+      },
+      error => {
+        console.error(
+          'User site API error:',
+          error
+        );
+
+        this.msgSvr.error(
+          'Unable to load logged-in user sites'
+        );
+      }
+    );
+  }
+
+  /**
+   * Get employee ID.
+   */
+  private getItemEeid(item: any): string {
+    if (!item) {
+      return '';
+    }
+
+    return String(
+      item.Eeid ||
+      item.EEID ||
+      item.EeidNo ||
+      item.EmpId ||
+      item.EMP_ID ||
+      item.EmployeeId ||
+      item.EmployeeCode ||
+      item.eeid ||
+      ''
     )
+      .trim()
+      .toUpperCase();
+  }
 
+  /**
+   * Active user check.
+   */
+  private isActiveUser(item: any): boolean {
+    if (!item) {
+      return false;
+    }
 
-    /* ============================================================
-       DASHBOARD COUNTS
-       ============================================================ */
+    let delFlag: any = 0;
 
-    SELECT
+    if (
+      item.DelFlag !== undefined &&
+      item.DelFlag !== null &&
+      item.DelFlag !== ''
+    ) {
+      delFlag = item.DelFlag;
+    } else if (
+      item.DEL_FLAG !== undefined &&
+      item.DEL_FLAG !== null &&
+      item.DEL_FLAG !== ''
+    ) {
+      delFlag = item.DEL_FLAG;
+    } else if (
+      item.delFlag !== undefined &&
+      item.delFlag !== null &&
+      item.delFlag !== ''
+    ) {
+      delFlag = item.delFlag;
+    } else if (
+      item.del_flag !== undefined &&
+      item.del_flag !== null &&
+      item.del_flag !== ''
+    ) {
+      delFlag = item.del_flag;
+    }
 
-        /* TOTAL EMPLOYEES */
-        (
-            SELECT COUNT(*)
-            FROM EMP
-        ),
+    return Number(delFlag) === 0;
+  }
 
-        /* NO MEAL REQUIRED */
-        (
-            SELECT COUNT(*)
-            FROM EMP
-            WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME))
-                  =
-                  'NO MEAL REQUIRED'
-        ),
+  /**
+   * Extract active sites for logged-in user.
+   */
+  private extractAllSites(
+    userList: any[],
+    eeid: string
+  ): string[] {
+    const loginEeid =
+      String(eeid)
+        .trim()
+        .toUpperCase();
 
-        /* COLLECTED */
-        (
-            SELECT COUNT(*)
-            FROM COLLECTED
-        ),
+    const sites =
+      userList
+        .filter(item => {
+          if (!item) {
+            return false;
+          }
 
-        /* NOT REQUIRED BUT CAME */
-        (
-            SELECT COUNT(DISTINCT S.FX_BADGE)
+          const itemEeid =
+            this.getItemEeid(item);
 
-            FROM CMS.C_F1_SCAN_LOG S
+          if (itemEeid !== loginEeid) {
+            return false;
+          }
 
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(S.MEAL_PREFERENCE)
-                   =
-                   TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 81
+          return this.isActiveUser(item);
+        })
+        .map(item => {
+          return this.extractSite(item);
+        })
+        .filter(site => !!site)
+        .map(site => {
+          return String(site).trim();
+        });
 
-            WHERE NVL(S.DEL_FLAG, 0) = 0
+    return Array.from(
+      new Set(sites)
+    );
+  }
 
-              AND TRUNC(S.MEAL_DATE) = V_DAY
+  /**
+   * Extract raw site ID.
+   */
+  private extractSite(item: any): string {
+    if (!item) {
+      return '';
+    }
 
-              AND UPPER(TRIM(BC.NAME))
-                  =
-                  'NO MEAL REQUIRED'
+    return String(
+      item.Site ||
+      item.site ||
+      item.SITE ||
+      item.SiteId ||
+      item.siteId ||
+      ''
+    ).trim();
+  }
 
-              AND EXISTS
-              (
-                  SELECT 1
-                  FROM CMS.C_USER_MANAGE_T U
+  /**
+   * Convert site ID to display text.
+   *
+   * 69941 -> 69941-FXCN
+   * 95326 -> 95326-FXBL
+   */
+getSiteName(siteId: any): string {
+  const id = String(siteId || '').trim();
 
-                  WHERE UPPER(TRIM(U.EMP_ID))
-                        =
-                        UPPER(TRIM(V_EMP_ID))
+  if (!id) {
+    return '';
+  }
 
-                    AND U.SYSTEM_TYPE = 'CMS'
+  return this.siteNameMap[id] || id;
+}
 
-                    AND NVL(U.DEL_FLAG, 0) = 0
+  /**
+   * Site dropdown change.
+   */
+onSiteChange(siteId: string): void {
+  this.selectedSite = siteId || '';
 
-                    AND UPPER(TRIM(U.SITE))
-                        =
-                        UPPER(TRIM(S.PROPERTY_01))
+  this.siteDisplay = this.selectedSite
+    ? this.getSiteName(this.selectedSite)
+    : 'All My Sites';
 
-                    AND
-                    (
-                        V_SITE IS NULL
-                        OR V_SITE = ''
-                        OR UPPER(TRIM(V_SITE)) = 'ALL'
-                        OR UPPER(TRIM(U.SITE))
-                           =
-                           UPPER(TRIM(V_SITE))
-                    )
-              )
-        ),
+  console.log(
+    'UI site:',
+    this.siteDisplay
+  );
 
-        /* NOT COLLECTED */
-        (
-            SELECT COUNT(*)
-            FROM EMP E
+  console.log(
+    'API site:',
+    this.selectedSite
+  );
 
-            WHERE UPPER(
-                      NVL(
-                          TRIM(E.MEAL_PREFERENCE_NAME),
-                          'X'
-                      )
-                  )
-                  <>
-                  'NO MEAL REQUIRED'
+  this.search(true);
+}
 
-              AND NOT EXISTS
-              (
-                  SELECT 1
-                  FROM COLLECTED C
+  /**
+   * Search.
+   */
+  search(first?: boolean): void {
+    this.checkedTableData = [];
 
-                  WHERE C.FX_BADGE =
-                        E.FX_BADGE
-              )
-        )
+    if (first) {
+      this.pi = 1;
+    }
 
-    INTO
-        V_TOTAL,
-        V_NO_MEAL,
-        V_COLLECTED,
-        V_NOT_REQ_CAME,
-        V_NOT_COLLECTED
+    this.loading = true;
 
-    FROM DUAL;
+    this.searchHandle(false);
+  }
 
+  /**
+   * F1 API search.
+   */
+  searchHandle(isExport?: boolean): void {
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
 
-    /* ============================================================
-       CURSOR 1 - DASHBOARD CARDS
-       ============================================================ */
+    if (!userInfo || !userInfo.eeid) {
+      this.loading = false;
+      this.exportLoading = false;
 
-    OPEN P_CURSOR FOR
+      this.msgSvr.error(
+        'Logged-in user EEID is missing'
+      );
 
-    SELECT
-        V_TOTAL AS TOTAL_EMPLOYEES,
-        V_COLLECTED AS MEALS_COLLECTED,
-        V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
-        V_NO_MEAL AS NO_MEAL_REQUIRED,
-        V_NOT_REQ_CAME AS NOT_REQUIRED_CAME
-    FROM DUAL;
+      return;
+    }
 
+    if (
+      !this.siteList ||
+      this.siteList.length === 0
+    ) {
+      this.loading = false;
+      this.exportLoading = false;
 
-    /* ============================================================
-       CURSOR 2 - CATEGORY SUMMARY
-       ============================================================ */
+      this.source = [];
+      this.total = 0;
 
-    OPEN P_SUMMARY_CURSOR FOR
+      this.msgSvr.error(
+        'No active site found'
+      );
 
-    WITH CATS AS
-    (
-        SELECT 1 SORT_NO, 'Indian Veg' CATEGORY FROM DUAL
-        UNION ALL
-        SELECT 2, 'Indian Non-Veg' FROM DUAL
-        UNION ALL
-        SELECT 3, 'Western Veg' FROM DUAL
-        UNION ALL
-        SELECT 4, 'Western Non-Veg' FROM DUAL
-        UNION ALL
-        SELECT 5, 'Chinese Non-Veg' FROM DUAL
-        UNION ALL
-        SELECT 6, 'Chinese Veg' FROM DUAL
-        UNION ALL
-        SELECT 7, 'Jain' FROM DUAL
-        UNION ALL
-        SELECT 8, 'Vegan' FROM DUAL
-    ),
+      return;
+    }
 
-    CNT AS
-    (
-        SELECT
-            UPPER(TRIM(BC.NAME)) AS PREF,
-            COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
+    const params: any = {
+      Groups: this.groups || '',
+      FxBadge: this.fxBadge || '',
+      EmpId: userInfo.eeid,
+      SystemName: 'CMS',
 
-        FROM CMS.C_F1_SCAN_LOG S
+      /*
+       * API receives 69941.
+       * UI shows 69941-FXCN.
+       */
+      Site: this.selectedSite || '',
 
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(S.MEAL_PREFERENCE)
-               =
-               TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 81
+      StartPage: isExport
+        ? 1
+        : this.pi,
 
-        WHERE NVL(S.DEL_FLAG, 0) = 0
+      PageSize: isExport
+        ? 999999999999999
+        : this.ps,
 
-          AND TRUNC(S.MEAL_DATE) = V_DAY
+      Func: 'CMS-GetF1MenuManage'
+    };
 
-          AND S.COLLECTED_DATA = 'SUCCESS'
+    const formValues =
+      this.sf && this.sf.value
+        ? this.sf.value
+        : {};
 
-          /* USER SITE AUTHORIZATION */
-          AND EXISTS
-          (
-              SELECT 1
-              FROM CMS.C_USER_MANAGE_T U
+    const finalParams: any =
+      deepMerge(
+        params,
+        formValues
+      );
 
-              WHERE UPPER(TRIM(U.EMP_ID))
-                    =
-                    UPPER(TRIM(V_EMP_ID))
+    /*
+     * Force site and employee values.
+     */
+    finalParams.Site =
+      this.selectedSite || '';
 
-                AND U.SYSTEM_TYPE = 'CMS'
+    finalParams.EmpId =
+      userInfo.eeid;
 
-                AND NVL(U.DEL_FLAG, 0) = 0
+    console.log(
+      'F1 Menu Manage params:',
+      finalParams
+    );
 
-                AND UPPER(TRIM(U.SITE))
-                    =
-                    UPPER(TRIM(S.PROPERTY_01))
+    this.publicSvr.iwxPostF1(
+      finalParams,
+      {
+        headers: {
+          apiID:
+            'ffff-1789633596388-10208193125-1306',
 
-                AND
-                (
-                    V_SITE IS NULL
-                    OR V_SITE = ''
-                    OR UPPER(TRIM(V_SITE)) = 'ALL'
-                    OR UPPER(TRIM(U.SITE))
-                       =
-                       UPPER(TRIM(V_SITE))
-                )
-          )
-
-        GROUP BY
-            UPPER(TRIM(BC.NAME))
+          userKey:
+            'E9785F13CCEAFB251A6AB147AFD24336'
+        }
+      },
+      true
     )
+    .then((res: any) => {
+      this.loading = false;
+      this.exportLoading = false;
 
-    SELECT
-        C.CATEGORY,
+      console.log(
+        'F1 Menu Manage response:',
+        res
+      );
 
-        NVL(
-            N.TOTAL_COUNT,
-            0
-        ) AS COLLECTED_COUNT,
+      if (
+        !res ||
+        String(res.IsOK) !== '1'
+      ) {
+        this.source = [];
+        this.total = 0;
 
-        CASE
-            WHEN V_COLLECTED = 0
-            THEN 0
+        this.msgSvr.error(
+          res && res.Msg
+            ? res.Msg
+            : 'Unable to load F1 menu data'
+        );
 
-            ELSE ROUND(
-                NVL(N.TOTAL_COUNT, 0)
-                * 100
-                / V_COLLECTED
+        return;
+      }
+
+      const list =
+        Array.isArray(res.List)
+          ? res.List
+          : [];
+
+      if (isExport) {
+        this.exportExcel(list);
+        return;
+      }
+
+      this.source =
+        list;
+
+      this.total =
+        list.length > 0
+          ? Number(
+              list[0].Rowscount ||
+              list.length
             )
-        END AS PERCENTAGE
+          : 0;
+    })
+    .catch(error => {
+      this.loading = false;
+      this.exportLoading = false;
 
-    FROM CATS C
+      console.error(
+        'F1 Menu Manage API error:',
+        error
+      );
 
-    LEFT JOIN CNT N
-        ON N.PREF =
-           UPPER(TRIM(C.CATEGORY))
+      this.msgSvr.error(
+        'F1 Menu Manage API failed'
+      );
+    });
+  }
 
-    ORDER BY
-        C.SORT_NO;
+  /**
+   * Export Excel.
+   */
+  private exportExcel(
+    list: any[]
+  ): void {
+    if (
+      !list ||
+      list.length === 0
+    ) {
+      this.msgSvr.error(
+        'No Data!'
+      );
 
+      return;
+    }
 
-    V_RES := '1';
+    const allData =
+      list.map(item => {
+        return {
+          Item: item.Rn,
+          Group: item.Groups,
+          Site: this.getSiteName(
+            item.Site ||
+            this.selectedSite
+          ),
+          FxBadge: item.FxBadge,
+          Name: item.Name,
+          MealPreference: item.MealPreference,
+          FirstDateFxbl: item.FirstDateFxbl,
+          LastDateFxbl: item.LastDateFxbl,
+          AddBy: item.AddBy,
+          AddDate: item.AddDate,
+          LastEditBy: item.EditBy,
+          LastEditDate: item.EditDate
+        };
+      });
 
-    V_RESULT := 'Success';
+    const fileName =
+      'F1_Meal_Management_' +
+      new Date().getTime() +
+      '.xlsx';
 
+    this.publicSvr.exportHandle(
+      allData,
+      13,
+      fileName
+    );
+  }
 
-EXCEPTION
+  /**
+   * Add.
+   */
+  add(): void {
+    this.openDrawer('Add');
+  }
 
-    WHEN OTHERS THEN
+  /**
+   * Update.
+   */
+  update(): void {
+    if (
+      this.checkedTableData.length !== 1
+    ) {
+      this.shareSvr.showMsg(
+        'error',
+        this.i18n.fanyi(
+          'table.content.edit-data-select'
+        )
+      );
 
-        V_RES := '0';
+      return;
+    }
 
-        V_RESULT :=
-            'Error: ' || SQLERRM;
+    this.openDrawer('Edit');
+  }
 
-END GET_MEAL_DASHBOARD;
+  /**
+   * Import.
+   */
+  importbulk(): void {
+    this.shareSvr.openDrawer(
+      'Import',
+      F1ManageImportComponent,
+      {},
+      result => {
+        if (result) {
+          this.search(true);
+        }
+      }
+    );
+  }
+
+  /**
+   * Add / Edit drawer.
+   */
+  openDrawer(name: string): void {
+    if (
+      name === 'Edit' &&
+      this.checkedTableData.length !== 1
+    ) {
+      this.shareSvr.showMsg(
+        'error',
+        this.i18n.fanyi(
+          'table.content.edit-data-select'
+        )
+      );
+
+      return;
+    }
+
+    this.shareSvr.openDrawer(
+      name,
+      AddDetailsDrawComponent,
+      {
+        option: name,
+        editData:
+          this.checkedTableData[0],
+
+        /*
+         * Raw site ID for API.
+         */
+        site:
+          this.selectedSite ||
+          this.site,
+
+        /*
+         * Display value for UI.
+         */
+        siteDisplay:
+          this.siteDisplay,
+
+        siteList:
+          this.siteList,
+
+        siteOptions:
+          this.siteOptions
+      },
+      result => {
+        if (result) {
+          this.search(true);
+        }
+      }
+    );
+  }
+
+  /**
+   * Delete.
+   */
+  delete(): void {
+    if (
+      this.checkedTableData.length === 0
+    ) {
+      this.shareSvr.showMsg(
+        'error',
+        this.i18n.fanyi(
+          'table.content.edit-data-select'
+        )
+      );
+
+      return;
+    }
+
+    this.delIdx = 0;
+
+    this.shareSvr.modalSvr.confirm({
+      nzTitle: 'Prompt',
+
+      nzContent:
+        'Are you sure you want to delete the selected ' +
+        this.checkedTableData.length +
+        ' data?',
+
+      nzOnOk: () => {
+        this.delHandle();
+      }
+    });
+  }
+
+  /**
+   * Delete API.
+   */
+  delHandle(): void {
+    const ids: any[] = [];
+
+    this.checkedTableData.forEach(item => {
+      if (
+        item &&
+        item.Id !== undefined &&
+        item.Id !== null
+      ) {
+        ids.push(item.Id);
+      }
+    });
+
+    if (ids.length === 0) {
+      this.msgSvr.error(
+        'Selected records do not contain Id'
+      );
+
+      return;
+    }
+
+    const userInfo =
+      this.publicSvr.getSettingUserInfo();
+
+    const params = {
+      Ids: ids.join(',') + ',',
+      EditBy: userInfo.eeid,
+      Func: 'CMS-DeleteF1MenuManage'
+    };
+
+    console.log(
+      'Delete params:',
+      params
+    );
+
+    this.publicSvr.iwxPostF1(
+      params,
+      {
+        headers: {
+          apiID:
+            'ffff-1789634776545-10208193125-1341',
+
+          userKey:
+            'E9785F13CCEAFB251A6AB147AFD24336'
+        }
+      },
+      true
+    )
+    .then((res: any) => {
+      if (
+        res &&
+        String(res.IsOK) === '1'
+      ) {
+        this.msgSvr.success(
+          'Success'
+        );
+
+        this.search(true);
+      } else {
+        this.msgSvr.error(
+          res && res.Msg
+            ? res.Msg
+            : 'Delete failed'
+        );
+      }
+    })
+    .catch(error => {
+      console.error(
+        'Delete API error:',
+        error
+      );
+
+      this.msgSvr.error(
+        'Delete failed'
+      );
+    });
+  }
+
+  /**
+   * Export.
+   */
+  exportData(): void {
+    if (
+      !this.siteList ||
+      this.siteList.length === 0
+    ) {
+      this.msgSvr.error(
+        'No active site found'
+      );
+
+      return;
+    }
+
+    this.exportLoading = true;
+
+    this.searchHandle(true);
+  }
+
+  /**
+   * Table changes.
+   */
+  change(ret: STChange): void {
+    if (
+      ret.type === 'checkbox'
+    ) {
+      this.checkedTableData =
+        ret.checkbox || [];
+    }
+
+    if (
+      ret.type === 'pi'
+    ) {
+      this.pi =
+        ret.pi;
+
+      this.search(false);
+    }
+
+    if (
+      ret.type === 'ps'
+    ) {
+      this.ps =
+        ret.ps;
+
+      this.search(true);
+    }
+  }
+}
