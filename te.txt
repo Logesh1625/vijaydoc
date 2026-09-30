@@ -15,10 +15,15 @@
 
 .header-row {
   width: 100%;
+
   background: #ffffff;
+
   border: 1px solid #e7edf4;
+
   border-radius: 14px;
+
   padding: 18px 22px;
+
   margin-bottom: 18px;
 
   box-shadow:
@@ -28,7 +33,9 @@
 
 .title-block {
   display: flex;
+
   align-items: center;
+
   gap: 14px;
 }
 
@@ -36,15 +43,18 @@
 .title-icon {
   width: 50px;
   height: 50px;
+
   min-width: 50px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   border-radius: 13px;
 
   background: #edf5ff;
+
   color: #1677ff;
 }
 
@@ -60,6 +70,7 @@
   color: #172b4d;
 
   font-size: 25px;
+
   font-weight: 700;
 
   line-height: 1.2;
@@ -108,6 +119,7 @@
 
 .control-row {
   display: flex;
+
   align-items: center;
 
   gap: 14px;
@@ -131,6 +143,7 @@
   color: #263b5b;
 
   font-size: 15px;
+
   font-weight: 700;
 }
 
@@ -142,9 +155,11 @@
 .section-icon {
   width: 46px;
   height: 46px;
+
   min-width: 46px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -154,12 +169,14 @@
 
 .site-icon {
   background: #edf5ff;
+
   color: #1677ff;
 }
 
 
 .scan-icon {
   background: #edf5ff;
+
   color: #1677ff;
 }
 
@@ -175,6 +192,7 @@
 
 .site-select {
   width: 270px;
+
   min-width: 270px;
 }
 
@@ -183,6 +201,7 @@
   height: 44px !important;
 
   display: flex;
+
   align-items: center;
 
   padding: 0 14px !important;
@@ -217,11 +236,13 @@
 
 .selected-site {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
 
   margin-left: 5px;
+
   padding-left: 20px;
 
   border-left: 1px solid #e0e7ef;
@@ -242,6 +263,7 @@
   color: #126de5;
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
@@ -252,6 +274,7 @@
 
 .site-warning {
   display: flex;
+
   align-items: center;
 
   gap: 8px;
@@ -267,6 +290,11 @@
   color: #ad6800;
 
   font-size: 13px;
+}
+
+
+.site-warning i {
+  font-size: 16px;
 }
 
 
@@ -332,6 +360,7 @@
   padding: 0 20px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -370,6 +399,7 @@
 
 .scan-hint {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
@@ -446,7 +476,11 @@
 
 /* ============================================================
    EMPLOYEE RESULT
-   PHOTO | DETAILS | STATUS
+   ------------------------------------------------------------
+   TOP:
+      PHOTO | EMPLOYEE DETAILS
+   BOTTOM:
+      FULL WIDTH STATUS
    ============================================================ */
 
 .employee-result {
@@ -454,14 +488,17 @@
 
   grid-template-columns:
     210px
-    minmax(350px, 1fr)
-    minmax(320px, 0.85fr);
+    minmax(0, 1fr);
 
-  align-items: stretch;
+  grid-template-areas:
+    "profile details"
+    "status status";
 
   gap: 25px;
 
   padding: 24px 28px;
+
+  align-items: stretch;
 }
 
 
@@ -470,6 +507,8 @@
    ============================================================ */
 
 .employee-profile {
+  grid-area: profile;
+
   display: flex;
 
   flex-direction: column;
@@ -477,6 +516,8 @@
   align-items: center;
 
   justify-content: center;
+
+  min-width: 0;
 }
 
 
@@ -493,6 +534,7 @@
   border: 2px solid #e2e9f1;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -528,6 +570,7 @@
   padding: 6px 18px;
 
   display: flex;
+
   align-items: center;
 
   gap: 6px;
@@ -554,6 +597,8 @@
    ============================================================ */
 
 .employee-details {
+  grid-area: details;
+
   min-width: 0;
 
   padding: 0 15px 0 20px;
@@ -569,7 +614,7 @@
     34px
     155px
     15px
-    1fr;
+    minmax(0, 1fr);
 
   align-items: center;
 
@@ -582,6 +627,7 @@
   height: 28px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -596,24 +642,28 @@
 
 .detail-icon.blue {
   color: #1677ff;
+
   background: #edf5ff;
 }
 
 
 .detail-icon.purple {
   color: #722ed1;
+
   background: #f3edff;
 }
 
 
 .detail-icon.green {
   color: #13a87b;
+
   background: #e9fff7;
 }
 
 
 .detail-icon.pink {
   color: #eb2f96;
+
   background: #fff0f7;
 }
 
@@ -644,6 +694,8 @@
   font-weight: 700;
 
   word-break: break-word;
+
+  min-width: 0;
 }
 
 
@@ -662,20 +714,28 @@
 
 /* ============================================================
    STATUS SECTION
+   ------------------------------------------------------------
+   STATUS IS BELOW PHOTO + DETAILS
    ============================================================ */
 
 .status-section {
+  grid-area: status;
+
+  width: 100%;
+
   min-width: 0;
+
+  padding-top: 20px;
+
+  border-top: 1px solid #e4eaf1;
+
+  border-left: none;
 
   display: flex;
 
   flex-direction: column;
 
   justify-content: center;
-
-  padding-left: 25px;
-
-  border-left: 1px solid #e4eaf1;
 }
 
 
@@ -684,17 +744,19 @@
    ============================================================ */
 
 .status-card {
+  width: 100%;
+
   min-height: 180px;
 
   padding: 22px;
 
   display: flex;
 
+  flex-direction: column;
+
   align-items: center;
 
   justify-content: center;
-
-  flex-direction: column;
 
   gap: 10px;
 
@@ -751,7 +813,6 @@
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   background: currentColor;
@@ -809,6 +870,8 @@
   font-weight: 700;
 
   text-align: center;
+
+  word-break: break-word;
 }
 
 
@@ -817,6 +880,10 @@
    ============================================================ */
 
 .status-message {
+  width: 100%;
+
+  box-sizing: border-box;
+
   display: flex;
 
   align-items: flex-start;
@@ -834,6 +901,8 @@
   border: 1px solid #ffe1b5;
 
   color: #8c5a18;
+
+  text-align: left;
 }
 
 
@@ -843,6 +912,8 @@
   color: #fa8c16;
 
   font-size: 17px;
+
+  flex-shrink: 0;
 }
 
 
@@ -927,6 +998,7 @@
   margin: 0 auto 14px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -971,6 +1043,7 @@
 
   .scan-wrapper {
     padding-left: 30px;
+
     padding-right: 30px;
   }
 
@@ -978,10 +1051,26 @@
   .employee-result {
     grid-template-columns:
       230px
-      minmax(450px, 1fr)
-      minmax(360px, 0.85fr);
+      minmax(0, 1fr);
 
     gap: 30px;
+  }
+
+
+  .photo-container {
+    width: 155px;
+
+    height: 155px;
+  }
+
+
+  .detail-row {
+    min-height: 44px;
+  }
+
+
+  .status-card {
+    min-height: 190px;
   }
 
 }
@@ -1007,34 +1096,50 @@
   }
 
 
+  /* --------------------------------------------
+     EMPLOYEE RESULT
+     -------------------------------------------- */
+
   .employee-result {
     grid-template-columns:
-      190px
-      1fr;
+      180px
+      minmax(0, 1fr);
+
+    grid-template-areas:
+      "profile details"
+      "status status";
+
+    gap: 20px;
+
+    padding: 22px;
   }
 
 
   .employee-details {
-    border-left: none;
-
-    padding-left: 0;
+    padding-left: 18px;
   }
 
 
   .status-section {
-    grid-column: 1 / -1;
+    padding-top: 18px;
 
     border-left: none;
 
     border-top: 1px solid #e4eaf1;
-
-    padding:
-      18px 0 0;
   }
 
 
   .status-card {
-    min-height: 160px;
+    min-height: 170px;
+  }
+
+
+  .detail-row {
+    grid-template-columns:
+      32px
+      145px
+      12px
+      minmax(0, 1fr);
   }
 
 }
@@ -1050,6 +1155,8 @@
     padding: 12px;
   }
 
+
+  /* HEADER */
 
   .header-row {
     padding: 15px;
@@ -1069,6 +1176,11 @@
   }
 
 
+  .title-block {
+    gap: 10px;
+  }
+
+
   .title-block h1 {
     font-size: 21px;
   }
@@ -1078,6 +1190,8 @@
     font-size: 11px;
   }
 
+
+  /* CONTROL */
 
   .control-card {
     padding: 15px;
@@ -1100,6 +1214,7 @@
 
   .site-select {
     width: 100%;
+
     min-width: 100%;
   }
 
@@ -1108,6 +1223,8 @@
     width: 100%;
 
     padding-top: 8px;
+
+    border-left: none;
 
     border-top: 1px solid #e5ebf2;
   }
@@ -1140,7 +1257,13 @@
      -------------------------------------------- */
 
   .employee-result {
+
     grid-template-columns: 1fr;
+
+    grid-template-areas:
+      "profile"
+      "details"
+      "status";
 
     gap: 20px;
 
@@ -1148,10 +1271,21 @@
   }
 
 
+  /* PROFILE */
+
   .employee-profile {
     width: 100%;
   }
 
+
+  .photo-container {
+    width: 135px;
+
+    height: 135px;
+  }
+
+
+  /* DETAILS */
 
   .employee-details {
     width: 100%;
@@ -1167,7 +1301,9 @@
       30px
       130px
       12px
-      1fr;
+      minmax(0, 1fr);
+
+    min-height: 40px;
   }
 
 
@@ -1181,29 +1317,31 @@
   }
 
 
-  /* --------------------------------------------
-     STATUS
-     -------------------------------------------- */
+  /* STATUS */
 
   .status-section {
     width: 100%;
 
-    padding-left: 0;
+    padding-top: 18px;
 
     border-left: none;
 
     border-top: 1px solid #e4eaf1;
-
-    padding-top: 18px;
   }
 
 
   .status-card {
-    min-height: 170px;
+    width: 100%;
+
+    min-height: 165px;
 
     padding: 18px;
 
     flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
 
     text-align: center;
   }
@@ -1222,6 +1360,13 @@
     text-align: center;
   }
 
+
+  .status-message {
+    width: 100%;
+
+    margin-top: 10px;
+  }
+
 }
 
 
@@ -1231,12 +1376,84 @@
 
 @media (max-width: 480px) {
 
+  .scan-wrapper {
+    padding: 10px;
+  }
+
+
+  .header-row {
+    border-radius: 12px;
+
+    padding: 13px;
+  }
+
+
+  .title-icon {
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
+  }
+
+
+  .title-icon i {
+    font-size: 20px;
+  }
+
+
+  .title-block h1 {
+    font-size: 19px;
+  }
+
+
+  .title-block p {
+    font-size: 10px;
+  }
+
+
+  .control-card {
+    padding: 13px;
+  }
+
+
+  .employee-result {
+    padding: 16px;
+
+    gap: 16px;
+  }
+
+
+  .photo-container {
+    width: 120px;
+
+    height: 120px;
+  }
+
+
+  .default-user {
+    font-size: 50px;
+  }
+
+
   .detail-row {
     grid-template-columns:
       28px
       115px
       10px
-      1fr;
+      minmax(0, 1fr);
+
+    min-height: 38px;
+  }
+
+
+  .detail-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+
+  .detail-icon i {
+    font-size: 13px;
   }
 
 
@@ -1247,6 +1464,18 @@
 
   .detail-value {
     font-size: 12px;
+  }
+
+
+  .detail-colon {
+    font-size: 12px;
+  }
+
+
+  .status-card {
+    min-height: 155px;
+
+    padding: 16px;
   }
 
 
@@ -1263,8 +1492,35 @@
   }
 
 
+  .status-title {
+    font-size: 12px;
+  }
+
+
   .status-content strong {
     font-size: 17px;
+  }
+
+
+  .status-message {
+    padding: 10px;
+
+    gap: 7px;
+  }
+
+
+  .status-message > i {
+    font-size: 15px;
+  }
+
+
+  .status-message strong {
+    font-size: 11px;
+  }
+
+
+  .status-message span {
+    font-size: 10px;
   }
 
 }
