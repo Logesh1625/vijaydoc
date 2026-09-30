@@ -4,7 +4,9 @@
 
 .scan-wrapper {
   min-height: 100%;
+
   padding: 18px 24px 35px;
+
   background: #f7f9fc;
 }
 
@@ -15,10 +17,15 @@
 
 .header-row {
   width: 100%;
+
   background: #ffffff;
+
   border: 1px solid #e7edf4;
+
   border-radius: 14px;
+
   padding: 18px 22px;
+
   margin-bottom: 18px;
 
   box-shadow:
@@ -28,7 +35,9 @@
 
 .title-block {
   display: flex;
+
   align-items: center;
+
   gap: 14px;
 }
 
@@ -36,15 +45,18 @@
 .title-icon {
   width: 50px;
   height: 50px;
+
   min-width: 50px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
   border-radius: 13px;
 
   background: #edf5ff;
+
   color: #1677ff;
 }
 
@@ -60,6 +72,7 @@
   color: #172b4d;
 
   font-size: 25px;
+
   font-weight: 700;
 
   line-height: 1.2;
@@ -108,6 +121,7 @@
 
 .control-row {
   display: flex;
+
   align-items: center;
 
   gap: 14px;
@@ -131,6 +145,7 @@
   color: #263b5b;
 
   font-size: 15px;
+
   font-weight: 700;
 }
 
@@ -142,9 +157,11 @@
 .section-icon {
   width: 46px;
   height: 46px;
+
   min-width: 46px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -154,12 +171,14 @@
 
 .site-icon {
   background: #edf5ff;
+
   color: #1677ff;
 }
 
 
 .scan-icon {
   background: #edf5ff;
+
   color: #1677ff;
 }
 
@@ -175,6 +194,7 @@
 
 .site-select {
   width: 270px;
+
   min-width: 270px;
 }
 
@@ -183,6 +203,7 @@
   height: 44px !important;
 
   display: flex;
+
   align-items: center;
 
   padding: 0 14px !important;
@@ -217,11 +238,13 @@
 
 .selected-site {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
 
   margin-left: 5px;
+
   padding-left: 20px;
 
   border-left: 1px solid #e0e7ef;
@@ -242,6 +265,7 @@
   color: #126de5;
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
@@ -252,6 +276,7 @@
 
 .site-warning {
   display: flex;
+
   align-items: center;
 
   gap: 8px;
@@ -337,6 +362,7 @@
   padding: 0 20px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -375,6 +401,7 @@
 
 .scan-hint {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
@@ -416,12 +443,12 @@
 
   border-radius: 15px;
 
-  box-shadow:
-    0 5px 18px rgba(30, 70, 110, 0.08);
-
   border: 1px solid #e4eaf1;
 
   border-left: 4px solid transparent;
+
+  box-shadow:
+    0 5px 18px rgba(30, 70, 110, 0.08);
 }
 
 
@@ -452,31 +479,45 @@
 /* ============================================================
    EMPLOYEE RESULT
    ------------------------------------------------------------
-   TOP:
-       PHOTO | EMPLOYEE DETAILS
-
-   BOTTOM:
+   LEFT:
+       PHOTO
+       SITE
        STATUS
+
+   RIGHT:
+       EMPLOYEE DETAILS
+
+   Everything is vertically centered.
    ============================================================ */
 
 .employee-result {
+  width: 100%;
+
+  box-sizing: border-box;
+
   display: grid;
 
   grid-template-columns:
-    210px
+    260px
     minmax(0, 1fr);
+
+  grid-template-rows:
+    auto
+    auto;
 
   grid-template-areas:
     "profile details"
-    "status status";
+    "status  details";
 
-  column-gap: 25px;
+  column-gap: 35px;
 
   row-gap: 18px;
 
-  padding: 22px 28px;
+  padding: 28px 35px;
 
-  align-items: stretch;
+  align-items: center;
+
+  justify-items: center;
 }
 
 
@@ -487,6 +528,8 @@
 .employee-profile {
   grid-area: profile;
 
+  width: 100%;
+
   display: flex;
 
   flex-direction: column;
@@ -495,17 +538,21 @@
 
   justify-content: center;
 
-  min-width: 0;
+  text-align: center;
 }
 
 
+/* ============================================================
+   PHOTO
+   ============================================================ */
+
 .photo-container {
-  width: 140px;
-  height: 140px;
+  width: 145px;
+  height: 145px;
 
   overflow: hidden;
 
-  border-radius: 12px;
+  border-radius: 13px;
 
   background: #f1f5f9;
 
@@ -517,7 +564,7 @@
   justify-content: center;
 
   box-shadow:
-    0 4px 12px rgba(30, 70, 110, 0.08);
+    0 5px 14px rgba(30, 70, 110, 0.10);
 }
 
 
@@ -532,7 +579,7 @@
 
 
 .default-user {
-  font-size: 55px;
+  font-size: 60px;
 
   color: #a4b4c7;
 }
@@ -543,22 +590,25 @@
    ============================================================ */
 
 .profile-site {
-  margin-top: 9px;
+  margin-top: 10px;
 
-  padding: 5px 16px;
+  padding: 6px 18px;
 
   display: flex;
+
   align-items: center;
 
-  gap: 5px;
+  justify-content: center;
 
-  border-radius: 16px;
+  gap: 6px;
+
+  border-radius: 18px;
 
   background: #edf6ff;
 
   color: #1677ff;
 
-  font-size: 12px;
+  font-size: 13px;
 
   font-weight: 700;
 }
@@ -576,44 +626,62 @@
 .employee-details {
   grid-area: details;
 
+  width: 100%;
+
   min-width: 0;
 
-  padding: 4px 10px 4px 22px;
+  padding: 5px 20px 5px 30px;
 
   border-left: 1px solid #e5ebf2;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
 }
 
 
+/* ============================================================
+   DETAIL ROW
+   ============================================================ */
+
 .detail-row {
+  width: 100%;
+
+  min-height: 43px;
+
   display: grid;
 
   grid-template-columns:
-    34px
-    155px
+    36px
+    165px
     15px
     minmax(0, 1fr);
 
   align-items: center;
-
-  min-height: 38px;
 }
 
 
+/* ============================================================
+   DETAIL ICON
+   ============================================================ */
+
 .detail-icon {
-  width: 27px;
-  height: 27px;
+  width: 28px;
+  height: 28px;
 
   display: flex;
 
   align-items: center;
   justify-content: center;
 
-  border-radius: 7px;
+  border-radius: 8px;
 }
 
 
 .detail-icon i {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 
@@ -645,10 +713,14 @@
 }
 
 
+/* ============================================================
+   DETAIL LABEL
+   ============================================================ */
+
 .detail-label {
   color: #687a91;
 
-  font-size: 12px;
+  font-size: 13px;
 
   font-weight: 600;
 
@@ -659,31 +731,35 @@
 .detail-colon {
   color: #9aa9bb;
 
-  font-size: 12px;
+  font-size: 13px;
 
   text-align: center;
 }
 
 
+/* ============================================================
+   DETAIL VALUE
+   ============================================================ */
+
 .detail-value {
+  min-width: 0;
+
   color: #1b3152;
 
-  font-size: 13px;
+  font-size: 14px;
 
   font-weight: 700;
 
   word-break: break-word;
-
-  min-width: 0;
 }
 
 
 .site-value {
   width: fit-content;
 
-  padding: 3px 10px;
+  padding: 4px 11px;
 
-  border-radius: 14px;
+  border-radius: 16px;
 
   background: #edf6ff;
 
@@ -694,7 +770,8 @@
 /* ============================================================
    STATUS SECTION
    ------------------------------------------------------------
-   STATUS IS BELOW PHOTO + EMPLOYEE DETAILS
+   IMPORTANT:
+   Status stays under the photo and is centered.
    ============================================================ */
 
 .status-section {
@@ -702,57 +779,54 @@
 
   width: 100%;
 
-  min-width: 0;
-
-  padding-top: 14px;
-
-  border-top: 1px solid #e5ebf2;
-
-  border-left: none;
+  max-width: 240px;
 
   display: flex;
 
   flex-direction: column;
 
-  align-items: stretch;
+  align-items: center;
 
   justify-content: center;
+
+  margin: 0 auto;
+
+  padding: 0;
+
+  border: none;
 }
 
 
 /* ============================================================
    STATUS CARD
-   ------------------------------------------------------------
-   COMPACT HORIZONTAL STYLE
-   LIKE REFERENCE IMAGE
    ============================================================ */
 
 .status-card {
   width: 100%;
 
-  min-height: 54px;
+  min-height: 58px;
 
-  padding: 8px 18px;
+  box-sizing: border-box;
+
+  padding: 9px 13px;
 
   display: flex;
 
-  flex-direction: row;
-
   align-items: center;
 
-  justify-content: flex-start;
+  justify-content: center;
 
-  gap: 10px;
+  gap: 9px;
 
-  border-radius: 8px;
+  border-radius: 9px;
 
   background: #ffffff;
 
-  border: 1px solid currentColor;
+  border: 1px solid;
 
   box-shadow: none;
 
-  text-align: left;
+  text-align: center;
 }
 
 
@@ -763,7 +837,7 @@
 .status-entitled {
   color: #389e0d;
 
-  background: #ffffff;
+  background: #fafff7;
 
   border-color: #b7dfaa;
 }
@@ -772,7 +846,7 @@
 .status-already {
   color: #d46b08;
 
-  background: #ffffff;
+  background: #fffaf0;
 
   border-color: #ffd591;
 }
@@ -781,7 +855,7 @@
 .status-mismatch {
   color: #ad6800;
 
-  background: #ffffff;
+  background: #fffdf0;
 
   border-color: #ffe58f;
 }
@@ -790,7 +864,7 @@
 .status-not-entitled {
   color: #cf1322;
 
-  background: #ffffff;
+  background: #fff7f6;
 
   border-color: #ffa39e;
 }
@@ -801,10 +875,10 @@
    ============================================================ */
 
 .status-icon-wrapper {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
 
-  min-width: 28px;
+  min-width: 30px;
 
   border-radius: 50%;
 
@@ -820,7 +894,7 @@
 .status-icon-wrapper i {
   color: #ffffff;
 
-  font-size: 15px;
+  font-size: 16px;
 }
 
 
@@ -829,15 +903,17 @@
    ============================================================ */
 
 .status-content {
+  min-width: 0;
+
   display: flex;
 
-  flex-direction: row;
+  flex-direction: column;
 
-  align-items: center;
+  align-items: flex-start;
 
-  gap: 8px;
+  justify-content: center;
 
-  min-width: 0;
+  gap: 2px;
 
   text-align: left;
 }
@@ -846,26 +922,22 @@
 .status-title {
   color: #65758b;
 
-  font-size: 13px;
+  font-size: 11px;
 
   font-weight: 600;
-
-  opacity: 1;
 }
 
 
 .status-content strong {
   color: inherit;
 
-  font-size: 15px;
-
-  line-height: 1.2;
+  font-size: 14px;
 
   font-weight: 700;
 
-  text-align: left;
+  line-height: 1.2;
 
-  word-break: break-word;
+  white-space: nowrap;
 }
 
 
@@ -882,11 +954,11 @@
 
   align-items: flex-start;
 
-  gap: 8px;
+  gap: 7px;
 
-  margin-top: 8px;
+  margin-top: 7px;
 
-  padding: 9px 12px;
+  padding: 8px 10px;
 
   border-radius: 7px;
 
@@ -903,36 +975,36 @@
 .status-message > i {
   margin-top: 2px;
 
+  flex-shrink: 0;
+
   color: #fa8c16;
 
-  font-size: 15px;
-
-  flex-shrink: 0;
+  font-size: 14px;
 }
 
 
 .status-message div {
+  min-width: 0;
+
   display: flex;
 
   flex-direction: column;
 
   gap: 2px;
-
-  min-width: 0;
 }
 
 
 .status-message strong {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 
 .status-message span {
-  font-size: 10px;
+  color: #8b7963;
+
+  font-size: 9px;
 
   line-height: 1.4;
-
-  color: #8b7963;
 }
 
 
@@ -975,7 +1047,6 @@
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 }
 
@@ -1044,24 +1115,46 @@
 
   .employee-result {
     grid-template-columns:
-      230px
+      280px
       minmax(0, 1fr);
 
-    column-gap: 30px;
+    column-gap: 45px;
 
-    row-gap: 20px;
+    padding:
+      30px 45px;
   }
 
 
   .photo-container {
-    width: 150px;
+    width: 155px;
 
-    height: 150px;
+    height: 155px;
+  }
+
+
+  .status-section {
+    max-width: 250px;
   }
 
 
   .detail-row {
-    min-height: 40px;
+    min-height: 45px;
+
+    grid-template-columns:
+      38px
+      175px
+      15px
+      minmax(0, 1fr);
+  }
+
+
+  .detail-label {
+    font-size: 14px;
+  }
+
+
+  .detail-value {
+    font-size: 15px;
   }
 
 }
@@ -1087,25 +1180,21 @@
   }
 
 
+  /* RESULT */
+
   .employee-result {
     grid-template-columns:
-      180px
+      210px
       minmax(0, 1fr);
 
-    grid-template-areas:
-      "profile details"
-      "status status";
+    column-gap: 25px;
 
-    column-gap: 20px;
-
-    row-gap: 16px;
-
-    padding: 20px;
+    padding: 22px;
   }
 
 
   .employee-details {
-    padding-left: 18px;
+    padding-left: 22px;
   }
 
 
@@ -1119,7 +1208,7 @@
 
 
   .status-section {
-    padding-top: 13px;
+    max-width: 210px;
   }
 
 }
@@ -1236,10 +1325,17 @@
   }
 
 
-  /* EMPLOYEE RESULT */
+  /* ========================================================
+     MOBILE RESULT
+     ======================================================== */
 
   .employee-result {
     grid-template-columns: 1fr;
+
+    grid-template-rows:
+      auto
+      auto
+      auto;
 
     grid-template-areas:
       "profile"
@@ -1248,14 +1344,18 @@
 
     gap: 16px;
 
-    padding: 18px;
+    padding: 20px 18px;
   }
 
 
-  /* PROFILE */
+  /* PHOTO CENTER */
 
   .employee-profile {
     width: 100%;
+
+    align-items: center;
+
+    justify-content: center;
   }
 
 
@@ -1266,25 +1366,33 @@
   }
 
 
-  /* DETAILS */
+  /* DETAILS CENTER */
 
   .employee-details {
     width: 100%;
 
-    padding: 0;
+    padding: 15px 0;
 
     border-left: none;
+
+    border-top: 1px solid #e5ebf2;
+
+    border-bottom: 1px solid #e5ebf2;
+
+    align-items: center;
   }
 
 
   .detail-row {
+    width: 100%;
+
     grid-template-columns:
       30px
       125px
       10px
       minmax(0, 1fr);
 
-    min-height: 38px;
+    min-height: 39px;
   }
 
 
@@ -1298,80 +1406,42 @@
   }
 
 
-  /* STATUS */
+  /* STATUS CENTER */
 
   .status-section {
     width: 100%;
 
-    padding-top: 12px;
+    max-width: 280px;
 
-    border-left: none;
+    margin: 0 auto;
 
-    border-top: 1px solid #e5ebf2;
+    align-items: center;
   }
 
 
   .status-card {
     width: 100%;
 
-    min-height: 50px;
+    min-height: 52px;
 
     padding: 8px 12px;
 
-    display: flex;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    justify-content: flex-start;
-
-    text-align: left;
+    justify-content: center;
   }
 
 
   .status-content {
-    display: flex;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    gap: 6px;
-
-    text-align: left;
-  }
-
-
-  .status-title {
-    font-size: 11px;
+    align-items: flex-start;
   }
 
 
   .status-content strong {
     font-size: 13px;
-
-    text-align: left;
-  }
-
-
-  .status-icon-wrapper {
-    width: 26px;
-    height: 26px;
-
-    min-width: 26px;
-  }
-
-
-  .status-icon-wrapper i {
-    font-size: 14px;
   }
 
 
   .status-message {
     width: 100%;
-
-    padding: 9px 10px;
   }
 
 }
@@ -1423,8 +1493,10 @@
   }
 
 
+  /* RESULT */
+
   .employee-result {
-    padding: 15px;
+    padding: 17px 14px;
 
     gap: 14px;
   }
@@ -1442,6 +1514,15 @@
   }
 
 
+  /* DETAILS */
+
+  .employee-details {
+    padding-top: 12px;
+
+    padding-bottom: 12px;
+  }
+
+
   .detail-row {
     grid-template-columns:
       28px
@@ -1455,6 +1536,7 @@
 
   .detail-icon {
     width: 26px;
+
     height: 26px;
   }
 
@@ -1479,8 +1561,15 @@
   }
 
 
+  /* STATUS */
+
+  .status-section {
+    max-width: 250px;
+  }
+
+
   .status-card {
-    min-height: 48px;
+    min-height: 50px;
 
     padding: 7px 10px;
 
@@ -1489,20 +1578,15 @@
 
 
   .status-icon-wrapper {
-    width: 25px;
-    height: 25px;
+    width: 26px;
+    height: 26px;
 
-    min-width: 25px;
+    min-width: 26px;
   }
 
 
   .status-icon-wrapper i {
     font-size: 13px;
-  }
-
-
-  .status-content {
-    gap: 5px;
   }
 
 
