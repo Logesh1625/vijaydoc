@@ -19,6 +19,8 @@
 
   box-shadow:
     0 5px 18px rgba(30, 70, 110, 0.08);
+
+  box-sizing: border-box;
 }
 
 
@@ -44,14 +46,14 @@
 
 
 /* ============================================================
-   EMPLOYEE RESULT
+   MAIN EMPLOYEE RESULT
    ------------------------------------------------------------
-   LEFT SIDE:
+   LEFT:
        PHOTO
        SITE
        STATUS
 
-   RIGHT SIDE:
+   RIGHT:
        EMPLOYEE DETAILS
    ============================================================ */
 
@@ -61,41 +63,25 @@
 
   display: grid;
 
-  /*
-     LEFT COLUMN = 300px
-     RIGHT COLUMN = remaining space
-  */
   grid-template-columns:
     300px
     minmax(0, 1fr);
-
-  /*
-     First row  = photo
-     Second row = status
-  */
-  grid-template-rows:
-    auto
-    auto;
 
   grid-template-areas:
     "profile details"
     "status  details";
 
-  column-gap: 35px;
-  row-gap: 20px;
+  column-gap: 45px;
+  row-gap: 22px;
 
-  padding: 28px 35px;
+  padding: 30px 40px;
 
-  /*
-     Important:
-     Both left and right content are centered.
-  */
   align-items: center;
 }
 
 
 /* ============================================================
-   EMPLOYEE PROFILE
+   LEFT PROFILE AREA
    ============================================================ */
 
 .employee-profile {
@@ -108,6 +94,7 @@
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
   text-align: center;
@@ -137,6 +124,8 @@
 
   box-shadow:
     0 5px 14px rgba(30, 70, 110, 0.10);
+
+  flex-shrink: 0;
 }
 
 
@@ -152,13 +141,12 @@
 
 .default-user {
   font-size: 60px;
-
   color: #a4b4c7;
 }
 
 
 /* ============================================================
-   PROFILE SITE
+   SITE BELOW PHOTO
    ============================================================ */
 
 .profile-site {
@@ -180,6 +168,7 @@
   color: #1677ff;
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
@@ -193,8 +182,6 @@
    EMPLOYEE DETAILS
    ------------------------------------------------------------
    RIGHT SIDE
-   ------------------------------------------------------------
-   Vertically centered with photo + status area
    ============================================================ */
 
 .employee-details {
@@ -203,9 +190,6 @@
   width: 100%;
   min-width: 0;
 
-  /*
-     This makes the details sit in the vertical center.
-  */
   align-self: center;
 
   display: flex;
@@ -214,9 +198,11 @@
 
   justify-content: center;
 
-  padding: 10px 20px 10px 35px;
+  padding: 8px 20px 8px 35px;
 
   border-left: 1px solid #e5ebf2;
+
+  box-sizing: border-box;
 }
 
 
@@ -263,15 +249,11 @@
 }
 
 
-/* BLUE */
-
 .detail-icon.blue {
   color: #1677ff;
   background: #edf5ff;
 }
 
-
-/* PURPLE */
 
 .detail-icon.purple {
   color: #722ed1;
@@ -279,15 +261,11 @@
 }
 
 
-/* GREEN */
-
 .detail-icon.green {
   color: #13a87b;
   background: #e9fff7;
 }
 
-
-/* PINK */
 
 .detail-icon.pink {
   color: #eb2f96;
@@ -352,8 +330,9 @@
 /* ============================================================
    STATUS SECTION
    ------------------------------------------------------------
-   STATUS IS DIRECTLY BELOW PHOTO
-   AND CENTERED UNDER PHOTO
+   IMPORTANT:
+   Status is completely separate from photo.
+   It stays below the photo/site.
    ============================================================ */
 
 .status-section {
@@ -361,10 +340,6 @@
 
   width: 100%;
 
-  /*
-     Same width as left column,
-     but content itself is centered.
-  */
   display: flex;
 
   flex-direction: column;
@@ -376,9 +351,8 @@
   text-align: center;
 
   margin: 0;
-  padding: 0;
 
-  border: none;
+  padding: 0;
 }
 
 
@@ -387,17 +361,13 @@
    ============================================================ */
 
 .status-card {
-  /*
-     Fixed width gives the same compact
-     look as your reference screenshot.
-  */
   width: 250px;
 
   min-height: 58px;
 
   box-sizing: border-box;
 
-  padding: 8px 14px;
+  padding: 9px 15px;
 
   display: flex;
 
@@ -414,7 +384,7 @@
   border: 1px solid;
 
   box-shadow:
-    0 2px 8px rgba(30, 70, 110, 0.04);
+    0 2px 8px rgba(30, 70, 110, 0.05);
 
   text-align: left;
 }
@@ -588,8 +558,6 @@
 
 .status-message strong {
   font-size: 10px;
-
-  font-weight: 700;
 }
 
 
@@ -621,80 +589,6 @@
 
 
 /* ============================================================
-   WAITING CARD
-   ============================================================ */
-
-.waiting-card {
-  width: 100%;
-
-  min-height: 240px;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.05);
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-}
-
-
-.waiting-content {
-  text-align: center;
-}
-
-
-.waiting-icon {
-  width: 72px;
-  height: 72px;
-
-  margin: 0 auto 14px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 20px;
-
-  background: #edf5ff;
-
-  color: #80b5f5;
-}
-
-
-.waiting-icon i {
-  font-size: 36px;
-}
-
-
-.waiting-content h2 {
-  margin: 0;
-
-  color: #18355f;
-
-  font-size: 18px;
-
-  font-weight: 700;
-}
-
-
-.waiting-content p {
-  margin: 6px 0 0;
-
-  color: #8191a7;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
    LARGE DESKTOP
    ============================================================ */
 
@@ -702,12 +596,12 @@
 
   .employee-result {
     grid-template-columns:
-      320px
+      330px
       minmax(0, 1fr);
 
-    column-gap: 45px;
+    column-gap: 50px;
 
-    padding: 32px 45px;
+    padding: 32px 50px;
   }
 
 
@@ -718,12 +612,12 @@
 
 
   .status-card {
-    width: 260px;
+    width: 270px;
   }
 
 
   .status-message {
-    width: 260px;
+    width: 270px;
   }
 
 
@@ -758,7 +652,7 @@
 
   .employee-result {
     grid-template-columns:
-      230px
+      240px
       minmax(0, 1fr);
 
     column-gap: 25px;
@@ -805,11 +699,6 @@
 
     grid-template-columns: 1fr;
 
-    grid-template-rows:
-      auto
-      auto
-      auto;
-
     grid-template-areas:
       "profile"
       "details"
@@ -821,7 +710,7 @@
   }
 
 
-  /* PHOTO CENTER */
+  /* PHOTO */
 
   .employee-profile {
     width: 100%;
@@ -850,8 +739,6 @@
     border-top: 1px solid #e5ebf2;
 
     border-bottom: 1px solid #e5ebf2;
-
-    align-self: center;
   }
 
 
@@ -878,7 +765,7 @@
   }
 
 
-  /* STATUS CENTER */
+  /* STATUS */
 
   .status-section {
     width: 100%;
@@ -888,8 +775,6 @@
     margin: 0 auto;
 
     align-items: center;
-
-    justify-content: center;
   }
 
 
@@ -898,14 +783,7 @@
 
     min-height: 54px;
 
-    padding: 8px 12px;
-
     justify-content: center;
-  }
-
-
-  .status-content strong {
-    font-size: 13px;
   }
 
 
@@ -963,22 +841,12 @@
   }
 
 
-  .detail-icon i {
-    font-size: 12px;
-  }
-
-
   .detail-label {
     font-size: 10px;
   }
 
 
   .detail-value {
-    font-size: 11px;
-  }
-
-
-  .detail-colon {
     font-size: 11px;
   }
 
@@ -994,8 +862,6 @@
     min-height: 50px;
 
     padding: 7px 10px;
-
-    gap: 7px;
   }
 
 
@@ -1004,16 +870,6 @@
     height: 26px;
 
     min-width: 26px;
-  }
-
-
-  .status-icon-wrapper i {
-    font-size: 13px;
-  }
-
-
-  .status-title {
-    font-size: 10px;
   }
 
 
@@ -1026,23 +882,6 @@
     width: 100%;
 
     padding: 8px 9px;
-
-    gap: 7px;
-  }
-
-
-  .status-message > i {
-    font-size: 14px;
-  }
-
-
-  .status-message strong {
-    font-size: 10px;
-  }
-
-
-  .status-message span {
-    font-size: 9px;
   }
 
 }
