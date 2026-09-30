@@ -1,450 +1,20 @@
 /* ============================================================
-   MEAL SCAN - MAIN
-   ============================================================ */
-
-.scan-wrapper {
-  min-height: 100%;
-
-  padding: 18px 24px 35px;
-
-  background: #f7f9fc;
-}
-
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.header-row {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e7edf4;
-
-  border-radius: 14px;
-
-  padding: 18px 22px;
-
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 3px 12px rgba(20, 35, 63, 0.05);
-}
-
-
-.title-block {
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-}
-
-
-.title-icon {
-  width: 50px;
-  height: 50px;
-
-  min-width: 50px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 13px;
-
-  background: #edf5ff;
-
-  color: #1677ff;
-}
-
-
-.title-icon i {
-  font-size: 25px;
-}
-
-
-.title-block h1 {
-  margin: 0;
-
-  color: #172b4d;
-
-  font-size: 25px;
-
-  font-weight: 700;
-
-  line-height: 1.2;
-}
-
-
-.title-block p {
-  margin: 5px 0 0;
-
-  color: #7b899d;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
-   MAIN CONTENT
-   ============================================================ */
-
-.main-content {
-  width: 100%;
-}
-
-
-/* ============================================================
-   CONTROL CARD
-   ============================================================ */
-
-.control-card {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 14px;
-
-  padding: 20px 22px;
-
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.06);
-}
-
-
-.control-row {
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-
-  width: 100%;
-}
-
-
-.control-divider {
-  height: 1px;
-
-  margin: 18px 0;
-
-  background: #e9eff5;
-}
-
-
-.control-label {
-  min-width: 42px;
-
-  color: #263b5b;
-
-  font-size: 15px;
-
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SECTION ICONS
-   ============================================================ */
-
-.section-icon {
-  width: 46px;
-  height: 46px;
-
-  min-width: 46px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-}
-
-
-.site-icon {
-  background: #edf5ff;
-
-  color: #1677ff;
-}
-
-
-.scan-icon {
-  background: #edf5ff;
-
-  color: #1677ff;
-}
-
-
-.section-icon i {
-  font-size: 22px;
-}
-
-
-/* ============================================================
-   SITE SELECT
-   ============================================================ */
-
-.site-select {
-  width: 270px;
-
-  min-width: 270px;
-}
-
-
-.site-select ::ng-deep .ant-select-selector {
-  height: 44px !important;
-
-  display: flex;
-
-  align-items: center;
-
-  padding: 0 14px !important;
-
-  border-radius: 9px !important;
-
-  border: 1px solid #d5e0ec !important;
-
-  box-shadow: none !important;
-
-  background: #ffffff !important;
-}
-
-
-.site-select ::ng-deep .ant-select-selection-item {
-  color: #273b59;
-
-  font-size: 14px;
-
-  font-weight: 600;
-}
-
-
-.site-select:hover ::ng-deep .ant-select-selector {
-  border-color: #1677ff !important;
-}
-
-
-/* ============================================================
-   SELECTED SITE
-   ============================================================ */
-
-.selected-site {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-left: 5px;
-
-  padding-left: 20px;
-
-  border-left: 1px solid #e0e7ef;
-
-  color: #718198;
-
-  font-size: 13px;
-}
-
-
-.selected-site strong {
-  padding: 6px 13px;
-
-  border-radius: 18px;
-
-  background: #edf5ff;
-
-  color: #126de5;
-
-  font-size: 13px;
-
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SITE WARNING
-   ============================================================ */
-
-.site-warning {
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  margin-top: 12px;
-
-  padding: 9px 12px;
-
-  border-radius: 8px;
-
-  background: #fff7e6;
-
-  color: #ad6800;
-
-  font-size: 13px;
-}
-
-
-.site-warning i {
-  font-size: 16px;
-}
-
-
-/* ============================================================
-   SCAN INPUT
-   ============================================================ */
-
-.scan-input-wrapper {
-  position: relative;
-
-  flex: 1;
-
-  min-width: 0;
-}
-
-
-.scan-input {
-  width: 100%;
-
-  height: 48px;
-
-  padding: 0 16px;
-
-  border-radius: 9px;
-
-  border: 1px solid #ccd9e8;
-
-  color: #203858;
-
-  font-size: 15px;
-
-  background: #ffffff;
-}
-
-
-.scan-input:hover {
-  border-color: #9bbde5;
-}
-
-
-.scan-input:focus {
-  border-color: #1677ff;
-
-  box-shadow:
-    0 0 0 2px rgba(22, 119, 255, 0.08);
-}
-
-
-.scan-input::placeholder {
-  color: #91a0b4;
-}
-
-
-/* ============================================================
-   SEARCH BUTTON
-   ============================================================ */
-
-.search-button {
-  height: 48px;
-
-  min-width: 110px;
-
-  padding: 0 20px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  border: none;
-
-  border-radius: 9px;
-
-  background: #1677ff;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  box-shadow:
-    0 4px 10px rgba(22, 119, 255, 0.18);
-}
-
-
-.search-button:hover {
-  background: #0958d9;
-
-  transform: none;
-}
-
-
-.search-button i {
-  font-size: 17px;
-}
-
-
-/* ============================================================
-   SCAN HINT
-   ============================================================ */
-
-.scan-hint {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-top: 9px;
-
-  padding-left: 60px;
-
-  color: #718198;
-
-  font-size: 12px;
-}
-
-
-.scan-hint i {
-  color: #1677ff;
-
-  font-size: 15px;
-}
-
-
-/* ============================================================
    RESULT CARD
    ============================================================ */
 
 .result-card-wrapper {
   width: 100%;
-
   margin-bottom: 18px;
 }
 
-
 .result-card {
   width: 100%;
-
   overflow: hidden;
 
   background: #ffffff;
 
   border-radius: 15px;
-
   border: 1px solid #e4eaf1;
-
   border-left: 4px solid transparent;
 
   box-shadow:
@@ -460,16 +30,13 @@
   border-left-color: #52c41a;
 }
 
-
 .card-already {
   border-left-color: #fa8c16;
 }
 
-
 .card-mismatch {
   border-left-color: #faad14;
 }
-
 
 .card-not-entitled {
   border-left-color: #ff4d4f;
@@ -479,28 +46,33 @@
 /* ============================================================
    EMPLOYEE RESULT
    ------------------------------------------------------------
-   LEFT:
+   LEFT SIDE:
        PHOTO
        SITE
        STATUS
 
-   RIGHT:
+   RIGHT SIDE:
        EMPLOYEE DETAILS
-
-   Everything is vertically centered.
    ============================================================ */
 
 .employee-result {
   width: 100%;
-
   box-sizing: border-box;
 
   display: grid;
 
+  /*
+     LEFT COLUMN = 300px
+     RIGHT COLUMN = remaining space
+  */
   grid-template-columns:
-    260px
+    300px
     minmax(0, 1fr);
 
+  /*
+     First row  = photo
+     Second row = status
+  */
   grid-template-rows:
     auto
     auto;
@@ -510,14 +82,15 @@
     "status  details";
 
   column-gap: 35px;
-
-  row-gap: 18px;
+  row-gap: 20px;
 
   padding: 28px 35px;
 
+  /*
+     Important:
+     Both left and right content are centered.
+  */
   align-items: center;
-
-  justify-items: center;
 }
 
 
@@ -535,7 +108,6 @@
   flex-direction: column;
 
   align-items: center;
-
   justify-content: center;
 
   text-align: center;
@@ -547,12 +119,12 @@
    ============================================================ */
 
 .photo-container {
-  width: 145px;
-  height: 145px;
+  width: 150px;
+  height: 150px;
 
   overflow: hidden;
 
-  border-radius: 13px;
+  border-radius: 14px;
 
   background: #f1f5f9;
 
@@ -597,7 +169,6 @@
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   gap: 6px;
@@ -609,7 +180,6 @@
   color: #1677ff;
 
   font-size: 13px;
-
   font-weight: 700;
 }
 
@@ -621,24 +191,32 @@
 
 /* ============================================================
    EMPLOYEE DETAILS
+   ------------------------------------------------------------
+   RIGHT SIDE
+   ------------------------------------------------------------
+   Vertically centered with photo + status area
    ============================================================ */
 
 .employee-details {
   grid-area: details;
 
   width: 100%;
-
   min-width: 0;
 
-  padding: 5px 20px 5px 30px;
-
-  border-left: 1px solid #e5ebf2;
+  /*
+     This makes the details sit in the vertical center.
+  */
+  align-self: center;
 
   display: flex;
 
   flex-direction: column;
 
   justify-content: center;
+
+  padding: 10px 20px 10px 35px;
+
+  border-left: 1px solid #e5ebf2;
 }
 
 
@@ -649,13 +227,13 @@
 .detail-row {
   width: 100%;
 
-  min-height: 43px;
+  min-height: 45px;
 
   display: grid;
 
   grid-template-columns:
     36px
-    165px
+    175px
     15px
     minmax(0, 1fr);
 
@@ -668,8 +246,8 @@
    ============================================================ */
 
 .detail-icon {
-  width: 28px;
-  height: 28px;
+  width: 29px;
+  height: 29px;
 
   display: flex;
 
@@ -685,30 +263,34 @@
 }
 
 
+/* BLUE */
+
 .detail-icon.blue {
   color: #1677ff;
-
   background: #edf5ff;
 }
 
 
+/* PURPLE */
+
 .detail-icon.purple {
   color: #722ed1;
-
   background: #f3edff;
 }
 
 
+/* GREEN */
+
 .detail-icon.green {
   color: #13a87b;
-
   background: #e9fff7;
 }
 
 
+/* PINK */
+
 .detail-icon.pink {
   color: #eb2f96;
-
   background: #fff0f7;
 }
 
@@ -770,8 +352,8 @@
 /* ============================================================
    STATUS SECTION
    ------------------------------------------------------------
-   IMPORTANT:
-   Status stays under the photo and is centered.
+   STATUS IS DIRECTLY BELOW PHOTO
+   AND CENTERED UNDER PHOTO
    ============================================================ */
 
 .status-section {
@@ -779,8 +361,10 @@
 
   width: 100%;
 
-  max-width: 240px;
-
+  /*
+     Same width as left column,
+     but content itself is centered.
+  */
   display: flex;
 
   flex-direction: column;
@@ -789,8 +373,9 @@
 
   justify-content: center;
 
-  margin: 0 auto;
+  text-align: center;
 
+  margin: 0;
   padding: 0;
 
   border: none;
@@ -802,13 +387,17 @@
    ============================================================ */
 
 .status-card {
-  width: 100%;
+  /*
+     Fixed width gives the same compact
+     look as your reference screenshot.
+  */
+  width: 250px;
 
   min-height: 58px;
 
   box-sizing: border-box;
 
-  padding: 9px 13px;
+  padding: 8px 14px;
 
   display: flex;
 
@@ -816,7 +405,7 @@
 
   justify-content: center;
 
-  gap: 9px;
+  gap: 10px;
 
   border-radius: 9px;
 
@@ -824,9 +413,10 @@
 
   border: 1px solid;
 
-  box-shadow: none;
+  box-shadow:
+    0 2px 8px rgba(30, 70, 110, 0.04);
 
-  text-align: center;
+  text-align: left;
 }
 
 
@@ -925,6 +515,8 @@
   font-size: 11px;
 
   font-weight: 600;
+
+  line-height: 1.1;
 }
 
 
@@ -946,7 +538,7 @@
    ============================================================ */
 
 .status-message {
-  width: 100%;
+  width: 250px;
 
   box-sizing: border-box;
 
@@ -958,9 +550,9 @@
 
   margin-top: 7px;
 
-  padding: 8px 10px;
+  padding: 9px 10px;
 
-  border-radius: 7px;
+  border-radius: 8px;
 
   background: #fffaf3;
 
@@ -996,6 +588,8 @@
 
 .status-message strong {
   font-size: 10px;
+
+  font-weight: 700;
 }
 
 
@@ -1106,43 +700,39 @@
 
 @media (min-width: 1500px) {
 
-  .scan-wrapper {
-    padding-left: 30px;
-
-    padding-right: 30px;
-  }
-
-
   .employee-result {
     grid-template-columns:
-      280px
+      320px
       minmax(0, 1fr);
 
     column-gap: 45px;
 
-    padding:
-      30px 45px;
+    padding: 32px 45px;
   }
 
 
   .photo-container {
     width: 155px;
-
     height: 155px;
   }
 
 
-  .status-section {
-    max-width: 250px;
+  .status-card {
+    width: 260px;
+  }
+
+
+  .status-message {
+    width: 260px;
   }
 
 
   .detail-row {
-    min-height: 45px;
+    min-height: 46px;
 
     grid-template-columns:
       38px
-      175px
+      180px
       15px
       minmax(0, 1fr);
   }
@@ -1166,49 +756,40 @@
 
 @media (max-width: 1100px) {
 
-  .control-row {
-    flex-wrap: wrap;
-  }
-
-
-  .selected-site {
-    border-left: none;
-
-    padding-left: 0;
-
-    margin-left: 0;
-  }
-
-
-  /* RESULT */
-
   .employee-result {
     grid-template-columns:
-      210px
+      230px
       minmax(0, 1fr);
 
     column-gap: 25px;
 
-    padding: 22px;
+    padding: 24px;
   }
 
 
   .employee-details {
-    padding-left: 22px;
+    padding-left: 25px;
   }
 
 
   .detail-row {
     grid-template-columns:
       32px
-      140px
+      145px
       12px
       minmax(0, 1fr);
+
+    min-height: 42px;
   }
 
 
-  .status-section {
-    max-width: 210px;
+  .status-card {
+    width: 220px;
+  }
+
+
+  .status-message {
+    width: 220px;
   }
 
 }
@@ -1220,116 +801,8 @@
 
 @media (max-width: 700px) {
 
-  .scan-wrapper {
-    padding: 12px;
-  }
-
-
-  /* HEADER */
-
-  .header-row {
-    padding: 15px;
-  }
-
-
-  .title-block {
-    gap: 10px;
-  }
-
-
-  .title-icon {
-    width: 44px;
-    height: 44px;
-
-    min-width: 44px;
-  }
-
-
-  .title-icon i {
-    font-size: 22px;
-  }
-
-
-  .title-block h1 {
-    font-size: 21px;
-  }
-
-
-  .title-block p {
-    font-size: 11px;
-  }
-
-
-  /* CONTROL */
-
-  .control-card {
-    padding: 15px;
-  }
-
-
-  .control-divider {
-    margin: 14px 0;
-  }
-
-
-  .control-row {
-    align-items: flex-start;
-
-    flex-direction: column;
-
-    gap: 10px;
-  }
-
-
-  .site-select {
-    width: 100%;
-
-    min-width: 100%;
-  }
-
-
-  .selected-site {
-    width: 100%;
-
-    padding-top: 8px;
-
-    padding-left: 0;
-
-    margin-left: 0;
-
-    border-left: none;
-
-    border-top: 1px solid #e5ebf2;
-  }
-
-
-  .scan-icon {
-    display: none;
-  }
-
-
-  .scan-input-wrapper {
-    width: 100%;
-
-    flex: none;
-  }
-
-
-  .search-button {
-    width: 100%;
-  }
-
-
-  .scan-hint {
-    padding-left: 0;
-  }
-
-
-  /* ========================================================
-     MOBILE RESULT
-     ======================================================== */
-
   .employee-result {
+
     grid-template-columns: 1fr;
 
     grid-template-rows:
@@ -1361,12 +834,11 @@
 
   .photo-container {
     width: 125px;
-
     height: 125px;
   }
 
 
-  /* DETAILS CENTER */
+  /* DETAILS */
 
   .employee-details {
     width: 100%;
@@ -1379,7 +851,7 @@
 
     border-bottom: 1px solid #e5ebf2;
 
-    align-items: center;
+    align-self: center;
   }
 
 
@@ -1416,22 +888,19 @@
     margin: 0 auto;
 
     align-items: center;
+
+    justify-content: center;
   }
 
 
   .status-card {
     width: 100%;
 
-    min-height: 52px;
+    min-height: 54px;
 
     padding: 8px 12px;
 
     justify-content: center;
-  }
-
-
-  .status-content {
-    align-items: flex-start;
   }
 
 
@@ -1453,48 +922,6 @@
 
 @media (max-width: 480px) {
 
-  .scan-wrapper {
-    padding: 10px;
-  }
-
-
-  .header-row {
-    padding: 13px;
-
-    border-radius: 12px;
-  }
-
-
-  .title-icon {
-    width: 40px;
-    height: 40px;
-
-    min-width: 40px;
-  }
-
-
-  .title-icon i {
-    font-size: 20px;
-  }
-
-
-  .title-block h1 {
-    font-size: 19px;
-  }
-
-
-  .title-block p {
-    font-size: 10px;
-  }
-
-
-  .control-card {
-    padding: 13px;
-  }
-
-
-  /* RESULT */
-
   .employee-result {
     padding: 17px 14px;
 
@@ -1504,7 +931,6 @@
 
   .photo-container {
     width: 115px;
-
     height: 115px;
   }
 
@@ -1514,11 +940,8 @@
   }
 
 
-  /* DETAILS */
-
   .employee-details {
     padding-top: 12px;
-
     padding-bottom: 12px;
   }
 
@@ -1536,7 +959,6 @@
 
   .detail-icon {
     width: 26px;
-
     height: 26px;
   }
 
@@ -1561,14 +983,14 @@
   }
 
 
-  /* STATUS */
-
   .status-section {
     max-width: 250px;
   }
 
 
   .status-card {
+    width: 100%;
+
     min-height: 50px;
 
     padding: 7px 10px;
@@ -1601,6 +1023,8 @@
 
 
   .status-message {
+    width: 100%;
+
     padding: 8px 9px;
 
     gap: 7px;
@@ -1622,843 +1046,3 @@
   }
 
 }
-
-
-
-
-
-<div class="scan-wrapper">
-
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
-
-<div class="header-row">
-
-  <div class="title-block">
-
-    <div class="title-icon">
-
-      <i
-        nz-icon
-        nzType="scan"
-        nzTheme="outline">
-      </i>
-
-    </div>
-
-    <div>
-
-      <h1>
-        Meal Scan
-      </h1>
-
-      <p>
-        Scan employee badge to mark meal collection
-      </p>
-
-    </div>
-
-  </div>
-
-</div>
-
-  <!-- ============================================================
-       MAIN CONTENT
-       ============================================================ -->
-
-  <div class="main-content">
-
-
-    <!-- ==========================================================
-         CONTROL CARD (Site selector + Scan input, unified)
-         ========================================================== -->
-
-    <div class="control-card">
-
-
-      <!-- ---------- ROW 1: SITE ---------- -->
-
-      <div class="control-row">
-
-        <div class="section-icon site-icon">
-
-          <i
-            nz-icon
-            nzType="environment"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <div class="control-label">
-          Site
-        </div>
-
-
-        <nz-select
-
-          [(ngModel)]="selectedSite"
-
-          name="selectedSite"
-
-          nzPlaceHolder="Select Site"
-
-          nzSize="large"
-
-          class="site-select"
-
-          [nzDisabled]="
-            siteList.length === 0 ||
-            loading ||
-            proceeding
-          "
-
-          (ngModelChange)="
-            onLocationChange($event)
-          ">
-
-
-          <!-- ALL SITES -->
-
-          <nz-option
-
-            nzValue=""
-
-            nzLabel="All">
-
-          </nz-option>
-
-
-          <!-- USER SITES -->
-
-          <nz-option
-
-            *ngFor="
-              let option of siteOptions
-            "
-
-            [nzValue]="
-              option.value
-            "
-
-            [nzLabel]="
-              option.label
-            ">
-
-          </nz-option>
-
-
-        </nz-select>
-
-
-        <!-- SELECTED SITE -->
-
-        <div class="selected-site">
-
-          <span>
-            Selected Site :
-          </span>
-
-          <strong>
-
-            {{
-              selectedSite
-                ? getSiteName(selectedSite)
-                : 'All'
-            }}
-
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- NO SITE -->
-
-      <div
-        class="site-warning"
-        *ngIf="!siteList.length">
-
-        <i
-          nz-icon
-          nzType="warning"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          No active site assigned to the logged-in user.
-        </span>
-
-      </div>
-
-
-      <div class="control-divider"></div>
-
-
-      <!-- ---------- ROW 2: SCAN INPUT ---------- -->
-
-      <div class="control-row">
-
-
-        <!-- SCAN ICON -->
-
-        <div class="section-icon scan-icon">
-
-          <i
-            nz-icon
-            nzType="scan"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <!-- INPUT AREA -->
-
-        <div class="scan-input-wrapper">
-
-          <input
-
-            #scanInput
-
-            nz-input
-
-            [(ngModel)]="empNo"
-
-            name="empNo"
-
-            placeholder="Scan employee badge..."
-
-            (keyup.enter)="onScanEnter()"
-
-            autocomplete="off"
-
-            [disabled]="
-              loading ||
-              proceeding ||
-              siteList.length === 0
-            "
-
-            class="scan-input"
-
-          />
-
-
-          <!-- LOADING -->
-
-          <nz-spin
-
-            *ngIf="
-              loading ||
-              proceeding
-            "
-
-            nzSimple>
-
-          </nz-spin>
-
-        </div>
-
-
-        <!-- SEARCH -->
-
-        <button
-
-          nz-button
-
-          nzType="primary"
-
-          nzSize="large"
-
-          class="search-button"
-
-          (click)="search(true)"
-
-          [disabled]="
-            loading ||
-            proceeding ||
-            siteList.length === 0
-          ">
-
-          <i
-            nz-icon
-            nzType="search"
-            nzTheme="outline">
-          </i>
-
-          <span>
-            Search
-          </span>
-
-        </button>
-
-
-      </div>
-
-
-      <!-- HINT -->
-
-      <div class="scan-hint">
-
-        <i
-          nz-icon
-          nzType="info-circle"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          Scan the employee FX Badge or enter the badge number manually.
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         EMPLOYEE RESULT
-         ========================================================== -->
-
-    <div
-      class="result-card-wrapper"
-      *ngIf="employeeDetail">
-
-
-      <div
-
-        class="result-card"
-
-        [ngClass]="
-
-          entitlementStatus === 'ENTITLED'
-
-            ? 'card-entitled'
-
-            :
-
-          entitlementStatus === 'ALREADY_SCANNED'
-
-            ? 'card-already'
-
-            :
-
-          entitlementStatus === 'SITE_MISMATCH'
-
-            ? 'card-mismatch'
-
-            :
-
-          'card-not-entitled'
-
-        ">
-
-
-        <div class="employee-result">
-
-
-          <!-- ====================================================
-               PHOTO
-               ==================================================== -->
-
-          <div class="employee-profile">
-
-
-            <div class="photo-container">
-
-
-              <nz-spin
-                *ngIf="photoLoading">
-              </nz-spin>
-
-
-              <img
-
-                *ngIf="
-                  employeePhotoUrl &&
-                  !photoLoading
-                "
-
-                [src]="employeePhotoUrl"
-
-                class="employee-photo"
-
-                alt="Employee Photo"
-
-              />
-
-
-              <i
-
-                *ngIf="
-                  !employeePhotoUrl &&
-                  !photoLoading
-                "
-
-                nz-icon
-
-                nzType="user"
-
-                nzTheme="outline"
-
-                class="default-user">
-
-              </i>
-
-
-            </div>
-
-
-            <!-- EMPLOYEE SITE -->
-
-            <div
-
-              class="profile-site"
-
-              *ngIf="employeeDetail.Site">
-
-              <i
-                nz-icon
-                nzType="environment"
-                nzTheme="fill">
-              </i>
-
-              <span>
-
-                {{
-                  getSiteName(
-                    employeeDetail.Site
-                  )
-                }}
-
-              </span>
-
-            </div>
-
-
-          </div>
-
-
-          <!-- ====================================================
-               DETAILS
-               ==================================================== -->
-
-          <div class="employee-details">
-
-
-            <!-- NAME -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="user"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Employee Name
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.Name ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- BADGE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon purple">
-
-                <i
-                  nz-icon
-                  nzType="idcard"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                FX Badge
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.FxBadge ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- SITE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon green">
-
-                <i
-                  nz-icon
-                  nzType="bank"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Site
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value site-value">
-
-                {{
-                  getSiteName(
-                    employeeDetail.Site
-                  )
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- MEAL -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon pink">
-
-                <i
-                  nz-icon
-                  nzType="fork"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Meal Preference
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.MealPreference ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- FIRST DATE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="calendar"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                First Day at Factory
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.FirstDateFxbl ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- LAST DATE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="calendar"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Last Day at Factory
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.LastDateFxbl ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-          </div>
-
-
-          <!-- ====================================================
-               STATUS
-               ==================================================== -->
-
-          <div class="status-section">
-
-
-            <div
-
-              class="status-card"
-
-              [ngClass]="
-
-                entitlementStatus === 'ENTITLED'
-
-                  ? 'status-entitled'
-
-                  :
-
-                entitlementStatus === 'ALREADY_SCANNED'
-
-                  ? 'status-already'
-
-                  :
-
-                entitlementStatus === 'SITE_MISMATCH'
-
-                  ? 'status-mismatch'
-
-                  :
-
-                'status-not-entitled'
-
-              ">
-
-
-              <div class="status-icon-wrapper">
-
-                <i
-
-                  nz-icon
-
-                  [nzType]="
-
-                    entitlementStatus === 'ENTITLED'
-
-                      ? 'check'
-
-                      :
-
-                    entitlementStatus === 'ALREADY_SCANNED'
-
-                      ? 'exclamation'
-
-                      :
-
-                    entitlementStatus === 'SITE_MISMATCH'
-
-                      ? 'warning'
-
-                      :
-
-                    'close'
-
-                  "
-
-                  nzTheme="outline">
-
-                </i>
-
-              </div>
-
-
-              <div class="status-content">
-
-                <span class="status-title">
-                  Status
-                </span>
-
-                <strong>
-
-                  {{
-
-                    entitlementStatus === 'ENTITLED'
-
-                      ? 'ENTITLED FOR MEAL'
-
-                      :
-
-                    entitlementStatus === 'ALREADY_SCANNED'
-
-                      ? 'ALREADY COLLECTED'
-
-                      :
-
-                    entitlementStatus === 'SITE_MISMATCH'
-
-                      ? 'SITE MISMATCH'
-
-                      :
-
-                    entitlementStatus === 'NOT_UPDATED'
-
-                      ? 'NOT UPDATED'
-
-                      :
-
-                    'NOT ENTITLED'
-
-                  }}
-
-                </strong>
-
-              </div>
-
-            </div>
-
-
-            <!-- ALREADY COLLECTED MESSAGE -->
-
-
-            <!-- SITE MISMATCH -->
-
-            <div
-
-              class="status-message mismatch-message"
-
-              *ngIf="
-                entitlementStatus ===
-                'SITE_MISMATCH'
-              ">
-
-              <i
-                nz-icon
-                nzType="warning"
-                nzTheme="outline">
-              </i>
-
-              <div>
-
-                <strong>
-                  Site mismatch
-                </strong>
-
-                <span>
-                  This employee does not belong to the selected site.
-                </span>
-
-              </div>
-
-            </div>
-
-
-          </div>
-
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         WAITING STATE
-         ========================================================== -->
-
-    <div
-
-      class="waiting-card"
-
-      *ngIf="
-        !employeeDetail &&
-        !loading
-      ">
-
-
-      <div class="waiting-content">
-
-        <div class="waiting-icon">
-
-          <i
-            nz-icon
-            nzType="scan"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <h2>
-          Scan an employee badge to begin
-        </h2>
-
-        <p>
-          Employee details will appear here after scanning.
-        </p>
-
-      </div>
-
-    </div>
-
-
-  </div>
-
-</div>
