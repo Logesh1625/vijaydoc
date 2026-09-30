@@ -85,7 +85,7 @@
 
 
 /* ============================================================
-   CONTROL CARD (Site + Scan, unified into one card)
+   CONTROL CARD
    ============================================================ */
 
 .control-card {
@@ -446,8 +446,7 @@
 
 /* ============================================================
    EMPLOYEE RESULT
-   Three columns: photo | details | status, side by side and
-   vertically centered as one row.
+   PHOTO | DETAILS | STATUS
    ============================================================ */
 
 .employee-result {
@@ -455,8 +454,8 @@
 
   grid-template-columns:
     210px
-    minmax(350px, 1fr);
-    // minmax(300px, 0.85fr);
+    minmax(350px, 1fr)
+    minmax(320px, 0.85fr);
 
   align-items: stretch;
 
@@ -685,39 +684,54 @@
    ============================================================ */
 
 .status-card {
-  min-height: 120px;
+  min-height: 180px;
 
-  padding: 20px;
+  padding: 22px;
 
   display: flex;
+
   align-items: center;
 
-  gap: 17px;
+  justify-content: center;
+
+  flex-direction: column;
+
+  gap: 10px;
 
   border-radius: 14px;
+
+  text-align: center;
 }
 
 
+/* ============================================================
+   STATUS COLORS
+   ============================================================ */
+
 .status-entitled {
   background: #f6ffed;
+
   color: #389e0d;
 }
 
 
 .status-already {
   background: #fff7e8;
+
   color: #d46b08;
 }
 
 
 .status-mismatch {
   background: #fffbe6;
+
   color: #ad6800;
 }
 
 
 .status-not-entitled {
   background: #fff1f0;
+
   color: #cf1322;
 }
 
@@ -727,15 +741,17 @@
    ============================================================ */
 
 .status-icon-wrapper {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
 
-  min-width: 60px;
+  min-width: 64px;
 
   border-radius: 50%;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   background: currentColor;
@@ -745,7 +761,7 @@
 .status-icon-wrapper i {
   color: #ffffff;
 
-  font-size: 28px;
+  font-size: 30px;
 }
 
 
@@ -758,9 +774,15 @@
 
   flex-direction: column;
 
+  align-items: center;
+
+  justify-content: center;
+
   gap: 5px;
 
   min-width: 0;
+
+  text-align: center;
 }
 
 
@@ -776,11 +798,17 @@
 
 
 .status-content strong {
+  display: block;
+
   color: inherit;
 
   font-size: 21px;
 
-  line-height: 1.2;
+  line-height: 1.25;
+
+  font-weight: 700;
+
+  text-align: center;
 }
 
 
@@ -842,6 +870,10 @@
   color: #8b7963;
 }
 
+
+/* ============================================================
+   SITE MISMATCH MESSAGE
+   ============================================================ */
 
 .mismatch-message {
   background: #fffbe6;
@@ -942,6 +974,7 @@
     padding-right: 30px;
   }
 
+
   .employee-result {
     grid-template-columns:
       230px
@@ -963,6 +996,7 @@
   .control-row {
     flex-wrap: wrap;
   }
+
 
   .selected-site {
     border-left: none;
@@ -998,6 +1032,11 @@
       18px 0 0;
   }
 
+
+  .status-card {
+    min-height: 160px;
+  }
+
 }
 
 
@@ -1020,6 +1059,7 @@
   .title-icon {
     width: 44px;
     height: 44px;
+
     min-width: 44px;
   }
 
@@ -1095,6 +1135,10 @@
   }
 
 
+  /* --------------------------------------------
+     EMPLOYEE RESULT
+     -------------------------------------------- */
+
   .employee-result {
     grid-template-columns: 1fr;
 
@@ -1137,6 +1181,10 @@
   }
 
 
+  /* --------------------------------------------
+     STATUS
+     -------------------------------------------- */
+
   .status-section {
     width: 100%;
 
@@ -1151,12 +1199,27 @@
 
 
   .status-card {
-    padding: 16px;
+    min-height: 170px;
+
+    padding: 18px;
+
+    flex-direction: column;
+
+    text-align: center;
+  }
+
+
+  .status-content {
+    align-items: center;
+
+    text-align: center;
   }
 
 
   .status-content strong {
     font-size: 18px;
+
+    text-align: center;
   }
 
 }
@@ -1190,6 +1253,7 @@
   .status-icon-wrapper {
     width: 52px;
     height: 52px;
+
     min-width: 52px;
   }
 
@@ -1198,875 +1262,9 @@
     font-size: 24px;
   }
 
+
+  .status-content strong {
+    font-size: 17px;
+  }
+
 }
-
-
-
-
-
-
-
-<div class="scan-wrapper">
-
-<!-- ============================================================
-     HEADER
-     ============================================================ -->
-
-<div class="header-row">
-
-  <div class="title-block">
-
-    <div class="title-icon">
-
-      <i
-        nz-icon
-        nzType="scan"
-        nzTheme="outline">
-      </i>
-
-    </div>
-
-    <div>
-
-      <h1>
-        Meal Scan
-      </h1>
-
-      <p>
-        Scan employee badge to mark meal collection
-      </p>
-
-    </div>
-
-  </div>
-
-</div>
-
-  <!-- ============================================================
-       MAIN CONTENT
-       ============================================================ -->
-
-  <div class="main-content">
-
-
-    <!-- ==========================================================
-         CONTROL CARD (Site selector + Scan input, unified)
-         ========================================================== -->
-
-    <div class="control-card">
-
-
-      <!-- ---------- ROW 1: SITE ---------- -->
-
-      <div class="control-row">
-
-        <div class="section-icon site-icon">
-
-          <i
-            nz-icon
-            nzType="environment"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <div class="control-label">
-          Site
-        </div>
-
-
-        <nz-select
-
-          [(ngModel)]="selectedSite"
-
-          name="selectedSite"
-
-          nzPlaceHolder="Select Site"
-
-          nzSize="large"
-
-          class="site-select"
-
-          [nzDisabled]="
-            siteList.length === 0 ||
-            loading ||
-            proceeding
-          "
-
-          (ngModelChange)="
-            onLocationChange($event)
-          ">
-
-
-          <!-- ALL SITES -->
-
-          <nz-option
-
-            nzValue=""
-
-            nzLabel="All">
-
-          </nz-option>
-
-
-          <!-- USER SITES -->
-
-          <nz-option
-
-            *ngFor="
-              let option of siteOptions
-            "
-
-            [nzValue]="
-              option.value
-            "
-
-            [nzLabel]="
-              option.label
-            ">
-
-          </nz-option>
-
-
-        </nz-select>
-
-
-        <!-- SELECTED SITE -->
-
-        <div class="selected-site">
-
-          <span>
-            Selected Site :
-          </span>
-
-          <strong>
-
-            {{
-              selectedSite
-                ? getSiteName(selectedSite)
-                : 'All'
-            }}
-
-          </strong>
-
-        </div>
-
-      </div>
-
-
-      <!-- NO SITE -->
-
-      <div
-        class="site-warning"
-        *ngIf="!siteList.length">
-
-        <i
-          nz-icon
-          nzType="warning"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          No active site assigned to the logged-in user.
-        </span>
-
-      </div>
-
-
-      <div class="control-divider"></div>
-
-
-      <!-- ---------- ROW 2: SCAN INPUT ---------- -->
-
-      <div class="control-row">
-
-
-        <!-- SCAN ICON -->
-
-        <div class="section-icon scan-icon">
-
-          <i
-            nz-icon
-            nzType="scan"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <!-- INPUT AREA -->
-
-        <div class="scan-input-wrapper">
-
-          <input
-
-            #scanInput
-
-            nz-input
-
-            [(ngModel)]="empNo"
-
-            name="empNo"
-
-            placeholder="Scan employee badge..."
-
-            (keyup.enter)="onScanEnter()"
-
-            autocomplete="off"
-
-            [disabled]="
-              loading ||
-              proceeding ||
-              siteList.length === 0
-            "
-
-            class="scan-input"
-
-          />
-
-
-          <!-- LOADING -->
-
-          <nz-spin
-
-            *ngIf="
-              loading ||
-              proceeding
-            "
-
-            nzSimple>
-
-          </nz-spin>
-
-        </div>
-
-
-        <!-- SEARCH -->
-
-        <button
-
-          nz-button
-
-          nzType="primary"
-
-          nzSize="large"
-
-          class="search-button"
-
-          (click)="search(true)"
-
-          [disabled]="
-            loading ||
-            proceeding ||
-            siteList.length === 0
-          ">
-
-          <i
-            nz-icon
-            nzType="search"
-            nzTheme="outline">
-          </i>
-
-          <span>
-            Search
-          </span>
-
-        </button>
-
-
-      </div>
-
-
-      <!-- HINT -->
-
-      <div class="scan-hint">
-
-        <i
-          nz-icon
-          nzType="info-circle"
-          nzTheme="outline">
-        </i>
-
-        <span>
-          Scan the employee FX Badge or enter the badge number manually.
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         EMPLOYEE RESULT
-         ========================================================== -->
-
-    <div
-      class="result-card-wrapper"
-      *ngIf="employeeDetail">
-
-
-      <div
-
-        class="result-card"
-
-        [ngClass]="
-
-          entitlementStatus === 'ENTITLED'
-
-            ? 'card-entitled'
-
-            :
-
-          entitlementStatus === 'ALREADY_SCANNED'
-
-            ? 'card-already'
-
-            :
-
-          entitlementStatus === 'SITE_MISMATCH'
-
-            ? 'card-mismatch'
-
-            :
-
-          'card-not-entitled'
-
-        ">
-
-
-        <div class="employee-result">
-
-
-          <!-- ====================================================
-               PHOTO
-               ==================================================== -->
-
-          <div class="employee-profile">
-
-
-            <div class="photo-container">
-
-
-              <nz-spin
-                *ngIf="photoLoading">
-              </nz-spin>
-
-
-              <img
-
-                *ngIf="
-                  employeePhotoUrl &&
-                  !photoLoading
-                "
-
-                [src]="employeePhotoUrl"
-
-                class="employee-photo"
-
-                alt="Employee Photo"
-
-              />
-
-
-              <i
-
-                *ngIf="
-                  !employeePhotoUrl &&
-                  !photoLoading
-                "
-
-                nz-icon
-
-                nzType="user"
-
-                nzTheme="outline"
-
-                class="default-user">
-
-              </i>
-
-
-            </div>
-
-
-            <!-- EMPLOYEE SITE -->
-
-            <div
-
-              class="profile-site"
-
-              *ngIf="employeeDetail.Site">
-
-              <i
-                nz-icon
-                nzType="environment"
-                nzTheme="fill">
-              </i>
-
-              <span>
-
-                {{
-                  getSiteName(
-                    employeeDetail.Site
-                  )
-                }}
-
-              </span>
-
-            </div>
-
-
-          </div>
-
-
-          <!-- ====================================================
-               DETAILS
-               ==================================================== -->
-
-          <div class="employee-details">
-
-
-            <!-- NAME -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="user"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Employee Name
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.Name ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- BADGE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon purple">
-
-                <i
-                  nz-icon
-                  nzType="idcard"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                FX Badge
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.FxBadge ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- SITE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon green">
-
-                <i
-                  nz-icon
-                  nzType="bank"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Site
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value site-value">
-
-                {{
-                  getSiteName(
-                    employeeDetail.Site
-                  )
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- MEAL -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon pink">
-
-                <i
-                  nz-icon
-                  nzType="fork"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Meal Preference
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.MealPreference ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- FIRST DATE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="calendar"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                First Day at Factory
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.FirstDateFxbl ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-            <!-- LAST DATE -->
-
-            <div class="detail-row">
-
-              <div class="detail-icon blue">
-
-                <i
-                  nz-icon
-                  nzType="calendar"
-                  nzTheme="outline">
-                </i>
-
-              </div>
-
-              <span class="detail-label">
-                Last Day at Factory
-              </span>
-
-              <span class="detail-colon">
-                :
-              </span>
-
-              <strong class="detail-value">
-
-                {{
-                  employeeDetail.LastDateFxbl ||
-                  'Not Updated'
-                }}
-
-              </strong>
-
-            </div>
-
-
-          </div>
-
-
-          <!-- ====================================================
-               STATUS
-               ==================================================== -->
-
-          <div class="status-section">
-
-
-            <div
-
-              class="status-card"
-
-              [ngClass]="
-
-                entitlementStatus === 'ENTITLED'
-
-                  ? 'status-entitled'
-
-                  :
-
-                entitlementStatus === 'ALREADY_SCANNED'
-
-                  ? 'status-already'
-
-                  :
-
-                entitlementStatus === 'SITE_MISMATCH'
-
-                  ? 'status-mismatch'
-
-                  :
-
-                'status-not-entitled'
-
-              ">
-
-
-              <div class="status-icon-wrapper">
-
-                <i
-
-                  nz-icon
-
-                  [nzType]="
-
-                    entitlementStatus === 'ENTITLED'
-
-                      ? 'check'
-
-                      :
-
-                    entitlementStatus === 'ALREADY_SCANNED'
-
-                      ? 'exclamation'
-
-                      :
-
-                    entitlementStatus === 'SITE_MISMATCH'
-
-                      ? 'warning'
-
-                      :
-
-                    'close'
-
-                  "
-
-                  nzTheme="outline">
-
-                </i>
-
-              </div>
-
-
-              <div class="status-content">
-
-                <span class="status-title">
-                  Status
-                </span>
-
-                <strong>
-
-                  {{
-
-                    entitlementStatus === 'ENTITLED'
-
-                      ? 'ENTITLED FOR MEAL'
-
-                      :
-
-                    entitlementStatus === 'ALREADY_SCANNED'
-
-                      ? 'ALREADY COLLECTED'
-
-                      :
-
-                    entitlementStatus === 'SITE_MISMATCH'
-
-                      ? 'SITE MISMATCH'
-
-                      :
-
-                    entitlementStatus === 'NOT_UPDATED'
-
-                      ? 'NOT UPDATED'
-
-                      :
-
-                    'NOT ENTITLED'
-
-                  }}
-
-                </strong>
-
-              </div>
-
-            </div>
-
-
-            <!-- ALREADY COLLECTED MESSAGE -->
-
-            <div
-
-              class="status-message"
-
-              *ngIf="
-                entitlementStatus ===
-                'ALREADY_SCANNED'
-              ">
-
-              <i
-                nz-icon
-                nzType="calendar"
-                nzTheme="outline">
-              </i>
-
-              <div>
-
-                <strong>
-                  Meal already collected
-                </strong>
-
-                <span>
-                  This employee has already collected the meal for the selected date.
-                </span>
-
-              </div>
-
-            </div>
-
-
-            <!-- SITE MISMATCH -->
-
-            <div
-
-              class="status-message mismatch-message"
-
-              *ngIf="
-                entitlementStatus ===
-                'SITE_MISMATCH'
-              ">
-
-              <i
-                nz-icon
-                nzType="warning"
-                nzTheme="outline">
-              </i>
-
-              <div>
-
-                <strong>
-                  Site mismatch
-                </strong>
-
-                <span>
-                  This employee does not belong to the selected site.
-                </span>
-
-              </div>
-
-            </div>
-
-
-          </div>
-
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- ==========================================================
-         WAITING STATE
-         ========================================================== -->
-
-    <div
-
-      class="waiting-card"
-
-      *ngIf="
-        !employeeDetail &&
-        !loading
-      ">
-
-
-      <div class="waiting-content">
-
-        <div class="waiting-icon">
-
-          <i
-            nz-icon
-            nzType="scan"
-            nzTheme="outline">
-          </i>
-
-        </div>
-
-
-        <h2>
-          Scan an employee badge to begin
-        </h2>
-
-        <p>
-          Employee details will appear here after scanning.
-        </p>
-
-      </div>
-
-    </div>
-
-
-  </div>
-
-</div>
