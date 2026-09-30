@@ -1,462 +1,7 @@
 /* ============================================================
-   MEAL SCAN - MAIN
-   ============================================================ */
-
-.scan-wrapper {
-  min-height: 100%;
-  padding: 18px 24px 35px;
-  background: #f7f9fc;
-}
-
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.header-row {
-  width: 100%;
-  background: #ffffff;
-  border: 1px solid #e7edf4;
-  border-radius: 14px;
-  padding: 18px 22px;
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 3px 12px rgba(20, 35, 63, 0.05);
-}
-
-
-.title-block {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-
-.title-icon {
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 13px;
-
-  background: #edf5ff;
-  color: #1677ff;
-}
-
-
-.title-icon i {
-  font-size: 25px;
-}
-
-
-.title-block h1 {
-  margin: 0;
-
-  color: #172b4d;
-
-  font-size: 25px;
-  font-weight: 700;
-
-  line-height: 1.2;
-}
-
-
-.title-block p {
-  margin: 5px 0 0;
-
-  color: #7b899d;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
-   MAIN CONTENT
-   ============================================================ */
-
-.main-content {
-  width: 100%;
-}
-
-
-/* ============================================================
-   CONTROL CARD
-   ============================================================ */
-
-.control-card {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 14px;
-
-  padding: 20px 22px;
-
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.06);
-}
-
-
-.control-row {
-  display: flex;
-  align-items: center;
-
-  gap: 14px;
-
-  width: 100%;
-}
-
-
-.control-divider {
-  height: 1px;
-
-  margin: 18px 0;
-
-  background: #e9eff5;
-}
-
-
-.control-label {
-  min-width: 42px;
-
-  color: #263b5b;
-
-  font-size: 15px;
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SECTION ICONS
-   ============================================================ */
-
-.section-icon {
-  width: 46px;
-  height: 46px;
-  min-width: 46px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-}
-
-
-.site-icon {
-  background: #edf5ff;
-  color: #1677ff;
-}
-
-
-.scan-icon {
-  background: #edf5ff;
-  color: #1677ff;
-}
-
-
-.section-icon i {
-  font-size: 22px;
-}
-
-
-/* ============================================================
-   SITE SELECT
-   ============================================================ */
-
-.site-select {
-  width: 270px;
-  min-width: 270px;
-}
-
-
-.site-select ::ng-deep .ant-select-selector {
-  height: 44px !important;
-
-  display: flex;
-  align-items: center;
-
-  padding: 0 14px !important;
-
-  border-radius: 9px !important;
-
-  border: 1px solid #d5e0ec !important;
-
-  box-shadow: none !important;
-
-  background: #ffffff !important;
-}
-
-
-.site-select ::ng-deep .ant-select-selection-item {
-  color: #273b59;
-
-  font-size: 14px;
-
-  font-weight: 600;
-}
-
-
-.site-select:hover ::ng-deep .ant-select-selector {
-  border-color: #1677ff !important;
-}
-
-
-/* ============================================================
-   SELECTED SITE
-   ============================================================ */
-
-.selected-site {
-  display: flex;
-  align-items: center;
-
-  gap: 7px;
-
-  margin-left: 5px;
-  padding-left: 20px;
-
-  border-left: 1px solid #e0e7ef;
-
-  color: #718198;
-
-  font-size: 13px;
-}
-
-
-.selected-site strong {
-  padding: 6px 13px;
-
-  border-radius: 18px;
-
-  background: #edf5ff;
-
-  color: #126de5;
-
-  font-size: 13px;
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SITE WARNING
-   ============================================================ */
-
-.site-warning {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  margin-top: 12px;
-
-  padding: 9px 12px;
-
-  border-radius: 8px;
-
-  background: #fff7e6;
-
-  color: #ad6800;
-
-  font-size: 13px;
-}
-
-
-.site-warning i {
-  font-size: 16px;
-}
-
-
-/* ============================================================
-   SCAN INPUT
-   ============================================================ */
-
-.scan-input-wrapper {
-  position: relative;
-
-  flex: 1;
-
-  min-width: 0;
-}
-
-
-.scan-input {
-  width: 100%;
-
-  height: 48px;
-
-  padding: 0 16px;
-
-  border-radius: 9px;
-
-  border: 1px solid #ccd9e8;
-
-  color: #203858;
-
-  font-size: 15px;
-
-  background: #ffffff;
-}
-
-
-.scan-input:hover {
-  border-color: #9bbde5;
-}
-
-
-.scan-input:focus {
-  border-color: #1677ff;
-
-  box-shadow:
-    0 0 0 2px rgba(22, 119, 255, 0.08);
-}
-
-
-.scan-input::placeholder {
-  color: #91a0b4;
-}
-
-
-/* ============================================================
-   SEARCH BUTTON
-   ============================================================ */
-
-.search-button {
-  height: 48px;
-
-  min-width: 110px;
-
-  padding: 0 20px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  border: none;
-
-  border-radius: 9px;
-
-  background: #1677ff;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  box-shadow:
-    0 4px 10px rgba(22, 119, 255, 0.18);
-}
-
-
-.search-button:hover {
-  background: #0958d9;
-
-  transform: none;
-}
-
-
-.search-button i {
-  font-size: 17px;
-}
-
-
-/* ============================================================
-   SCAN HINT
-   ============================================================ */
-
-.scan-hint {
-  display: flex;
-  align-items: center;
-
-  gap: 7px;
-
-  margin-top: 9px;
-
-  padding-left: 60px;
-
-  color: #718198;
-
-  font-size: 12px;
-}
-
-
-.scan-hint i {
-  color: #1677ff;
-
-  font-size: 15px;
-}
-
-
-/* ============================================================
-   RESULT CARD
-   ============================================================ */
-
-.result-card-wrapper {
-  width: 100%;
-
-  margin-bottom: 18px;
-}
-
-
-.result-card {
-  width: 100%;
-
-  overflow: hidden;
-
-  background: #ffffff;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 5px 18px rgba(30, 70, 110, 0.08);
-
-  border: 1px solid #e4eaf1;
-
-  border-left: 4px solid transparent;
-}
-
-
-/* ============================================================
-   STATUS BORDER
-   ============================================================ */
-
-.card-entitled {
-  border-left-color: #52c41a;
-}
-
-
-.card-already {
-  border-left-color: #fa8c16;
-}
-
-
-.card-mismatch {
-  border-left-color: #faad14;
-}
-
-
-.card-not-entitled {
-  border-left-color: #ff4d4f;
-}
-
-
-/* ============================================================
    EMPLOYEE RESULT
-   ------------------------------------------------------------
-   TOP:
-       PHOTO | EMPLOYEE DETAILS
-
-   BOTTOM:
-       STATUS
+   LEFT  = PHOTO + SITE + STATUS
+   RIGHT = EMPLOYEE DETAILS
    ============================================================ */
 
 .employee-result {
@@ -468,20 +13,20 @@
 
   grid-template-areas:
     "profile details"
-    "status status";
+    "status  details";
 
   column-gap: 25px;
 
-  row-gap: 18px;
+  row-gap: 16px;
 
   padding: 22px 28px;
 
-  align-items: stretch;
+  align-items: start;
 }
 
 
 /* ============================================================
-   EMPLOYEE PROFILE
+   PROFILE
    ============================================================ */
 
 .employee-profile {
@@ -493,15 +38,13 @@
 
   align-items: center;
 
-  justify-content: center;
-
-  min-width: 0;
+  justify-content: flex-start;
 }
 
 
 .photo-container {
-  width: 140px;
-  height: 140px;
+  width: 145px;
+  height: 145px;
 
   overflow: hidden;
 
@@ -532,7 +75,7 @@
 
 
 .default-user {
-  font-size: 55px;
+  font-size: 58px;
 
   color: #a4b4c7;
 }
@@ -548,9 +91,12 @@
   padding: 5px 16px;
 
   display: flex;
+
   align-items: center;
 
-  gap: 5px;
+  justify-content: center;
+
+  gap: 6px;
 
   border-radius: 16px;
 
@@ -558,7 +104,7 @@
 
   color: #1677ff;
 
-  font-size: 12px;
+  font-size: 13px;
 
   font-weight: 700;
 }
@@ -571,6 +117,7 @@
 
 /* ============================================================
    EMPLOYEE DETAILS
+   RIGHT SIDE
    ============================================================ */
 
 .employee-details {
@@ -578,7 +125,7 @@
 
   min-width: 0;
 
-  padding: 4px 10px 4px 22px;
+  padding: 2px 10px 0 22px;
 
   border-left: 1px solid #e5ebf2;
 }
@@ -595,25 +142,25 @@
 
   align-items: center;
 
-  min-height: 38px;
+  min-height: 42px;
 }
 
 
 .detail-icon {
-  width: 27px;
-  height: 27px;
+  width: 28px;
+  height: 28px;
 
   display: flex;
 
   align-items: center;
   justify-content: center;
 
-  border-radius: 7px;
+  border-radius: 8px;
 }
 
 
 .detail-icon i {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 
@@ -648,7 +195,7 @@
 .detail-label {
   color: #687a91;
 
-  font-size: 12px;
+  font-size: 13px;
 
   font-weight: 600;
 
@@ -659,7 +206,7 @@
 .detail-colon {
   color: #9aa9bb;
 
-  font-size: 12px;
+  font-size: 13px;
 
   text-align: center;
 }
@@ -668,7 +215,7 @@
 .detail-value {
   color: #1b3152;
 
-  font-size: 13px;
+  font-size: 14px;
 
   font-weight: 700;
 
@@ -681,9 +228,9 @@
 .site-value {
   width: fit-content;
 
-  padding: 3px 10px;
+  padding: 4px 11px;
 
-  border-radius: 14px;
+  border-radius: 16px;
 
   background: #edf6ff;
 
@@ -692,9 +239,8 @@
 
 
 /* ============================================================
-   STATUS SECTION
-   ------------------------------------------------------------
-   STATUS IS BELOW PHOTO + EMPLOYEE DETAILS
+   STATUS
+   LEFT COLUMN - BELOW PHOTO
    ============================================================ */
 
 .status-section {
@@ -704,11 +250,9 @@
 
   min-width: 0;
 
-  padding-top: 14px;
+  padding: 0;
 
-  border-top: 1px solid #e5ebf2;
-
-  border-left: none;
+  border: none;
 
   display: flex;
 
@@ -716,15 +260,12 @@
 
   align-items: stretch;
 
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 
 /* ============================================================
    STATUS CARD
-   ------------------------------------------------------------
-   COMPACT HORIZONTAL STYLE
-   LIKE REFERENCE IMAGE
    ============================================================ */
 
 .status-card {
@@ -732,7 +273,9 @@
 
   min-height: 54px;
 
-  padding: 8px 18px;
+  box-sizing: border-box;
+
+  padding: 9px 12px;
 
   display: flex;
 
@@ -742,7 +285,7 @@
 
   justify-content: flex-start;
 
-  gap: 10px;
+  gap: 9px;
 
   border-radius: 8px;
 
@@ -750,9 +293,9 @@
 
   border: 1px solid currentColor;
 
-  box-shadow: none;
-
   text-align: left;
+
+  box-shadow: none;
 }
 
 
@@ -831,11 +374,13 @@
 .status-content {
   display: flex;
 
-  flex-direction: row;
+  flex-direction: column;
 
-  align-items: center;
+  align-items: flex-start;
 
-  gap: 8px;
+  justify-content: center;
+
+  gap: 2px;
 
   min-width: 0;
 
@@ -846,20 +391,20 @@
 .status-title {
   color: #65758b;
 
-  font-size: 13px;
+  font-size: 11px;
 
   font-weight: 600;
 
-  opacity: 1;
+  line-height: 1.2;
 }
 
 
 .status-content strong {
   color: inherit;
 
-  font-size: 15px;
+  font-size: 14px;
 
-  line-height: 1.2;
+  line-height: 1.25;
 
   font-weight: 700;
 
@@ -870,7 +415,7 @@
 
 
 /* ============================================================
-   STATUS MESSAGE
+   ALREADY COLLECTED MESSAGE
    ============================================================ */
 
 .status-message {
@@ -882,11 +427,11 @@
 
   align-items: flex-start;
 
-  gap: 8px;
+  gap: 7px;
 
-  margin-top: 8px;
+  margin-top: 7px;
 
-  padding: 9px 12px;
+  padding: 8px 10px;
 
   border-radius: 7px;
 
@@ -905,7 +450,7 @@
 
   color: #fa8c16;
 
-  font-size: 15px;
+  font-size: 14px;
 
   flex-shrink: 0;
 }
@@ -923,12 +468,14 @@
 
 
 .status-message strong {
-  font-size: 11px;
+  font-size: 10px;
+
+  line-height: 1.3;
 }
 
 
 .status-message span {
-  font-size: 10px;
+  font-size: 9px;
 
   line-height: 1.4;
 
@@ -937,7 +484,7 @@
 
 
 /* ============================================================
-   MISMATCH MESSAGE
+   SITE MISMATCH MESSAGE
    ============================================================ */
 
 .mismatch-message {
@@ -955,92 +502,10 @@
 
 
 /* ============================================================
-   WAITING CARD
-   ============================================================ */
-
-.waiting-card {
-  width: 100%;
-
-  min-height: 240px;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.05);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-}
-
-
-.waiting-content {
-  text-align: center;
-}
-
-
-.waiting-icon {
-  width: 72px;
-  height: 72px;
-
-  margin: 0 auto 14px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 20px;
-
-  background: #edf5ff;
-
-  color: #80b5f5;
-}
-
-
-.waiting-icon i {
-  font-size: 36px;
-}
-
-
-.waiting-content h2 {
-  margin: 0;
-
-  color: #18355f;
-
-  font-size: 18px;
-
-  font-weight: 700;
-}
-
-
-.waiting-content p {
-  margin: 6px 0 0;
-
-  color: #8191a7;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
    LARGE DESKTOP
    ============================================================ */
 
 @media (min-width: 1500px) {
-
-  .scan-wrapper {
-    padding-left: 30px;
-
-    padding-right: 30px;
-  }
-
 
   .employee-result {
     grid-template-columns:
@@ -1049,7 +514,9 @@
 
     column-gap: 30px;
 
-    row-gap: 20px;
+    row-gap: 18px;
+
+    padding: 24px 30px;
   }
 
 
@@ -1061,7 +528,7 @@
 
 
   .detail-row {
-    min-height: 40px;
+    min-height: 44px;
   }
 
 }
@@ -1073,32 +540,18 @@
 
 @media (max-width: 1100px) {
 
-  .control-row {
-    flex-wrap: wrap;
-  }
-
-
-  .selected-site {
-    border-left: none;
-
-    padding-left: 0;
-
-    margin-left: 0;
-  }
-
-
   .employee-result {
     grid-template-columns:
-      180px
+      190px
       minmax(0, 1fr);
 
     grid-template-areas:
       "profile details"
-      "status status";
+      "status details";
 
     column-gap: 20px;
 
-    row-gap: 16px;
+    row-gap: 15px;
 
     padding: 20px;
   }
@@ -1112,14 +565,9 @@
   .detail-row {
     grid-template-columns:
       32px
-      140px
+      135px
       12px
       minmax(0, 1fr);
-  }
-
-
-  .status-section {
-    padding-top: 13px;
   }
 
 }
@@ -1130,113 +578,6 @@
    ============================================================ */
 
 @media (max-width: 700px) {
-
-  .scan-wrapper {
-    padding: 12px;
-  }
-
-
-  /* HEADER */
-
-  .header-row {
-    padding: 15px;
-  }
-
-
-  .title-block {
-    gap: 10px;
-  }
-
-
-  .title-icon {
-    width: 44px;
-    height: 44px;
-
-    min-width: 44px;
-  }
-
-
-  .title-icon i {
-    font-size: 22px;
-  }
-
-
-  .title-block h1 {
-    font-size: 21px;
-  }
-
-
-  .title-block p {
-    font-size: 11px;
-  }
-
-
-  /* CONTROL */
-
-  .control-card {
-    padding: 15px;
-  }
-
-
-  .control-divider {
-    margin: 14px 0;
-  }
-
-
-  .control-row {
-    align-items: flex-start;
-
-    flex-direction: column;
-
-    gap: 10px;
-  }
-
-
-  .site-select {
-    width: 100%;
-
-    min-width: 100%;
-  }
-
-
-  .selected-site {
-    width: 100%;
-
-    padding-top: 8px;
-
-    padding-left: 0;
-
-    margin-left: 0;
-
-    border-left: none;
-
-    border-top: 1px solid #e5ebf2;
-  }
-
-
-  .scan-icon {
-    display: none;
-  }
-
-
-  .scan-input-wrapper {
-    width: 100%;
-
-    flex: none;
-  }
-
-
-  .search-button {
-    width: 100%;
-  }
-
-
-  .scan-hint {
-    padding-left: 0;
-  }
-
-
-  /* EMPLOYEE RESULT */
 
   .employee-result {
     grid-template-columns: 1fr;
@@ -1252,8 +593,6 @@
   }
 
 
-  /* PROFILE */
-
   .employee-profile {
     width: 100%;
   }
@@ -1265,8 +604,6 @@
     height: 125px;
   }
 
-
-  /* DETAILS */
 
   .employee-details {
     width: 100%;
@@ -1284,7 +621,7 @@
       10px
       minmax(0, 1fr);
 
-    min-height: 38px;
+    min-height: 39px;
   }
 
 
@@ -1298,80 +635,15 @@
   }
 
 
-  /* STATUS */
-
   .status-section {
     width: 100%;
-
-    padding-top: 12px;
-
-    border-left: none;
-
-    border-top: 1px solid #e5ebf2;
   }
 
 
   .status-card {
     width: 100%;
 
-    min-height: 50px;
-
-    padding: 8px 12px;
-
-    display: flex;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    justify-content: flex-start;
-
-    text-align: left;
-  }
-
-
-  .status-content {
-    display: flex;
-
-    flex-direction: row;
-
-    align-items: center;
-
-    gap: 6px;
-
-    text-align: left;
-  }
-
-
-  .status-title {
-    font-size: 11px;
-  }
-
-
-  .status-content strong {
-    font-size: 13px;
-
-    text-align: left;
-  }
-
-
-  .status-icon-wrapper {
-    width: 26px;
-    height: 26px;
-
-    min-width: 26px;
-  }
-
-
-  .status-icon-wrapper i {
-    font-size: 14px;
-  }
-
-
-  .status-message {
-    width: 100%;
-
-    padding: 9px 10px;
+    min-height: 52px;
   }
 
 }
@@ -1382,46 +654,6 @@
    ============================================================ */
 
 @media (max-width: 480px) {
-
-  .scan-wrapper {
-    padding: 10px;
-  }
-
-
-  .header-row {
-    padding: 13px;
-
-    border-radius: 12px;
-  }
-
-
-  .title-icon {
-    width: 40px;
-    height: 40px;
-
-    min-width: 40px;
-  }
-
-
-  .title-icon i {
-    font-size: 20px;
-  }
-
-
-  .title-block h1 {
-    font-size: 19px;
-  }
-
-
-  .title-block p {
-    font-size: 10px;
-  }
-
-
-  .control-card {
-    padding: 13px;
-  }
-
 
   .employee-result {
     padding: 15px;
@@ -1437,11 +669,6 @@
   }
 
 
-  .default-user {
-    font-size: 50px;
-  }
-
-
   .detail-row {
     grid-template-columns:
       28px
@@ -1450,17 +677,6 @@
       minmax(0, 1fr);
 
     min-height: 37px;
-  }
-
-
-  .detail-icon {
-    width: 26px;
-    height: 26px;
-  }
-
-
-  .detail-icon i {
-    font-size: 12px;
   }
 
 
@@ -1474,17 +690,10 @@
   }
 
 
-  .detail-colon {
-    font-size: 11px;
-  }
-
-
   .status-card {
     min-height: 48px;
 
     padding: 7px 10px;
-
-    gap: 7px;
   }
 
 
@@ -1501,40 +710,8 @@
   }
 
 
-  .status-content {
-    gap: 5px;
-  }
-
-
-  .status-title {
-    font-size: 10px;
-  }
-
-
   .status-content strong {
     font-size: 12px;
-  }
-
-
-  .status-message {
-    padding: 8px 9px;
-
-    gap: 7px;
-  }
-
-
-  .status-message > i {
-    font-size: 14px;
-  }
-
-
-  .status-message strong {
-    font-size: 10px;
-  }
-
-
-  .status-message span {
-    font-size: 9px;
   }
 
 }
