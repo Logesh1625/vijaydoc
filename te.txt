@@ -3,13 +3,8 @@
    ============================================================ */
 
 .scan-wrapper {
-  min-height: 100vh;
-  width: 100%;
-
-  box-sizing: border-box;
-
+  min-height: 100%;
   padding: 18px 24px 35px;
-
   background: #f7f9fc;
 }
 
@@ -20,15 +15,10 @@
 
 .header-row {
   width: 100%;
-  box-sizing: border-box;
-
   background: #ffffff;
-
   border: 1px solid #e7edf4;
   border-radius: 14px;
-
   padding: 18px 22px;
-
   margin-bottom: 18px;
 
   box-shadow:
@@ -39,7 +29,6 @@
 .title-block {
   display: flex;
   align-items: center;
-
   gap: 14px;
 }
 
@@ -47,7 +36,6 @@
 .title-icon {
   width: 50px;
   height: 50px;
-
   min-width: 50px;
 
   display: flex;
@@ -57,7 +45,6 @@
   border-radius: 13px;
 
   background: #edf5ff;
-
   color: #1677ff;
 }
 
@@ -89,7 +76,7 @@
 
 
 /* ============================================================
-   MAIN
+   MAIN CONTENT
    ============================================================ */
 
 .main-content {
@@ -103,7 +90,6 @@
 
 .control-card {
   width: 100%;
-  box-sizing: border-box;
 
   background: #ffffff;
 
@@ -121,12 +107,13 @@
 
 
 .control-row {
-  width: 100%;
-
   display: flex;
+
   align-items: center;
 
   gap: 14px;
+
+  width: 100%;
 }
 
 
@@ -145,12 +132,13 @@
   color: #263b5b;
 
   font-size: 15px;
+
   font-weight: 700;
 }
 
 
 /* ============================================================
-   SECTION ICON
+   SECTION ICONS
    ============================================================ */
 
 .section-icon {
@@ -160,6 +148,7 @@
   min-width: 46px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -167,7 +156,12 @@
 }
 
 
-.site-icon,
+.site-icon {
+  background: #edf5ff;
+  color: #1677ff;
+}
+
+
 .scan-icon {
   background: #edf5ff;
   color: #1677ff;
@@ -185,6 +179,7 @@
 
 .site-select {
   width: 270px;
+
   min-width: 270px;
 }
 
@@ -193,6 +188,7 @@
   height: 44px !important;
 
   display: flex;
+
   align-items: center;
 
   padding: 0 14px !important;
@@ -201,9 +197,9 @@
 
   border: 1px solid #d5e0ec !important;
 
-  background: #ffffff !important;
-
   box-shadow: none !important;
+
+  background: #ffffff !important;
 }
 
 
@@ -227,11 +223,13 @@
 
 .selected-site {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
 
   margin-left: 5px;
+
   padding-left: 20px;
 
   border-left: 1px solid #e0e7ef;
@@ -252,16 +250,18 @@
   color: #126de5;
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
 
 /* ============================================================
-   WARNING
+   SITE WARNING
    ============================================================ */
 
 .site-warning {
   display: flex;
+
   align-items: center;
 
   gap: 8px;
@@ -300,9 +300,8 @@
 
 .scan-input {
   width: 100%;
-  height: 48px;
 
-  box-sizing: border-box;
+  height: 48px;
 
   padding: 0 16px;
 
@@ -310,11 +309,11 @@
 
   border: 1px solid #ccd9e8;
 
-  background: #ffffff;
-
   color: #203858;
 
   font-size: 15px;
+
+  background: #ffffff;
 }
 
 
@@ -348,6 +347,7 @@
   padding: 0 20px;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -360,6 +360,7 @@
   background: #1677ff;
 
   font-size: 14px;
+
   font-weight: 600;
 
   box-shadow:
@@ -385,6 +386,7 @@
 
 .scan-hint {
   display: flex;
+
   align-items: center;
 
   gap: 7px;
@@ -407,13 +409,14 @@
 
 
 /* ============================================================
-   RESULT WRAPPER
+   RESULT CARD WRAPPER
    ============================================================ */
 
 .result-card-wrapper {
   width: 100%;
 
   display: flex;
+
   justify-content: center;
 
   margin-bottom: 18px;
@@ -422,12 +425,15 @@
 
 /* ============================================================
    RESULT CARD
+
+   IMPORTANT:
+   Keeps card compact and removes excess right-side space.
    ============================================================ */
 
 .result-card {
   width: 100%;
 
-  max-width: 1100px;
+  max-width: 850px;
 
   box-sizing: border-box;
 
@@ -471,14 +477,13 @@
 
 
 /* ============================================================
-   IMPORTANT RESULT LAYOUT
-   ============================================================
+   EMPLOYEE RESULT
 
    TOP:
-       PHOTO          DETAILS
+       PHOTO       | EMPLOYEE DETAILS
 
    BOTTOM:
-                 STATUS
+                  STATUS
 
    ============================================================ */
 
@@ -490,27 +495,27 @@
   display: grid;
 
   grid-template-columns:
-    250px
-    minmax(450px, 650px);
+    210px
+    480px;
 
   grid-template-areas:
     "profile details"
-    "status status";
+    "status  status";
 
-  column-gap: 45px;
+  column-gap: 25px;
 
-  row-gap: 22px;
+  row-gap: 18px;
 
   justify-content: center;
 
   align-items: center;
 
-  padding: 32px 35px;
+  padding: 25px 30px;
 }
 
 
 /* ============================================================
-   PROFILE
+   EMPLOYEE PROFILE
    ============================================================ */
 
 .employee-profile {
@@ -535,8 +540,8 @@
    ============================================================ */
 
 .photo-container {
-  width: 145px;
-  height: 145px;
+  width: 135px;
+  height: 135px;
 
   overflow: hidden;
 
@@ -567,42 +572,43 @@
 
 
 .default-user {
-  font-size: 58px;
+  font-size: 55px;
 
   color: #a4b4c7;
 }
 
 
 /* ============================================================
-   SITE BELOW PHOTO
+   PROFILE SITE
    ============================================================ */
 
 .profile-site {
-  margin-top: 10px;
+  margin-top: 8px;
 
-  padding: 6px 18px;
+  padding: 5px 15px;
 
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
-  gap: 6px;
+  gap: 5px;
 
-  border-radius: 18px;
+  border-radius: 16px;
 
   background: #edf6ff;
 
   color: #1677ff;
 
-  font-size: 13px;
+  font-size: 12px;
 
   font-weight: 700;
 }
 
 
 .profile-site i {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 
@@ -619,7 +625,7 @@
 
   min-width: 0;
 
-  padding: 8px 0 8px 35px;
+  padding: 5px 0 5px 22px;
 
   border-left: 1px solid #e5ebf2;
 
@@ -638,15 +644,15 @@
 .detail-row {
   width: 100%;
 
-  min-height: 43px;
+  min-height: 37px;
 
   display: grid;
 
   grid-template-columns:
-    34px
-    165px
-    18px
-    minmax(180px, 1fr);
+    30px
+    140px
+    12px
+    180px;
 
   align-items: center;
 }
@@ -657,55 +663,59 @@
    ============================================================ */
 
 .detail-icon {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 
   display: flex;
 
   align-items: center;
   justify-content: center;
 
-  border-radius: 8px;
+  border-radius: 7px;
 }
 
 
 .detail-icon i {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 
 .detail-icon.blue {
   color: #1677ff;
+
   background: #edf5ff;
 }
 
 
 .detail-icon.purple {
   color: #722ed1;
+
   background: #f3edff;
 }
 
 
 .detail-icon.green {
   color: #13a87b;
+
   background: #e9fff7;
 }
 
 
 .detail-icon.pink {
   color: #eb2f96;
+
   background: #fff0f7;
 }
 
 
 /* ============================================================
-   LABEL
+   DETAIL LABEL
    ============================================================ */
 
 .detail-label {
   color: #687a91;
 
-  font-size: 13px;
+  font-size: 12px;
 
   font-weight: 600;
 
@@ -714,20 +724,20 @@
 
 
 /* ============================================================
-   COLON
+   DETAIL COLON
    ============================================================ */
 
 .detail-colon {
   color: #9aa9bb;
 
-  font-size: 13px;
+  font-size: 12px;
 
   text-align: center;
 }
 
 
 /* ============================================================
-   VALUE
+   DETAIL VALUE
    ============================================================ */
 
 .detail-value {
@@ -735,7 +745,7 @@
 
   color: #1b3152;
 
-  font-size: 14px;
+  font-size: 13px;
 
   font-weight: 700;
 
@@ -746,9 +756,9 @@
 .site-value {
   width: fit-content;
 
-  padding: 4px 11px;
+  padding: 3px 9px;
 
-  border-radius: 16px;
+  border-radius: 14px;
 
   background: #edf6ff;
 
@@ -758,11 +768,8 @@
 
 /* ============================================================
    STATUS SECTION
-   ============================================================
 
-   FULL WIDTH
-   CENTERED
-   SEPARATE FROM PHOTO + DETAILS
+   FULL WIDTH BELOW BOTH COLUMNS
    ============================================================ */
 
 .status-section {
@@ -778,24 +785,24 @@
 
   justify-content: center;
 
-  padding-top: 20px;
+  padding-top: 14px;
 
   border-top: 1px solid #e5ebf2;
 }
 
 
 /* ============================================================
-   STATUS BOX
+   STATUS CARD
    ============================================================ */
 
 .status-card {
-  width: 320px;
+  width: 300px;
 
-  min-height: 58px;
+  min-height: 52px;
 
   box-sizing: border-box;
 
-  padding: 9px 18px;
+  padding: 8px 15px;
 
   display: flex;
 
@@ -803,9 +810,9 @@
 
   justify-content: center;
 
-  gap: 10px;
+  gap: 9px;
 
-  border-radius: 9px;
+  border-radius: 8px;
 
   border: 1px solid;
 
@@ -860,10 +867,10 @@
    ============================================================ */
 
 .status-icon-wrapper {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
 
-  min-width: 30px;
+  min-width: 28px;
 
   border-radius: 50%;
 
@@ -879,7 +886,7 @@
 .status-icon-wrapper i {
   color: #ffffff;
 
-  font-size: 15px;
+  font-size: 14px;
 }
 
 
@@ -896,7 +903,7 @@
 
   justify-content: center;
 
-  gap: 2px;
+  gap: 1px;
 
   text-align: left;
 }
@@ -905,7 +912,7 @@
 .status-title {
   color: #65758b;
 
-  font-size: 11px;
+  font-size: 10px;
 
   font-weight: 600;
 }
@@ -914,7 +921,7 @@
 .status-content strong {
   color: inherit;
 
-  font-size: 14px;
+  font-size: 13px;
 
   font-weight: 700;
 
@@ -929,7 +936,7 @@
    ============================================================ */
 
 .status-message {
-  width: 320px;
+  width: 300px;
 
   box-sizing: border-box;
 
@@ -939,9 +946,9 @@
 
   gap: 7px;
 
-  margin-top: 7px;
+  margin-top: 6px;
 
-  padding: 8px 10px;
+  padding: 7px 9px;
 
   border-radius: 7px;
 
@@ -962,7 +969,7 @@
 
   color: #fa8c16;
 
-  font-size: 14px;
+  font-size: 13px;
 }
 
 
@@ -973,7 +980,7 @@
 
   flex-direction: column;
 
-  gap: 2px;
+  gap: 1px;
 }
 
 
@@ -987,7 +994,7 @@
 
   font-size: 9px;
 
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 
@@ -1017,8 +1024,6 @@
   width: 100%;
 
   min-height: 240px;
-
-  box-sizing: border-box;
 
   background: #ffffff;
 
@@ -1092,45 +1097,45 @@
 @media (min-width: 1500px) {
 
   .result-card {
-    max-width: 1200px;
+    max-width: 900px;
   }
 
 
   .employee-result {
     grid-template-columns:
-      280px
-      700px;
+      230px
+      520px;
 
-    column-gap: 55px;
+    column-gap: 30px;
 
-    padding: 35px 45px;
+    padding: 28px 35px;
   }
 
 
   .photo-container {
-    width: 155px;
-    height: 155px;
+    width: 145px;
+    height: 145px;
   }
 
 
   .detail-row {
-    min-height: 45px;
+    min-height: 40px;
 
     grid-template-columns:
-      38px
-      175px
-      18px
-      minmax(200px, 1fr);
+      32px
+      150px
+      12px
+      200px;
   }
 
 
   .detail-label {
-    font-size: 14px;
+    font-size: 13px;
   }
 
 
   .detail-value {
-    font-size: 15px;
+    font-size: 14px;
   }
 
 }
@@ -1142,28 +1147,57 @@
 
 @media (max-width: 1100px) {
 
+  .control-row {
+    flex-wrap: wrap;
+  }
+
+
+  .selected-site {
+    border-left: none;
+
+    padding-left: 0;
+
+    margin-left: 0;
+  }
+
+
+  .result-card {
+    max-width: 750px;
+  }
+
+
   .employee-result {
     grid-template-columns:
-      220px
-      minmax(0, 1fr);
+      190px
+      minmax(350px, 1fr);
 
-    column-gap: 30px;
+    column-gap: 20px;
 
-    padding: 25px;
+    padding: 22px;
   }
 
 
   .employee-details {
-    padding-left: 25px;
+    padding-left: 20px;
   }
 
 
   .detail-row {
     grid-template-columns:
-      32px
-      140px
-      12px
+      28px
+      125px
+      10px
       minmax(120px, 1fr);
+  }
+
+
+  .status-card {
+    width: 280px;
+  }
+
+
+  .status-message {
+    width: 280px;
   }
 
 }
@@ -1222,10 +1256,15 @@
   }
 
 
-  .control-row {
-    flex-direction: column;
+  .control-divider {
+    margin: 14px 0;
+  }
 
+
+  .control-row {
     align-items: flex-start;
+
+    flex-direction: column;
 
     gap: 10px;
   }
@@ -1241,11 +1280,11 @@
   .selected-site {
     width: 100%;
 
-    margin-left: 0;
+    padding-top: 8px;
 
     padding-left: 0;
 
-    padding-top: 8px;
+    margin-left: 0;
 
     border-left: none;
 
@@ -1276,107 +1315,138 @@
 
 
   /* ========================================================
-     RESULT
+     RESULT CARD
      ======================================================== */
 
-  .result-card-wrapper {
-    width: 100%;
-  }
-
-
   .result-card {
-    width: 100%;
+    max-width: 100%;
   }
 
 
   .employee-result {
-
     grid-template-columns: 1fr;
+
+    grid-template-rows:
+      auto
+      auto
+      auto;
 
     grid-template-areas:
       "profile"
       "details"
       "status";
 
-    column-gap: 0;
+    gap: 15px;
 
-    row-gap: 18px;
-
-    padding: 20px 15px;
+    padding: 18px 14px;
   }
 
 
-  /* PHOTO */
+  /* ========================================================
+     PHOTO CENTER
+     ======================================================== */
 
   .employee-profile {
     width: 100%;
 
     align-items: center;
+
+    justify-content: center;
   }
 
 
   .photo-container {
-    width: 125px;
-    height: 125px;
+    width: 120px;
+
+    height: 120px;
   }
 
 
-  /* DETAILS */
+  /* ========================================================
+     DETAILS
+     ======================================================== */
 
   .employee-details {
     width: 100%;
 
-    padding: 15px 0;
+    padding: 13px 0;
 
     border-left: none;
 
     border-top: 1px solid #e5ebf2;
 
     border-bottom: 1px solid #e5ebf2;
+
+    align-items: center;
   }
 
 
   .detail-row {
+    width: 100%;
+
     grid-template-columns:
-      30px
-      120px
-      10px
+      28px
+      110px
+      8px
       minmax(0, 1fr);
 
-    min-height: 40px;
+    min-height: 37px;
   }
 
 
   .detail-label {
-    font-size: 11px;
+    font-size: 10px;
   }
 
 
   .detail-value {
-    font-size: 12px;
+    font-size: 11px;
   }
 
 
-  /* STATUS */
+  /* ========================================================
+     STATUS CENTER
+     ======================================================== */
 
   .status-section {
     width: 100%;
 
-    padding-top: 4px;
+    padding-top: 2px;
 
     border-top: none;
+
+    align-items: center;
   }
 
 
   .status-card {
-    width: 280px;
+    width: 270px;
 
-    min-height: 52px;
+    min-height: 50px;
+
+    padding: 8px 12px;
+
+    justify-content: center;
+  }
+
+
+  .status-content {
+    align-items: flex-start;
+  }
+
+
+  .status-title {
+    font-size: 10px;
+  }
+
+
+  .status-content strong {
+    font-size: 12px;
   }
 
 
   .status-message {
-    width: 280px;
+    width: 270px;
   }
 
 }
@@ -1393,53 +1463,166 @@
   }
 
 
-  .employee-result {
-    padding: 17px 12px;
+  .header-row {
+    padding: 13px;
 
-    row-gap: 15px;
+    border-radius: 12px;
+  }
+
+
+  .title-icon {
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
+  }
+
+
+  .title-icon i {
+    font-size: 20px;
+  }
+
+
+  .title-block h1 {
+    font-size: 19px;
+  }
+
+
+  .title-block p {
+    font-size: 10px;
+  }
+
+
+  .control-card {
+    padding: 13px;
+  }
+
+
+  /* RESULT */
+
+  .employee-result {
+    padding: 15px 10px;
+
+    gap: 14px;
   }
 
 
   .photo-container {
-    width: 115px;
-    height: 115px;
+    width: 110px;
+
+    height: 110px;
+  }
+
+
+  .default-user {
+    font-size: 50px;
+  }
+
+
+  /* DETAILS */
+
+  .employee-details {
+    padding-top: 12px;
+
+    padding-bottom: 12px;
   }
 
 
   .detail-row {
     grid-template-columns:
-      28px
-      105px
-      8px
+      26px
+      100px
+      7px
       minmax(0, 1fr);
 
-    min-height: 37px;
+    min-height: 35px;
   }
 
 
   .detail-icon {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+
+    height: 24px;
+  }
+
+
+  .detail-icon i {
+    font-size: 12px;
   }
 
 
   .detail-label {
-    font-size: 10px;
+    font-size: 9px;
   }
 
 
   .detail-value {
+    font-size: 10px;
+  }
+
+
+  .detail-colon {
+    font-size: 10px;
+  }
+
+
+  /* STATUS */
+
+  .status-card {
+    width: 250px;
+
+    min-height: 48px;
+
+    padding: 7px 10px;
+
+    gap: 7px;
+  }
+
+
+  .status-icon-wrapper {
+    width: 26px;
+    height: 26px;
+
+    min-width: 26px;
+  }
+
+
+  .status-icon-wrapper i {
+    font-size: 13px;
+  }
+
+
+  .status-title {
+    font-size: 9px;
+  }
+
+
+  .status-content strong {
     font-size: 11px;
   }
 
 
-  .status-card {
-    width: 260px;
+  .status-message {
+    width: 250px;
+
+    padding: 8px 9px;
+
+    gap: 7px;
   }
 
 
-  .status-message {
-    width: 260px;
+  .status-message > i {
+    font-size: 13px;
+  }
+
+
+  .status-message strong {
+    font-size: 9px;
+  }
+
+
+  .status-message span {
+    font-size: 8px;
   }
 
 }
