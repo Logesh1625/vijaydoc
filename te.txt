@@ -1,509 +1,28 @@
 /* ============================================================
-   MEAL SCAN - MAIN
-   ============================================================ */
-
-.scan-wrapper {
-  min-height: 100%;
-  padding: 18px 24px 35px;
-  background: #f7f9fc;
-}
-
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.header-row {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e7edf4;
-
-  border-radius: 14px;
-
-  padding: 18px 22px;
-
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 3px 12px rgba(20, 35, 63, 0.05);
-}
-
-
-.title-block {
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-}
-
-
-.title-icon {
-  width: 50px;
-  height: 50px;
-
-  min-width: 50px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 13px;
-
-  background: #edf5ff;
-
-  color: #1677ff;
-}
-
-
-.title-icon i {
-  font-size: 25px;
-}
-
-
-.title-block h1 {
-  margin: 0;
-
-  color: #172b4d;
-
-  font-size: 25px;
-
-  font-weight: 700;
-
-  line-height: 1.2;
-}
-
-
-.title-block p {
-  margin: 5px 0 0;
-
-  color: #7b899d;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
-   MAIN CONTENT
-   ============================================================ */
-
-.main-content {
-  width: 100%;
-}
-
-
-/* ============================================================
-   CONTROL CARD
-   ============================================================ */
-
-.control-card {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 14px;
-
-  padding: 20px 22px;
-
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.06);
-}
-
-
-.control-row {
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-
-  width: 100%;
-}
-
-
-.control-divider {
-  height: 1px;
-
-  margin: 18px 0;
-
-  background: #e9eff5;
-}
-
-
-.control-label {
-  min-width: 42px;
-
-  color: #263b5b;
-
-  font-size: 15px;
-
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SECTION ICONS
-   ============================================================ */
-
-.section-icon {
-  width: 46px;
-  height: 46px;
-
-  min-width: 46px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-}
-
-
-.site-icon {
-  background: #edf5ff;
-
-  color: #1677ff;
-}
-
-
-.scan-icon {
-  background: #edf5ff;
-
-  color: #1677ff;
-}
-
-
-.section-icon i {
-  font-size: 22px;
-}
-
-
-/* ============================================================
-   SITE SELECT
-   ============================================================ */
-
-.site-select {
-  width: 270px;
-
-  min-width: 270px;
-}
-
-
-.site-select ::ng-deep .ant-select-selector {
-  height: 44px !important;
-
-  display: flex;
-
-  align-items: center;
-
-  padding: 0 14px !important;
-
-  border-radius: 9px !important;
-
-  border: 1px solid #d5e0ec !important;
-
-  box-shadow: none !important;
-
-  background: #ffffff !important;
-}
-
-
-.site-select ::ng-deep .ant-select-selection-item {
-  color: #273b59;
-
-  font-size: 14px;
-
-  font-weight: 600;
-}
-
-
-.site-select:hover ::ng-deep .ant-select-selector {
-  border-color: #1677ff !important;
-}
-
-
-/* ============================================================
-   SELECTED SITE
-   ============================================================ */
-
-.selected-site {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-left: 5px;
-
-  padding-left: 20px;
-
-  border-left: 1px solid #e0e7ef;
-
-  color: #718198;
-
-  font-size: 13px;
-}
-
-
-.selected-site strong {
-  padding: 6px 13px;
-
-  border-radius: 18px;
-
-  background: #edf5ff;
-
-  color: #126de5;
-
-  font-size: 13px;
-
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SITE WARNING
-   ============================================================ */
-
-.site-warning {
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  margin-top: 12px;
-
-  padding: 9px 12px;
-
-  border-radius: 8px;
-
-  background: #fff7e6;
-
-  color: #ad6800;
-
-  font-size: 13px;
-}
-
-
-.site-warning i {
-  font-size: 16px;
-}
-
-
-/* ============================================================
-   SCAN INPUT
-   ============================================================ */
-
-.scan-input-wrapper {
-  position: relative;
-
-  flex: 1;
-
-  min-width: 0;
-}
-
-
-.scan-input {
-  width: 100%;
-
-  height: 48px;
-
-  padding: 0 16px;
-
-  border-radius: 9px;
-
-  border: 1px solid #ccd9e8;
-
-  color: #203858;
-
-  font-size: 15px;
-
-  background: #ffffff;
-}
-
-
-.scan-input:hover {
-  border-color: #9bbde5;
-}
-
-
-.scan-input:focus {
-  border-color: #1677ff;
-
-  box-shadow:
-    0 0 0 2px rgba(22, 119, 255, 0.08);
-}
-
-
-.scan-input::placeholder {
-  color: #91a0b4;
-}
-
-
-/* ============================================================
-   SEARCH BUTTON
-   ============================================================ */
-
-.search-button {
-  height: 48px;
-
-  min-width: 110px;
-
-  padding: 0 20px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  border: none;
-
-  border-radius: 9px;
-
-  background: #1677ff;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  box-shadow:
-    0 4px 10px rgba(22, 119, 255, 0.18);
-}
-
-
-.search-button:hover {
-  background: #0958d9;
-
-  transform: none;
-}
-
-
-.search-button i {
-  font-size: 17px;
-}
-
-
-/* ============================================================
-   SCAN HINT
-   ============================================================ */
-
-.scan-hint {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-top: 9px;
-
-  padding-left: 60px;
-
-  color: #718198;
-
-  font-size: 12px;
-}
-
-
-.scan-hint i {
-  color: #1677ff;
-
-  font-size: 15px;
-}
-
-
-/* ============================================================
-   RESULT CARD
-   ============================================================ */
-
-.result-card-wrapper {
-  width: 100%;
-
-  margin-bottom: 18px;
-}
-
-
-.result-card {
-  width: 100%;
-
-  overflow: hidden;
-
-  background: #ffffff;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 5px 18px rgba(30, 70, 110, 0.08);
-
-  border: 1px solid #e4eaf1;
-
-  border-left: 4px solid transparent;
-}
-
-
-/* ============================================================
-   STATUS BORDER
-   ============================================================ */
-
-.card-entitled {
-  border-left-color: #52c41a;
-}
-
-
-.card-already {
-  border-left-color: #fa8c16;
-}
-
-
-.card-mismatch {
-  border-left-color: #faad14;
-}
-
-
-.card-not-entitled {
-  border-left-color: #ff4d4f;
-}
-
-
-/* ============================================================
    EMPLOYEE RESULT
-   ------------------------------------------------------------
-   TOP:
-      PHOTO | EMPLOYEE DETAILS
-   BOTTOM:
-      FULL WIDTH STATUS
+   PHOTO + DETAILS TOP
+   STATUS BELOW
    ============================================================ */
 
 .employee-result {
   display: grid;
 
-  grid-template-columns:
-    210px
-    minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr);
 
   grid-template-areas:
     "profile details"
     "status status";
 
-  gap: 25px;
+  gap: 18px 25px;
 
-  padding: 24px 28px;
+  padding: 22px 28px;
 
   align-items: stretch;
 }
 
 
 /* ============================================================
-   EMPLOYEE PROFILE
+   PROFILE
    ============================================================ */
 
 .employee-profile {
@@ -516,18 +35,16 @@
   align-items: center;
 
   justify-content: center;
-
-  min-width: 0;
 }
 
 
 .photo-container {
-  width: 145px;
-  height: 145px;
+  width: 140px;
+  height: 140px;
 
   overflow: hidden;
 
-  border-radius: 14px;
+  border-radius: 12px;
 
   background: #f1f5f9;
 
@@ -539,7 +56,7 @@
   justify-content: center;
 
   box-shadow:
-    0 5px 14px rgba(30, 70, 110, 0.10);
+    0 4px 12px rgba(30, 70, 110, 0.08);
 }
 
 
@@ -554,7 +71,7 @@
 
 
 .default-user {
-  font-size: 60px;
+  font-size: 55px;
 
   color: #a4b4c7;
 }
@@ -565,30 +82,25 @@
    ============================================================ */
 
 .profile-site {
-  margin-top: 10px;
+  margin-top: 9px;
 
-  padding: 6px 18px;
+  padding: 5px 16px;
 
   display: flex;
 
   align-items: center;
 
-  gap: 6px;
+  gap: 5px;
 
-  border-radius: 18px;
+  border-radius: 16px;
 
   background: #edf6ff;
 
   color: #1677ff;
 
-  font-size: 13px;
+  font-size: 12px;
 
   font-weight: 700;
-}
-
-
-.profile-site i {
-  font-size: 15px;
 }
 
 
@@ -601,9 +113,9 @@
 
   min-width: 0;
 
-  padding: 0 15px 0 20px;
+  padding: 4px 10px 4px 22px;
 
-  border-left: 1px solid #eef2f7;
+  border-left: 1px solid #e5ebf2;
 }
 
 
@@ -618,60 +130,56 @@
 
   align-items: center;
 
-  min-height: 42px;
+  min-height: 38px;
 }
 
 
 .detail-icon {
-  width: 28px;
-  height: 28px;
+  width: 27px;
+  height: 27px;
 
   display: flex;
 
   align-items: center;
   justify-content: center;
 
-  border-radius: 8px;
+  border-radius: 7px;
 }
 
 
 .detail-icon i {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 
 .detail-icon.blue {
   color: #1677ff;
-
   background: #edf5ff;
 }
 
 
 .detail-icon.purple {
   color: #722ed1;
-
   background: #f3edff;
 }
 
 
 .detail-icon.green {
   color: #13a87b;
-
   background: #e9fff7;
 }
 
 
 .detail-icon.pink {
   color: #eb2f96;
-
   background: #fff0f7;
 }
 
 
 .detail-label {
-  color: #6d7f97;
+  color: #687a91;
 
-  font-size: 13px;
+  font-size: 12px;
 
   font-weight: 600;
 
@@ -682,29 +190,29 @@
 .detail-colon {
   color: #9aa9bb;
 
-  font-size: 13px;
+  font-size: 12px;
+
+  text-align: center;
 }
 
 
 .detail-value {
   color: #1b3152;
 
-  font-size: 14px;
+  font-size: 13px;
 
   font-weight: 700;
 
   word-break: break-word;
-
-  min-width: 0;
 }
 
 
 .site-value {
   width: fit-content;
 
-  padding: 4px 11px;
+  padding: 3px 10px;
 
-  border-radius: 16px;
+  border-radius: 14px;
 
   background: #edf6ff;
 
@@ -714,8 +222,6 @@
 
 /* ============================================================
    STATUS SECTION
-   ------------------------------------------------------------
-   STATUS IS BELOW PHOTO + DETAILS
    ============================================================ */
 
 .status-section {
@@ -723,11 +229,9 @@
 
   width: 100%;
 
-  min-width: 0;
+  padding-top: 14px;
 
-  padding-top: 20px;
-
-  border-top: 1px solid #e4eaf1;
+  border-top: 1px solid #e5ebf2;
 
   border-left: none;
 
@@ -735,34 +239,43 @@
 
   flex-direction: column;
 
+  align-items: stretch;
+
   justify-content: center;
 }
 
 
 /* ============================================================
    STATUS CARD
+   REFERENCE IMAGE STYLE
    ============================================================ */
 
 .status-card {
   width: 100%;
 
-  min-height: 180px;
+  min-height: 54px;
 
-  padding: 22px;
+  padding: 8px 18px;
 
   display: flex;
 
-  flex-direction: column;
+  flex-direction: row;
 
   align-items: center;
 
-  justify-content: center;
+  justify-content: flex-start;
 
   gap: 10px;
 
-  border-radius: 14px;
+  border-radius: 8px;
 
-  text-align: center;
+  background: #ffffff;
+
+  border: 1px solid currentColor;
+
+  box-shadow: none;
+
+  text-align: left;
 }
 
 
@@ -771,30 +284,38 @@
    ============================================================ */
 
 .status-entitled {
-  background: #f6ffed;
-
   color: #389e0d;
+
+  background: #ffffff;
+
+  border-color: #b7dfaa;
 }
 
 
 .status-already {
-  background: #fff7e8;
-
   color: #d46b08;
+
+  background: #ffffff;
+
+  border-color: #ffd591;
 }
 
 
 .status-mismatch {
-  background: #fffbe6;
-
   color: #ad6800;
+
+  background: #ffffff;
+
+  border-color: #ffe58f;
 }
 
 
 .status-not-entitled {
-  background: #fff1f0;
-
   color: #cf1322;
+
+  background: #ffffff;
+
+  border-color: #ffa39e;
 }
 
 
@@ -803,10 +324,10 @@
    ============================================================ */
 
 .status-icon-wrapper {
-  width: 64px;
-  height: 64px;
+  width: 28px;
+  height: 28px;
 
-  min-width: 64px;
+  min-width: 28px;
 
   border-radius: 50%;
 
@@ -822,7 +343,7 @@
 .status-icon-wrapper i {
   color: #ffffff;
 
-  font-size: 30px;
+  font-size: 15px;
 }
 
 
@@ -833,45 +354,39 @@
 .status-content {
   display: flex;
 
-  flex-direction: column;
+  flex-direction: row;
 
   align-items: center;
 
-  justify-content: center;
-
-  gap: 5px;
+  gap: 8px;
 
   min-width: 0;
 
-  text-align: center;
+  text-align: left;
 }
 
 
 .status-title {
-  color: inherit;
+  color: #65758b;
 
   font-size: 13px;
 
   font-weight: 600;
 
-  opacity: 0.8;
+  opacity: 1;
 }
 
 
 .status-content strong {
-  display: block;
-
   color: inherit;
 
-  font-size: 21px;
+  font-size: 15px;
 
-  line-height: 1.25;
+  line-height: 1.2;
 
   font-weight: 700;
 
-  text-align: center;
-
-  word-break: break-word;
+  text-align: left;
 }
 
 
@@ -888,13 +403,13 @@
 
   align-items: flex-start;
 
-  gap: 9px;
+  gap: 8px;
 
-  margin-top: 10px;
+  margin-top: 8px;
 
-  padding: 11px 13px;
+  padding: 9px 12px;
 
-  border-radius: 10px;
+  border-radius: 7px;
 
   background: #fffaf3;
 
@@ -911,7 +426,7 @@
 
   color: #fa8c16;
 
-  font-size: 17px;
+  font-size: 15px;
 
   flex-shrink: 0;
 }
@@ -922,28 +437,28 @@
 
   flex-direction: column;
 
-  gap: 3px;
+  gap: 2px;
 
   min-width: 0;
 }
 
 
 .status-message strong {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 
 .status-message span {
-  font-size: 11px;
+  font-size: 10px;
 
-  line-height: 1.45;
+  line-height: 1.4;
 
   color: #8b7963;
 }
 
 
 /* ============================================================
-   SITE MISMATCH MESSAGE
+   SITE MISMATCH
    ============================================================ */
 
 .mismatch-message {
@@ -961,144 +476,10 @@
 
 
 /* ============================================================
-   WAITING CARD
-   ============================================================ */
-
-.waiting-card {
-  width: 100%;
-
-  min-height: 240px;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.05);
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-}
-
-
-.waiting-content {
-  text-align: center;
-}
-
-
-.waiting-icon {
-  width: 72px;
-  height: 72px;
-
-  margin: 0 auto 14px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 20px;
-
-  background: #edf5ff;
-
-  color: #80b5f5;
-}
-
-
-.waiting-icon i {
-  font-size: 36px;
-}
-
-
-.waiting-content h2 {
-  margin: 0;
-
-  color: #18355f;
-
-  font-size: 18px;
-
-  font-weight: 700;
-}
-
-
-.waiting-content p {
-  margin: 6px 0 0;
-
-  color: #8191a7;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
-   LARGE DESKTOP
-   ============================================================ */
-
-@media (min-width: 1500px) {
-
-  .scan-wrapper {
-    padding-left: 30px;
-
-    padding-right: 30px;
-  }
-
-
-  .employee-result {
-    grid-template-columns:
-      230px
-      minmax(0, 1fr);
-
-    gap: 30px;
-  }
-
-
-  .photo-container {
-    width: 155px;
-
-    height: 155px;
-  }
-
-
-  .detail-row {
-    min-height: 44px;
-  }
-
-
-  .status-card {
-    min-height: 190px;
-  }
-
-}
-
-
-/* ============================================================
    TABLET
    ============================================================ */
 
 @media (max-width: 1100px) {
-
-  .control-row {
-    flex-wrap: wrap;
-  }
-
-
-  .selected-site {
-    border-left: none;
-
-    padding-left: 0;
-
-    margin-left: 0;
-  }
-
-
-  /* --------------------------------------------
-     EMPLOYEE RESULT
-     -------------------------------------------- */
 
   .employee-result {
     grid-template-columns:
@@ -1109,9 +490,9 @@
       "profile details"
       "status status";
 
-    gap: 20px;
+    gap: 16px 20px;
 
-    padding: 22px;
+    padding: 20px;
   }
 
 
@@ -1120,24 +501,10 @@
   }
 
 
-  .status-section {
-    padding-top: 18px;
-
-    border-left: none;
-
-    border-top: 1px solid #e4eaf1;
-  }
-
-
-  .status-card {
-    min-height: 170px;
-  }
-
-
   .detail-row {
     grid-template-columns:
       32px
-      145px
+      140px
       12px
       minmax(0, 1fr);
   }
@@ -1151,113 +518,7 @@
 
 @media (max-width: 700px) {
 
-  .scan-wrapper {
-    padding: 12px;
-  }
-
-
-  /* HEADER */
-
-  .header-row {
-    padding: 15px;
-  }
-
-
-  .title-icon {
-    width: 44px;
-    height: 44px;
-
-    min-width: 44px;
-  }
-
-
-  .title-icon i {
-    font-size: 22px;
-  }
-
-
-  .title-block {
-    gap: 10px;
-  }
-
-
-  .title-block h1 {
-    font-size: 21px;
-  }
-
-
-  .title-block p {
-    font-size: 11px;
-  }
-
-
-  /* CONTROL */
-
-  .control-card {
-    padding: 15px;
-  }
-
-
-  .control-divider {
-    margin: 14px 0;
-  }
-
-
-  .control-row {
-    align-items: flex-start;
-
-    flex-direction: column;
-
-    gap: 10px;
-  }
-
-
-  .site-select {
-    width: 100%;
-
-    min-width: 100%;
-  }
-
-
-  .selected-site {
-    width: 100%;
-
-    padding-top: 8px;
-
-    border-left: none;
-
-    border-top: 1px solid #e5ebf2;
-  }
-
-
-  .scan-icon {
-    display: none;
-  }
-
-
-  .scan-input-wrapper {
-    width: 100%;
-
-    flex: none;
-  }
-
-
-  .search-button {
-    width: 100%;
-  }
-
-
-  .scan-hint {
-    padding-left: 0;
-  }
-
-
-  /* --------------------------------------------
-     EMPLOYEE RESULT
-     -------------------------------------------- */
-
   .employee-result {
-
     grid-template-columns: 1fr;
 
     grid-template-areas:
@@ -1265,13 +526,11 @@
       "details"
       "status";
 
-    gap: 20px;
+    gap: 16px;
 
-    padding: 20px;
+    padding: 18px;
   }
 
-
-  /* PROFILE */
 
   .employee-profile {
     width: 100%;
@@ -1279,13 +538,10 @@
 
 
   .photo-container {
-    width: 135px;
-
-    height: 135px;
+    width: 125px;
+    height: 125px;
   }
 
-
-  /* DETAILS */
 
   .employee-details {
     width: 100%;
@@ -1299,72 +555,61 @@
   .detail-row {
     grid-template-columns:
       30px
-      130px
-      12px
+      125px
+      10px
       minmax(0, 1fr);
 
-    min-height: 40px;
+    min-height: 38px;
   }
 
 
   .detail-label {
-    font-size: 12px;
+    font-size: 11px;
   }
 
 
   .detail-value {
-    font-size: 13px;
+    font-size: 12px;
   }
 
 
-  /* STATUS */
-
   .status-section {
-    width: 100%;
-
-    padding-top: 18px;
-
-    border-left: none;
-
-    border-top: 1px solid #e4eaf1;
+    padding-top: 12px;
   }
 
 
   .status-card {
-    width: 100%;
+    min-height: 50px;
 
-    min-height: 165px;
-
-    padding: 18px;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    text-align: center;
+    padding: 8px 12px;
   }
 
 
   .status-content {
-    align-items: center;
+    gap: 6px;
+  }
 
-    text-align: center;
+
+  .status-title {
+    font-size: 11px;
   }
 
 
   .status-content strong {
-    font-size: 18px;
-
-    text-align: center;
+    font-size: 13px;
   }
 
 
-  .status-message {
-    width: 100%;
+  .status-icon-wrapper {
+    width: 26px;
+    height: 26px;
 
-    margin-top: 10px;
+    min-width: 26px;
+  }
+
+
+  .status-icon-wrapper i {
+    font-size: 14px;
   }
 
 }
@@ -1376,151 +621,50 @@
 
 @media (max-width: 480px) {
 
-  .scan-wrapper {
-    padding: 10px;
-  }
-
-
-  .header-row {
-    border-radius: 12px;
-
-    padding: 13px;
-  }
-
-
-  .title-icon {
-    width: 40px;
-    height: 40px;
-
-    min-width: 40px;
-  }
-
-
-  .title-icon i {
-    font-size: 20px;
-  }
-
-
-  .title-block h1 {
-    font-size: 19px;
-  }
-
-
-  .title-block p {
-    font-size: 10px;
-  }
-
-
-  .control-card {
-    padding: 13px;
-  }
-
-
   .employee-result {
-    padding: 16px;
-
-    gap: 16px;
+    padding: 15px;
   }
 
 
   .photo-container {
-    width: 120px;
-
-    height: 120px;
-  }
-
-
-  .default-user {
-    font-size: 50px;
+    width: 115px;
+    height: 115px;
   }
 
 
   .detail-row {
     grid-template-columns:
       28px
-      115px
-      10px
+      112px
+      8px
       minmax(0, 1fr);
-
-    min-height: 38px;
-  }
-
-
-  .detail-icon {
-    width: 26px;
-    height: 26px;
-  }
-
-
-  .detail-icon i {
-    font-size: 13px;
   }
 
 
   .detail-label {
-    font-size: 11px;
+    font-size: 10px;
   }
 
 
   .detail-value {
-    font-size: 12px;
-  }
-
-
-  .detail-colon {
-    font-size: 12px;
+    font-size: 11px;
   }
 
 
   .status-card {
-    min-height: 155px;
-
-    padding: 16px;
-  }
-
-
-  .status-icon-wrapper {
-    width: 52px;
-    height: 52px;
-
-    min-width: 52px;
-  }
-
-
-  .status-icon-wrapper i {
-    font-size: 24px;
-  }
-
-
-  .status-title {
-    font-size: 12px;
-  }
-
-
-  .status-content strong {
-    font-size: 17px;
-  }
-
-
-  .status-message {
-    padding: 10px;
+    padding: 7px 10px;
 
     gap: 7px;
   }
 
 
-  .status-message > i {
-    font-size: 15px;
-  }
-
-
-  .status-message strong {
-    font-size: 11px;
-  }
-
-
-  .status-message span {
+  .status-title {
     font-size: 10px;
+  }
+
+
+  .status-content strong {
+    font-size: 12px;
   }
 
 }
