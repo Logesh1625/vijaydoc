@@ -1,1628 +1,1207 @@
-/* ============================================================
-   MEAL SCAN - MAIN
-   ============================================================ */
-
-.scan-wrapper {
-  min-height: 100%;
-  padding: 18px 24px 35px;
-  background: #f7f9fc;
-}
-
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.header-row {
-  width: 100%;
-  background: #ffffff;
-  border: 1px solid #e7edf4;
-  border-radius: 14px;
-  padding: 18px 22px;
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 3px 12px rgba(20, 35, 63, 0.05);
-}
-
-
-.title-block {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-
-.title-icon {
-  width: 50px;
-  height: 50px;
-  min-width: 50px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 13px;
-
-  background: #edf5ff;
-  color: #1677ff;
-}
-
-
-.title-icon i {
-  font-size: 25px;
-}
-
-
-.title-block h1 {
-  margin: 0;
-
-  color: #172b4d;
-
-  font-size: 25px;
-  font-weight: 700;
-
-  line-height: 1.2;
-}
-
-
-.title-block p {
-  margin: 5px 0 0;
-
-  color: #7b899d;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
-   MAIN CONTENT
-   ============================================================ */
-
-.main-content {
-  width: 100%;
-}
-
-
-/* ============================================================
-   CONTROL CARD
-   ============================================================ */
-
-.control-card {
-  width: 100%;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 14px;
-
-  padding: 20px 22px;
-
-  margin-bottom: 18px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.06);
-}
-
-
-.control-row {
-  display: flex;
-
-  align-items: center;
-
-  gap: 14px;
-
-  width: 100%;
-}
-
-
-.control-divider {
-  height: 1px;
-
-  margin: 18px 0;
-
-  background: #e9eff5;
-}
-
-
-.control-label {
-  min-width: 42px;
-
-  color: #263b5b;
-
-  font-size: 15px;
-
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SECTION ICONS
-   ============================================================ */
-
-.section-icon {
-  width: 46px;
-  height: 46px;
-
-  min-width: 46px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-}
-
-
-.site-icon {
-  background: #edf5ff;
-  color: #1677ff;
-}
-
-
-.scan-icon {
-  background: #edf5ff;
-  color: #1677ff;
-}
-
-
-.section-icon i {
-  font-size: 22px;
-}
-
-
-/* ============================================================
-   SITE SELECT
-   ============================================================ */
-
-.site-select {
-  width: 270px;
-
-  min-width: 270px;
-}
-
-
-.site-select ::ng-deep .ant-select-selector {
-  height: 44px !important;
-
-  display: flex;
-
-  align-items: center;
-
-  padding: 0 14px !important;
-
-  border-radius: 9px !important;
-
-  border: 1px solid #d5e0ec !important;
-
-  box-shadow: none !important;
-
-  background: #ffffff !important;
-}
-
-
-.site-select ::ng-deep .ant-select-selection-item {
-  color: #273b59;
-
-  font-size: 14px;
-
-  font-weight: 600;
-}
-
-
-.site-select:hover ::ng-deep .ant-select-selector {
-  border-color: #1677ff !important;
-}
-
-
-/* ============================================================
-   SELECTED SITE
-   ============================================================ */
-
-.selected-site {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-left: 5px;
-
-  padding-left: 20px;
-
-  border-left: 1px solid #e0e7ef;
-
-  color: #718198;
-
-  font-size: 13px;
-}
-
-
-.selected-site strong {
-  padding: 6px 13px;
-
-  border-radius: 18px;
-
-  background: #edf5ff;
-
-  color: #126de5;
-
-  font-size: 13px;
-
-  font-weight: 700;
-}
-
-
-/* ============================================================
-   SITE WARNING
-   ============================================================ */
-
-.site-warning {
-  display: flex;
-
-  align-items: center;
-
-  gap: 8px;
-
-  margin-top: 12px;
-
-  padding: 9px 12px;
-
-  border-radius: 8px;
-
-  background: #fff7e6;
-
-  color: #ad6800;
-
-  font-size: 13px;
-}
-
-
-.site-warning i {
-  font-size: 16px;
-}
-
-
-/* ============================================================
-   SCAN INPUT
-   ============================================================ */
-
-.scan-input-wrapper {
-  position: relative;
-
-  flex: 1;
-
-  min-width: 0;
-}
-
-
-.scan-input {
-  width: 100%;
-
-  height: 48px;
-
-  padding: 0 16px;
-
-  border-radius: 9px;
-
-  border: 1px solid #ccd9e8;
-
-  color: #203858;
-
-  font-size: 15px;
-
-  background: #ffffff;
-}
-
-
-.scan-input:hover {
-  border-color: #9bbde5;
-}
-
-
-.scan-input:focus {
-  border-color: #1677ff;
-
-  box-shadow:
-    0 0 0 2px rgba(22, 119, 255, 0.08);
-}
-
-
-.scan-input::placeholder {
-  color: #91a0b4;
-}
-
-
-/* ============================================================
-   SEARCH BUTTON
-   ============================================================ */
-
-.search-button {
-  height: 48px;
-
-  min-width: 110px;
-
-  padding: 0 20px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  gap: 8px;
-
-  border: none;
-
-  border-radius: 9px;
-
-  background: #1677ff;
-
-  font-size: 14px;
-
-  font-weight: 600;
-
-  box-shadow:
-    0 4px 10px rgba(22, 119, 255, 0.18);
-}
-
-
-.search-button:hover {
-  background: #0958d9;
-
-  transform: none;
-}
-
-
-.search-button i {
-  font-size: 17px;
-}
-
-
-/* ============================================================
-   SCAN HINT
-   ============================================================ */
-
-.scan-hint {
-  display: flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-top: 9px;
-
-  padding-left: 60px;
-
-  color: #718198;
-
-  font-size: 12px;
-}
-
-
-.scan-hint i {
-  color: #1677ff;
-
-  font-size: 15px;
-}
-
-
-/* ============================================================
-   RESULT CARD WRAPPER
-   ============================================================ */
-
-.result-card-wrapper {
-  width: 100%;
-
-  display: flex;
-
-  justify-content: center;
-
-  margin-bottom: 18px;
-}
-
-
-/* ============================================================
-   RESULT CARD
-
-   IMPORTANT:
-   Keeps card compact and removes excess right-side space.
-   ============================================================ */
-
-.result-card {
-  width: 100%;
-
-  max-width: 850px;
-
-  box-sizing: border-box;
-
-  overflow: hidden;
-
-  background: #ffffff;
-
-  border-radius: 14px;
-
-  border: 1px solid #e4eaf1;
-
-  border-left: 4px solid transparent;
-
-  box-shadow:
-    0 5px 18px rgba(30, 70, 110, 0.08);
-}
-
-
-/* ============================================================
-   STATUS BORDER
-   ============================================================ */
-
-.card-entitled {
-  border-left-color: #52c41a;
-}
-
-
-.card-already {
-  border-left-color: #fa8c16;
-}
-
-
-.card-mismatch {
-  border-left-color: #faad14;
-}
-
-
-.card-not-entitled {
-  border-left-color: #ff4d4f;
-}
-
-
-/* ============================================================
-   EMPLOYEE RESULT
-
-   TOP:
-       PHOTO       | EMPLOYEE DETAILS
-
-   BOTTOM:
-                  STATUS
-
-   ============================================================ */
-
-.employee-result {
-  width: 100%;
-
-  box-sizing: border-box;
-
-  display: grid;
-
-  grid-template-columns:
-    210px
-    480px;
-
-  grid-template-areas:
-    "profile details"
-    "status  status";
-
-  column-gap: 25px;
-
-  row-gap: 18px;
-
-  justify-content: center;
-
-  align-items: center;
-
-  padding: 25px 30px;
-}
-
-
-/* ============================================================
-   EMPLOYEE PROFILE
-   ============================================================ */
-
-.employee-profile {
-  grid-area: profile;
-
-  width: 100%;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  text-align: center;
-}
-
-
-/* ============================================================
-   PHOTO
-   ============================================================ */
-
-.photo-container {
-  width: 135px;
-  height: 135px;
-
-  overflow: hidden;
-
-  border-radius: 12px;
-
-  background: #f1f5f9;
-
-  border: 2px solid #e2e9f1;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  box-shadow:
-    0 4px 12px rgba(30, 70, 110, 0.10);
-}
-
-
-.employee-photo {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-
-  display: block;
-}
-
-
-.default-user {
-  font-size: 55px;
-
-  color: #a4b4c7;
-}
-
-
-/* ============================================================
-   PROFILE SITE
-   ============================================================ */
-
-.profile-site {
-  margin-top: 8px;
-
-  padding: 5px 15px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 5px;
-
-  border-radius: 16px;
-
-  background: #edf6ff;
-
-  color: #1677ff;
-
-  font-size: 12px;
-
-  font-weight: 700;
-}
-
-
-.profile-site i {
-  font-size: 14px;
-}
-
-
-/* ============================================================
-   EMPLOYEE DETAILS
-   ============================================================ */
-
-.employee-details {
-  grid-area: details;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  min-width: 0;
-
-  padding: 5px 0 5px 22px;
-
-  border-left: 1px solid #e5ebf2;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-}
-
-
-/* ============================================================
-   DETAIL ROW
-   ============================================================ */
-
-.detail-row {
-  width: 100%;
-
-  min-height: 37px;
-
-  display: grid;
-
-  grid-template-columns:
-    30px
-    140px
-    12px
-    180px;
-
-  align-items: center;
-}
-
-
-/* ============================================================
-   DETAIL ICON
-   ============================================================ */
-
-.detail-icon {
-  width: 26px;
-  height: 26px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 7px;
-}
-
-
-.detail-icon i {
-  font-size: 13px;
-}
-
-
-.detail-icon.blue {
-  color: #1677ff;
-
-  background: #edf5ff;
-}
-
-
-.detail-icon.purple {
-  color: #722ed1;
-
-  background: #f3edff;
-}
-
-
-.detail-icon.green {
-  color: #13a87b;
-
-  background: #e9fff7;
-}
-
-
-.detail-icon.pink {
-  color: #eb2f96;
-
-  background: #fff0f7;
-}
-
-
-/* ============================================================
-   DETAIL LABEL
-   ============================================================ */
-
-.detail-label {
-  color: #687a91;
-
-  font-size: 12px;
-
-  font-weight: 600;
-
-  white-space: nowrap;
-}
-
-
-/* ============================================================
-   DETAIL COLON
-   ============================================================ */
-
-.detail-colon {
-  color: #9aa9bb;
-
-  font-size: 12px;
-
-  text-align: center;
-}
-
-
-/* ============================================================
-   DETAIL VALUE
-   ============================================================ */
-
-.detail-value {
-  min-width: 0;
-
-  color: #1b3152;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  word-break: break-word;
-}
-
-
-.site-value {
-  width: fit-content;
-
-  padding: 3px 9px;
-
-  border-radius: 14px;
-
-  background: #edf6ff;
-
-  color: #1677ff;
-}
-
-
-/* ============================================================
-   STATUS SECTION
-
-   FULL WIDTH BELOW BOTH COLUMNS
-   ============================================================ */
-
-.status-section {
-  grid-area: status;
-
-  width: 100%;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding-top: 14px;
-
-  border-top: 1px solid #e5ebf2;
-}
-
-
-/* ============================================================
-   STATUS CARD
-   ============================================================ */
-
-.status-card {
-  width: 300px;
-
-  min-height: 52px;
-
-  box-sizing: border-box;
-
-  padding: 8px 15px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  gap: 9px;
-
-  border-radius: 8px;
-
-  border: 1px solid;
-
-  background: #ffffff;
-
-  text-align: center;
-}
-
-
-/* ============================================================
-   STATUS COLORS
-   ============================================================ */
-
-.status-entitled {
-  color: #389e0d;
-
-  background: #fafff7;
-
-  border-color: #b7dfaa;
-}
-
-
-.status-already {
-  color: #d46b08;
-
-  background: #fffaf0;
-
-  border-color: #ffd591;
-}
-
-
-.status-mismatch {
-  color: #ad6800;
-
-  background: #fffdf0;
-
-  border-color: #ffe58f;
-}
-
-
-.status-not-entitled {
-  color: #cf1322;
-
-  background: #fff7f6;
-
-  border-color: #ffa39e;
-}
-
-
-/* ============================================================
-   STATUS ICON
-   ============================================================ */
-
-.status-icon-wrapper {
-  width: 28px;
-  height: 28px;
-
-  min-width: 28px;
-
-  border-radius: 50%;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  background: currentColor;
-}
-
-
-.status-icon-wrapper i {
-  color: #ffffff;
-
-  font-size: 14px;
-}
-
-
-/* ============================================================
-   STATUS CONTENT
-   ============================================================ */
-
-.status-content {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: flex-start;
-
-  justify-content: center;
-
-  gap: 1px;
-
-  text-align: left;
-}
-
-
-.status-title {
-  color: #65758b;
-
-  font-size: 10px;
-
-  font-weight: 600;
-}
-
-
-.status-content strong {
-  color: inherit;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  line-height: 1.2;
-
-  white-space: nowrap;
-}
-
-
-/* ============================================================
-   STATUS MESSAGE
-   ============================================================ */
-
-.status-message {
-  width: 300px;
-
-  box-sizing: border-box;
-
-  display: flex;
-
-  align-items: flex-start;
-
-  gap: 7px;
-
-  margin-top: 6px;
-
-  padding: 7px 9px;
-
-  border-radius: 7px;
-
-  background: #fffaf3;
-
-  border: 1px solid #ffe1b5;
-
-  color: #8c5a18;
-
-  text-align: left;
-}
-
-
-.status-message > i {
-  margin-top: 2px;
-
-  flex-shrink: 0;
-
-  color: #fa8c16;
-
-  font-size: 13px;
-}
-
-
-.status-message div {
-  min-width: 0;
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 1px;
-}
-
-
-.status-message strong {
-  font-size: 10px;
-}
-
-
-.status-message span {
-  color: #8b7963;
-
-  font-size: 9px;
-
-  line-height: 1.3;
-}
-
-
-/* ============================================================
-   MISMATCH MESSAGE
-   ============================================================ */
-
-.mismatch-message {
-  background: #fffbe6;
-
-  border-color: #ffe58f;
-
-  color: #8c6500;
-}
-
-
-.mismatch-message > i {
-  color: #faad14;
-}
-
-
-/* ============================================================
-   WAITING CARD
-   ============================================================ */
-
-.waiting-card {
-  width: 100%;
-
-  min-height: 240px;
-
-  background: #ffffff;
-
-  border: 1px solid #e1eaf3;
-
-  border-radius: 15px;
-
-  box-shadow:
-    0 4px 14px rgba(25, 70, 120, 0.05);
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-}
-
-
-.waiting-content {
-  text-align: center;
-}
-
-
-.waiting-icon {
-  width: 72px;
-  height: 72px;
-
-  margin: 0 auto 14px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 20px;
-
-  background: #edf5ff;
-
-  color: #80b5f5;
-}
-
-
-.waiting-icon i {
-  font-size: 36px;
-}
-
-
-.waiting-content h2 {
-  margin: 0;
-
-  color: #18355f;
-
-  font-size: 18px;
-
-  font-weight: 700;
-}
-
-
-.waiting-content p {
-  margin: 6px 0 0;
-
-  color: #8191a7;
-
-  font-size: 13px;
-}
-
-
-/* ============================================================
-   LARGE DESKTOP
-   ============================================================ */
-
-@media (min-width: 1500px) {
-
-  .result-card {
-    max-width: 900px;
-  }
-
-
-  .employee-result {
-    grid-template-columns:
-      230px
-      520px;
-
-    column-gap: 30px;
-
-    padding: 28px 35px;
-  }
-
-
-  .photo-container {
-    width: 145px;
-    height: 145px;
-  }
-
-
-  .detail-row {
-    min-height: 40px;
-
-    grid-template-columns:
-      32px
-      150px
-      12px
-      200px;
-  }
-
-
-  .detail-label {
-    font-size: 13px;
-  }
-
-
-  .detail-value {
-    font-size: 14px;
-  }
-
-}
-
-
-/* ============================================================
-   TABLET
-   ============================================================ */
-
-@media (max-width: 1100px) {
-
-  .control-row {
-    flex-wrap: wrap;
-  }
-
-
-  .selected-site {
-    border-left: none;
-
-    padding-left: 0;
-
-    margin-left: 0;
-  }
-
-
-  .result-card {
-    max-width: 750px;
-  }
-
-
-  .employee-result {
-    grid-template-columns:
-      190px
-      minmax(350px, 1fr);
-
-    column-gap: 20px;
-
-    padding: 22px;
-  }
-
-
-  .employee-details {
-    padding-left: 20px;
-  }
-
-
-  .detail-row {
-    grid-template-columns:
-      28px
-      125px
-      10px
-      minmax(120px, 1fr);
-  }
-
-
-  .status-card {
-    width: 280px;
-  }
-
-
-  .status-message {
-    width: 280px;
-  }
-
-}
-
-
-/* ============================================================
-   MOBILE
-   ============================================================ */
-
-@media (max-width: 700px) {
-
-  .scan-wrapper {
-    padding: 12px;
-  }
-
-
-  /* HEADER */
-
-  .header-row {
-    padding: 15px;
-  }
-
-
-  .title-block {
-    gap: 10px;
-  }
-
-
-  .title-icon {
-    width: 44px;
-    height: 44px;
-
-    min-width: 44px;
-  }
-
-
-  .title-icon i {
-    font-size: 22px;
-  }
-
-
-  .title-block h1 {
-    font-size: 21px;
-  }
-
-
-  .title-block p {
-    font-size: 11px;
-  }
-
-
-  /* CONTROL */
-
-  .control-card {
-    padding: 15px;
-  }
-
-
-  .control-divider {
-    margin: 14px 0;
-  }
-
-
-  .control-row {
-    align-items: flex-start;
-
-    flex-direction: column;
-
-    gap: 10px;
-  }
-
-
-  .site-select {
-    width: 100%;
-
-    min-width: 100%;
-  }
-
-
-  .selected-site {
-    width: 100%;
-
-    padding-top: 8px;
-
-    padding-left: 0;
-
-    margin-left: 0;
-
-    border-left: none;
-
-    border-top: 1px solid #e5ebf2;
-  }
-
-
-  .scan-icon {
-    display: none;
-  }
-
-
-  .scan-input-wrapper {
-    width: 100%;
-
-    flex: none;
-  }
-
-
-  .search-button {
-    width: 100%;
-  }
-
-
-  .scan-hint {
-    padding-left: 0;
-  }
-
-
-  /* ========================================================
-     RESULT CARD
-     ======================================================== */
-
-  .result-card {
-    max-width: 100%;
-  }
-
-
-  .employee-result {
-    grid-template-columns: 1fr;
-
-    grid-template-rows:
-      auto
-      auto
-      auto;
-
-    grid-template-areas:
-      "profile"
-      "details"
-      "status";
-
-    gap: 15px;
-
-    padding: 18px 14px;
-  }
-
-
-  /* ========================================================
-     PHOTO CENTER
-     ======================================================== */
-
-  .employee-profile {
-    width: 100%;
-
-    align-items: center;
-
-    justify-content: center;
-  }
-
-
-  .photo-container {
-    width: 120px;
-
-    height: 120px;
-  }
-
-
-  /* ========================================================
-     DETAILS
-     ======================================================== */
-
-  .employee-details {
-    width: 100%;
-
-    padding: 13px 0;
-
-    border-left: none;
-
-    border-top: 1px solid #e5ebf2;
-
-    border-bottom: 1px solid #e5ebf2;
-
-    align-items: center;
-  }
-
-
-  .detail-row {
-    width: 100%;
-
-    grid-template-columns:
-      28px
-      110px
-      8px
-      minmax(0, 1fr);
-
-    min-height: 37px;
-  }
-
-
-  .detail-label {
-    font-size: 10px;
-  }
-
-
-  .detail-value {
-    font-size: 11px;
-  }
-
-
-  /* ========================================================
-     STATUS CENTER
-     ======================================================== */
-
-  .status-section {
-    width: 100%;
-
-    padding-top: 2px;
-
-    border-top: none;
-
-    align-items: center;
-  }
-
-
-  .status-card {
-    width: 270px;
-
-    min-height: 50px;
-
-    padding: 8px 12px;
-
-    justify-content: center;
-  }
-
-
-  .status-content {
-    align-items: flex-start;
-  }
-
-
-  .status-title {
-    font-size: 10px;
-  }
-
-
-  .status-content strong {
-    font-size: 12px;
-  }
-
-
-  .status-message {
-    width: 270px;
-  }
-
-}
-
-
-/* ============================================================
-   SMALL MOBILE
-   ============================================================ */
-
-@media (max-width: 480px) {
-
-  .scan-wrapper {
-    padding: 10px;
-  }
-
-
-  .header-row {
-    padding: 13px;
-
-    border-radius: 12px;
-  }
-
-
-  .title-icon {
-    width: 40px;
-    height: 40px;
-
-    min-width: 40px;
-  }
-
-
-  .title-icon i {
-    font-size: 20px;
-  }
-
-
-  .title-block h1 {
-    font-size: 19px;
-  }
-
-
-  .title-block p {
-    font-size: 10px;
-  }
-
-
-  .control-card {
-    padding: 13px;
-  }
-
-
-  /* RESULT */
-
-  .employee-result {
-    padding: 15px 10px;
-
-    gap: 14px;
-  }
-
-
-  .photo-container {
-    width: 110px;
-
-    height: 110px;
-  }
-
-
-  .default-user {
-    font-size: 50px;
-  }
-
-
-  /* DETAILS */
-
-  .employee-details {
-    padding-top: 12px;
-
-    padding-bottom: 12px;
-  }
-
-
-  .detail-row {
-    grid-template-columns:
-      26px
-      100px
-      7px
-      minmax(0, 1fr);
-
-    min-height: 35px;
-  }
-
-
-  .detail-icon {
-    width: 24px;
-
-    height: 24px;
-  }
-
-
-  .detail-icon i {
-    font-size: 12px;
-  }
-
-
-  .detail-label {
-    font-size: 9px;
-  }
-
-
-  .detail-value {
-    font-size: 10px;
-  }
-
-
-  .detail-colon {
-    font-size: 10px;
-  }
-
-
-  /* STATUS */
-
-  .status-card {
-    width: 250px;
-
-    min-height: 48px;
-
-    padding: 7px 10px;
-
-    gap: 7px;
-  }
-
-
-  .status-icon-wrapper {
-    width: 26px;
-    height: 26px;
-
-    min-width: 26px;
-  }
-
-
-  .status-icon-wrapper i {
-    font-size: 13px;
-  }
-
-
-  .status-title {
-    font-size: 9px;
-  }
-
-
-  .status-content strong {
-    font-size: 11px;
-  }
-
-
-  .status-message {
-    width: 250px;
-
-    padding: 8px 9px;
-
-    gap: 7px;
-  }
-
-
-  .status-message > i {
-    font-size: 13px;
-  }
-
-
-  .status-message strong {
-    font-size: 9px;
-  }
-
-
-  .status-message span {
-    font-size: 8px;
-  }
-
-}
+CREATE OR REPLACE PACKAGE BODY DMS.DORM_REPORTS
+AS
+-- Package body
+
+  PROCEDURE CHECK_IN_REPORT(
+    V_EMP_ID IN VARCHAR2,
+    V_EMPLOYEE_ID IN VARCHAR2,
+    V_DORM_ID IN NUMBER,
+    V_SITE IN NUMBER,
+    V_CHECKIN_TYPE IN VARCHAR2,
+    V_START_DATE IN VARCHAR2,
+    V_END_DATE IN VARCHAR2,
+    L_START_PAGE IN VARCHAR2,
+    L_PAGE_SIZE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+  ) IS
+  BEGIN
+    IF V_CHECKIN_TYPE IS NOT NULL THEN
+      -- Logic when V_CHECKIN_TYPE is not null
+      OPEN P_CURSOR FOR
+        SELECT
+          RN,
+          ROWSCOUNT,
+          DORM_ID,
+          EMP_ID,
+          ID,
+          CHECK_IN_DORM_ID,
+          FLOOR_ID,
+          ROOM_ID,
+          BED_ID,
+          EMPLOYEE_ID,
+          FATHER_NAME,
+          MOTHER_NAME,
+          AGE,
+          GENDER,
+          PHONE_NUMBER,
+          EMERGENCY_NUMBER,
+          REASON,
+          STATUS,
+          CHECK_IN_DATE,
+          CHECK_IN_BY,
+          DORM_NAME,
+          FLOOR_NUMBER,
+          ROOM_NUMBER,
+          BED_NUMBER,
+          EMPLOYEE_NAME,
+          CHECK_IN_FORM_STATUS,
+          DEPARTMENT,
+          BED_TYPE,
+          CHECK_OUT_DATE,
+          EMPLOYEE_STATUS,
+          PERMANENTADDRESS,
+          PERMANENTDISTRICT,
+          PERMANENTSTATE,
+          PERMANENTCOUNTRY,
+          PROJECT,
+          EMERGENCY_CONTECT_PERSON,
+          CHECK_OUT_BY,
+          DOJ,
+          DORM_LOCATION,
+          ROOM_TYPE,
+          AADHAR_NO,
+          SAPARATION_DATE,
+          CASE 
+                WHEN SITE = 69941 THEN 'FXCN' 
+                WHEN SITE = 95326 THEN 'FXBL' 
+                ELSE TO_CHAR(SITE) -- Optional ELSE to handle other cases
+            END AS SITE
+        FROM (
+          SELECT
+            ROW_NUMBER() OVER (ORDER BY C.CHECK_IN_DATE DESC) AS RN,
+            COUNT(1) OVER () AS ROWSCOUNT,
+            D.DORM_ID,
+            D.EMP_ID,
+            C.ID,
+            C.DORM_ID AS CHECK_IN_DORM_ID,
+            C.FLOOR_ID,
+            C.ROOM_ID,
+            C.BED_ID,
+            C.EMPLOYEE_ID,
+            C.FATHER_NAME,
+            C.MOTHER_NAME,
+            C.AGE,
+            C.GENDER,
+            C.PHONE_NUMBER,
+            C.EMERGENCY_NUMBER,
+            C.REASON,
+            C.STATUS,
+            TO_CHAR(C.CHECK_IN_DATE, 'DD-MM-YYYY HH24:MI:SS') AS CHECK_IN_DATE,
+            C.CHECK_IN_BY,
+            C.DORM_NAME,
+            C.FLOOR_NUMBER,
+            C.ROOM_NUMBER,
+            C.BED_NUMBER,
+            C.EMPLOYEE_NAME,
+            C.CHECK_IN_FORM_STATUS,
+            C.DEPARTMENT,
+            C.BED_TYPE,
+            C.CHECK_OUT_DATE,
+            C.EMPLOYEE_STATUS,
+            C.PERMANENTADDRESS,
+            C.PERMANENTDISTRICT,
+            C.PERMANENTSTATE,
+            C.PERMANENTCOUNTRY,
+            C.PROJECT,
+            C.EMERGENCY_CONTECT_PERSON,
+            C.CHECK_OUT_BY,
+            C.DOJ,
+            DC.DORM_LOCATION,
+            C.ROOM_TYPE,
+            C.AADHAR_NO,
+            DC.SITE,
+            C.SAPARATION_DATE
+          FROM
+            DMS.C_CHECK_IN_T C
+            LEFT JOIN DMS.C_DATA_CONTROL_T D ON C.DORM_ID = D.DORM_ID
+            LEFT JOIN DMS.C_DORM_CREATION_T DC ON DC.ID = C.DORM_ID AND DC.DEL_FLAG = 0
+          WHERE
+            TRUNC(C.CHECK_IN_DATE) <= TO_DATE(V_START_DATE, 'DD-MM-YYYY')
+            AND (TRUNC(C.CHECK_OUT_DATE) > TO_DATE(V_START_DATE, 'DD-MM-YYYY') OR C.CHECK_OUT_DATE IS NULL)
+            AND (TRUNC(C.DORM_SHIFTED_DATE) > TO_DATE(V_START_DATE, 'DD-MM-YYYY') OR C.DORM_SHIFTED_DATE IS NULL)
+            AND D.EMP_ID = V_EMP_ID
+            AND C.DORM_ID = NVL(V_DORM_ID, C.DORM_ID)
+            AND C.EMPLOYEE_ID = NVL(V_EMPLOYEE_ID, C.EMPLOYEE_ID)
+        --    AND DC.SITE = NVL(V_SITE, DC.SITE)
+        --    AND C.CHECK_IN_FORM_STATUS IN (0, 3, 4)
+          ORDER BY C.CHECK_IN_DATE DESC
+        )
+        WHERE
+          RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+          AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE;
+         V_RES := '1';
+	V_RESULT := 'Success';
+    ELSE
+      -- Logic when V_CHECKIN_TYPE is null (use the original procedure logic)
+      OPEN P_CURSOR FOR
+        SELECT
+          RN,
+          ROWSCOUNT,
+          DORM_ID,
+          EMP_ID,
+          ID,
+          CHECK_IN_DORM_ID,
+          FLOOR_ID,
+          ROOM_ID,
+          BED_ID,
+          EMPLOYEE_ID,
+          FATHER_NAME,
+          MOTHER_NAME,
+          AGE,
+          GENDER,
+          PHONE_NUMBER,
+          EMERGENCY_NUMBER,
+          REASON,
+          STATUS,
+          CHECK_IN_DATE,
+          CHECK_IN_BY,
+          DORM_NAME,
+          FLOOR_NUMBER,
+          ROOM_NUMBER,
+          BED_NUMBER,
+          EMPLOYEE_NAME,
+          CHECK_IN_FORM_STATUS,
+          DEPARTMENT,
+          BED_TYPE,
+          CHECK_OUT_DATE,
+          EMPLOYEE_STATUS,
+          PERMANENTADDRESS,
+          PERMANENTDISTRICT,
+          PERMANENTSTATE,
+          PERMANENTCOUNTRY,
+          PROJECT,
+          EMERGENCY_CONTECT_PERSON,
+          CHECK_OUT_BY,
+          DOJ,
+          DORM_LOCATION,
+          ROOM_TYPE,
+          AADHAR_NO,
+          SAPARATION_DATE,
+          CASE 
+                WHEN SITE = 69941 THEN 'FXCN' 
+                WHEN SITE = 95326 THEN 'FXBL' 
+                ELSE TO_CHAR(SITE) -- Optional ELSE to handle other cases
+            END AS SITE
+        FROM (
+          SELECT
+            ROW_NUMBER() OVER (ORDER BY C.CHECK_IN_DATE DESC) AS RN,
+            COUNT(1) OVER () AS ROWSCOUNT,
+            D.DORM_ID,           
+            D.EMP_ID,
+            C.ID,
+            C.DORM_ID AS CHECK_IN_DORM_ID,
+            C.FLOOR_ID,
+            C.ROOM_ID,
+            C.BED_ID,
+            C.EMPLOYEE_ID,
+            C.FATHER_NAME,
+            C.MOTHER_NAME,
+            C.AGE,
+            C.GENDER,
+            C.PHONE_NUMBER,
+            C.EMERGENCY_NUMBER,
+            C.REASON,
+            C.STATUS,
+            TO_CHAR(C.CHECK_IN_DATE, 'DD-MM-YYYY HH24:MI:SS') AS CHECK_IN_DATE,
+            C.CHECK_IN_BY,
+            C.DORM_NAME,
+            C.FLOOR_NUMBER,
+            C.ROOM_NUMBER,
+            C.BED_NUMBER,
+            C.EMPLOYEE_NAME,
+            C.CHECK_IN_FORM_STATUS,
+            C.DEPARTMENT,
+            C.BED_TYPE,
+            C.CHECK_OUT_DATE,
+            C.EMPLOYEE_STATUS,
+            C.PERMANENTADDRESS,
+            C.PERMANENTDISTRICT,
+            C.PERMANENTSTATE,
+            C.PERMANENTCOUNTRY,
+            C.PROJECT,
+            C.EMERGENCY_CONTECT_PERSON,
+            C.CHECK_OUT_BY,
+            C.DOJ,
+            DC.DORM_LOCATION,
+            C.ROOM_TYPE,
+            C.AADHAR_NO,
+            DC.SITE,
+            C.SAPARATION_DATE
+          FROM
+            DMS.C_CHECK_IN_T C
+            LEFT JOIN DMS.C_DATA_CONTROL_T D ON C.DORM_ID = D.DORM_ID
+            LEFT JOIN DMS.C_DORM_CREATION_T DC ON DC.ID = C.DORM_ID AND DC.DEL_FLAG = 0
+          WHERE
+            D.EMP_ID = V_EMP_ID
+            AND DC.SITE = NVL(V_SITE, DC.SITE)
+            AND C.DORM_ID = NVL(V_DORM_ID, C.DORM_ID)
+            AND C.CHECK_IN_FORM_STATUS IN (0, 3, 4)
+            AND C.EMPLOYEE_ID = NVL(V_EMPLOYEE_ID, C.EMPLOYEE_ID)
+            AND C.CHECK_IN_DATE >= NVL(TO_DATE(V_START_DATE, 'DD-MM-YYYY'), C.CHECK_IN_DATE)
+            AND C.CHECK_IN_DATE <= NVL(TO_DATE(V_END_DATE, 'DD-MM-YYYY') + INTERVAL '1' DAY, C.CHECK_IN_DATE)
+          ORDER BY C.CHECK_IN_DATE DESC
+        )
+        WHERE
+          RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+          AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE;
+         V_RES := '1';
+	V_RESULT := 'Success';
+    END IF;
+  END CHECK_IN_REPORT;
+ 
+  PROCEDURE CHECK_OUT_REPORT(
+    V_EMP_ID IN VARCHAR2,
+    V_EMPLOYEE_ID IN VARCHAR2,
+    V_DORM_ID IN NUMBER,
+    V_SITE IN NUMBER,
+   -- V_CHECKIN_TYPE IN VARCHAR2,
+    V_START_DATE IN VARCHAR2,
+    V_END_DATE IN VARCHAR2,
+    L_START_PAGE IN VARCHAR2,
+    L_PAGE_SIZE IN VARCHAR2,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+  ) IS
+ 
+ BEGIN
+	 OPEN P_CURSOR FOR 
+	 
+	 SELECT
+    RN,
+    ROWCOUNT,
+    ID,
+    DORM_ID,
+    FLOOR_ID,
+    ROOM_ID,
+    BED_ID,
+    EMPLOYEE_ID,
+    FATHER_NAME,
+    MOTHER_NAME,
+    AGE,
+    GENDER,
+    PHONE_NUMBER,
+    EMERGENCY_NUMBER, 
+    REASON,
+    STATUS,
+    CHECK_IN_DATE,
+    CHECK_IN_BY,
+    DORM_NAME,
+    FLOOR_NUMBER,
+    ROOM_NUMBER,
+    BED_NUMBER,
+    EMPLOYEE_NAME,
+    CHECK_IN_FORM_STATUS,
+    DEPARTMENT,
+    BED_TYPE,
+    CHECK_OUT_DATE,
+    EMPLOYEE_STATUS,
+    PERMANENTADDRESS,
+    PERMANENTDISTRICT,
+    PERMANENTSTATE,
+    PERMANENTCOUNTRY,
+    PROJECT,
+    EMERGENCY_CONTECT_PERSON,
+    CHECK_OUT_BY,
+    DOJ,
+    DORM_LOCATION,
+    ROOM_TYPE,
+    AADHAR_NO,
+    SAPARATION_DATE,
+       CASE 
+                WHEN SITE = 69941 THEN 'FXCN' 
+                WHEN SITE = 95326 THEN 'FXBL' 
+                ELSE TO_CHAR(SITE) -- Optional ELSE to handle other cases
+            END AS SITE
+FROM  
+    (
+    SELECT
+        ROW_NUMBER() OVER(ORDER BY C.CHECK_OUT_DATE DESC) AS RN,
+        COUNT(1) OVER() AS ROWCOUNT,
+        C.ID,
+        C.DORM_ID,
+        C.FLOOR_ID,
+        C.ROOM_ID,
+        C.BED_ID,
+        C.EMPLOYEE_ID,
+        C.FATHER_NAME,
+        C.MOTHER_NAME,
+        C.AGE,
+        C.GENDER,
+        C.PHONE_NUMBER,
+        C.EMERGENCY_NUMBER,
+        C.REASON,
+        C.STATUS,
+        C.CHECK_IN_DATE,
+        C.CHECK_IN_BY,
+        C.DORM_NAME,
+        C.FLOOR_NUMBER,
+        C.ROOM_NUMBER,
+        C.BED_NUMBER,
+        C.EMPLOYEE_NAME,
+        C.CHECK_IN_FORM_STATUS,
+        C.DEPARTMENT,
+        C.BED_TYPE,
+       TO_CHAR( C.CHECK_OUT_DATE,'DD-MM-YYYY HH24:MM:SS') AS CHECK_OUT_DATE,
+        C.EMPLOYEE_STATUS,
+        C.PERMANENTADDRESS,
+        C.PERMANENTDISTRICT,
+        C.PERMANENTSTATE,
+        C.PERMANENTCOUNTRY,
+        C.PROJECT,
+        C.EMERGENCY_CONTECT_PERSON,
+        C.CHECK_OUT_BY,
+        C.DOJ,
+        DC.DORM_LOCATION,
+        C.ROOM_TYPE,
+        C.AADHAR_NO,
+        C.SAPARATION_DATE,
+        DC.SITE
+    FROM
+        DMS.C_CHECK_IN_T C
+    INNER JOIN 
+        DMS.C_DATA_CONTROL_T D ON
+        C.DORM_ID = D.DORM_ID
+    INNER JOIN DMS.C_DORM_CREATION_T DC ON
+        DC.ID=C.DORM_ID AND DC.DEL_FLAG =0
+    WHERE
+        D.EMP_ID = V_EMP_ID
+        AND C.CHECK_IN_FORM_STATUS = 1
+        AND DC.SITE = NVL(V_SITE,DC.SITE)
+        AND C.DORM_ID = NVL(V_DORM_ID, C.DORM_ID)
+        AND C.EMPLOYEE_ID = NVL(V_EMPLOYEE_ID, C.EMPLOYEE_ID)
+        AND C.CHECK_OUT_DATE >= NVL(TO_DATE(V_START_DATE, 'DD-MM-YYYY'), C.CHECK_OUT_DATE)
+        AND C.CHECK_OUT_DATE <= NVL(TO_DATE(V_END_DATE, 'DD-MM-YYYY') + INTERVAL '1' DAY, C.CHECK_OUT_DATE       )  ORDER BY C.CHECK_OUT_DATE DESC )
+        WHERE RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+        AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE  ;
+       V_RES := '1';
+	V_RESULT := 'Success';
+ 
+ END;
+ 
+PROCEDURE GET_OCCUPANCY_VACANCY_SUMMART(
+ V_DORM_ID IN NUMBER,
+ V_SITE IN NUMBER,
+ V_EMP_ID IN VARCHAR2,
+ V_INPUT_DATE IN VARCHAR2,
+ L_START_PAGE IN VARCHAR2,
+ L_PAGE_SIZE IN VARCHAR2,
+ V_RES OUT VARCHAR2,
+ V_RESULT OUT VARCHAR2,
+ P_CURSOR OUT SYS_REFCURSOR
+)IS 
+BEGIN
+    IF V_INPUT_DATE IS NOT NULL AND V_EMP_ID IS NOT NULL 
+    THEN 
+        OPEN P_CURSOR FOR
+     SELECT 
+      DORM_NAME,
+            DORM_LOCATION,
+            VACANT_ROOM_CAPACITY,
+            OVERALL_DORM_CAPACITY,
+            OVERALL_FLOOR_CAPACITY,
+            OCCUPIED_FLOOR_CAPACITY,
+            VACANT_FLOOR_CAPACITY,
+            SUM_ROOM_CAPACITY,
+            OCCUPIED_ROOM_CAPACITY,
+            SUM_OF_BED_CAPACITY,
+            OCCUPIED_BED_CAPACITY,
+            VACANT_BED_CAPACITY,
+          OCCUPIED_BED_RATIO,
+           VACANT_BED_RATIO,
+            RN,
+            ROWCOUNT,
+            CASE 
+                WHEN SITE = 69941 THEN 'FXCN' 
+                WHEN SITE = 95326 THEN 'FXBL' 
+                ELSE TO_CHAR(SITE) -- Optional ELSE to handle other cases
+            END AS SITE
+     
+     
+     FROM (
+  SELECT
+     S.DORM_NAME,
+       S.  DORM_LOCATION,
+       DC.SITE,
+          OVERALL_DORM_CAPACITY AS OVERALL_DORM_CAPACITY,
+          OVERALL_FLOOR_CAPACITY AS OVERALL_FLOOR_CAPACITY,
+          OCCUPIED_FLOOR_CAPACITY AS OCCUPIED_FLOOR_CAPACITY,
+          VACANT_FLOOR_CAPACITY AS VACANT_FLOOR_CAPACITY,
+          SUM_ROOM_CAPACITY AS SUM_ROOM_CAPACITY,
+          OCCUPIED_ROOM_CAPACITY AS OCCUPIED_ROOM_CAPACITY,
+          VACANT_ROOM_CAPACITY AS VACANT_ROOM_CAPACITY,
+          SUM_OF_BED_CAPACITY AS SUM_OF_BED_CAPACITY,
+          OCCUPIED_BED_CAPACITY AS OCCUPIED_BED_CAPACITY,
+          VACANT_BED_CAPACITY AS VACANT_BED_CAPACITY,
+        --  OCCUPIED_BED_RATIO AS OCCUPIED_BED_RATIO,
+       --   VACANT_BED_RATIO AS VACANT_BED_RATIO,
+          ROUND(OCCUPIED_BED_RATIO, 2) AS OCCUPIED_BED_RATIO,
+           ROUND(VACANT_BED_RATIO, 2) AS VACANT_BED_RATIO,
+
+            ROW_NUMBER() OVER (ORDER BY S.WORK_DATE DESC) AS RN,
+                COUNT(1) OVER () AS ROWCOUNT
+  FROM
+    DMS.C_SUMMARY_REPORT_T S
+          INNER JOIN DMS.C_DATA_CONTROL_T D ON S.DORM_ID = D.DORM_ID
+    JOIN DMS.C_DORM_CREATION_T DC ON DC.ID  = S.DORM_ID 
+  WHERE
+    WORK_DATE = TO_DATE(V_INPUT_DATE, 'DD-MM-YYYY')
+    AND S.DORM_ID = NVL(V_DORM_ID, S.DORM_ID)
+    AND D.EMP_ID = V_EMP_ID
+   AND DC.SITE =NVL(V_SITE,DC.SITE)
+) 
+
+       WHERE        RN > (TO_NUMBER(L_START_PAGE) - 1) * TO_NUMBER(L_PAGE_SIZE)
+            AND RN <= (TO_NUMBER(L_START_PAGE) - 1) * TO_NUMBER(L_PAGE_SIZE) + TO_NUMBER(L_PAGE_SIZE);   
+        V_RES := '1';
+        V_RESULT := 'Success';
+    ELSE
+        OPEN P_CURSOR FOR
+        SELECT
+            DORM_NAME,
+            CASE 
+                WHEN SITE = 69941 THEN 'FXCN' 
+                WHEN SITE = 95326 THEN 'FXBL' 
+                ELSE TO_CHAR(SITE) -- Optional ELSE to handle other cases
+            END AS SITE,
+            DORM_LOCATION,
+            VACANT_ROOM_CAPACITY,
+            OVERALL_DORM_CAPACITY,
+            OVERALL_FLOOR_CAPACITY,
+            OCCUPIED_FLOOR_CAPACITY,
+            VACANT_FLOOR_CAPACITY,
+            SUM_ROOM_CAPACITY,
+            OCCUPIED_ROOM_CAPACITY,
+            SUM_OF_BED_CAPACITY,
+            OCCUPIED_BED_CAPACITY,
+            VACANT_BED_CAPACITY,
+            OCCUPIED_BED_RATIO,
+            VACANT_BED_RATIO,
+            RN,
+            ROWCOUNT
+        FROM (
+            SELECT
+                D.DORM_NAME,
+                D.SITE,
+                D.DORM_LOCATION,
+                COUNT(DISTINCT CASE WHEN B.CREATE_BED_FORM_STATUS NOT IN(1,3) THEN R.ID END) AS VACANT_ROOM_CAPACITY,
+                D.DORM_CAPACITY AS OVERALL_DORM_CAPACITY,
+                D.FLOOR_CAPACITY AS OVERALL_FLOOR_CAPACITY,
+                COUNT(DISTINCT CASE WHEN B.CREATE_BED_FORM_STATUS = 1 THEN B.FLOOR_ID END) AS OCCUPIED_FLOOR_CAPACITY,
+                COUNT(DISTINCT CASE WHEN F.CREATE_FLOOR_FORM_STATUS != 3 THEN F.ID END) AS VACANT_FLOOR_CAPACITY,
+                (SELECT SUM(F2.ROOM_CAPACITY) FROM DMS.C_FLOOR_CREATION_T F2 WHERE F2.DORM_ID = D.ID) AS SUM_ROOM_CAPACITY,
+                (SELECT SUM(F2.ROOM_CAPACITY) FROM DMS.C_FLOOR_CREATION_T F2 WHERE F2.DORM_ID = D.ID) -  
+                COUNT(DISTINCT CASE WHEN B.CREATE_BED_FORM_STATUS NOT IN(1,3) THEN R.ID END) AS OCCUPIED_ROOM_CAPACITY,
+                NVL((SELECT SUM(R2.BED_CAPACITY) FROM DMS.C_ROOM_CREATION_T R2 WHERE R2.DORM_ID = D.ID), 0) AS SUM_OF_BED_CAPACITY,
+                COUNT(CASE WHEN B.CREATE_BED_FORM_STATUS = 1 THEN 1 END) AS OCCUPIED_BED_CAPACITY,
+                COUNT(CASE WHEN B.CREATE_BED_FORM_STATUS = 0 THEN 1 END) AS VACANT_BED_CAPACITY,
+                -- Fixed Occupied Bed Ratio
+                CASE 
+                    WHEN MAX(D.DORM_CAPACITY) > 0 
+                    THEN ROUND(
+                           (COUNT(DISTINCT CASE WHEN B.CREATE_BED_FORM_STATUS = 1 THEN B.ID END) / 
+                           TO_NUMBER(MAX(D.DORM_CAPACITY))) * 100, 
+                         2
+                         )
+                    ELSE 0 
+                END AS OCCUPIED_BED_RATIO,
+                -- Fixed Vacant Bed Ratio
+                CASE 
+                    WHEN MAX(D.DORM_CAPACITY) > 0 
+                    THEN ROUND(
+                           ((TO_NUMBER(MAX(D.DORM_CAPACITY)) - 
+                            COUNT(DISTINCT CASE WHEN B.CREATE_BED_FORM_STATUS = 1 THEN B.ID END)) / 
+                           TO_NUMBER(MAX(D.DORM_CAPACITY))) * 100, 
+                         2
+                         )
+                    ELSE 0 
+                END AS VACANT_BED_RATIO,
+                ROW_NUMBER() OVER (ORDER BY D.CREATED_DATE DESC) AS RN,
+                COUNT(1) OVER () AS ROWCOUNT
+            FROM
+                DMS.C_DORM_CREATION_T D
+                LEFT JOIN DMS.C_FLOOR_CREATION_T F ON D.ID = F.DORM_ID AND F.DEL_FLAG = 0
+                LEFT JOIN DMS.C_ROOM_CREATION_T R ON F.ID = R.FLOOR_ID AND R.DEL_FLAG = 0
+                LEFT JOIN DMS.C_BED_CREATION_T B ON R.ID = B.ROOM_ID AND B.DEL_FLAG = 0
+                INNER JOIN DMS.C_DATA_CONTROL_T DC ON DC.DORM_ID = D.ID
+            WHERE
+                DC.EMP_ID = V_EMP_ID
+                AND D.ID = NVL(V_DORM_ID, D.ID)
+                AND D.SITE= NVL(V_SITE,D.SITE)
+                AND D.DEL_FLAG = 0
+            GROUP BY
+                D.DORM_NAME,
+                D.DORM_LOCATION,
+                D.DORM_CAPACITY,
+                D.FLOOR_CAPACITY,
+                D.ID,
+                D.CREATED_DATE,
+                D.SITE
+            ORDER BY D.CREATED_DATE DESC
+        )
+        WHERE 
+            RN > (TO_NUMBER(L_START_PAGE) - 1) * TO_NUMBER(L_PAGE_SIZE)
+            AND RN <= (TO_NUMBER(L_START_PAGE) - 1) * TO_NUMBER(L_PAGE_SIZE) + TO_NUMBER(L_PAGE_SIZE);
+            
+        V_RES := '1';
+        V_RESULT := 'Success';
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+END;
+     
+PROCEDURE GET_DORM_LIVE_HEAD_COUNT(
+  V_EMP_ID IN VARCHAR2,
+  V_SITE IN NUMBER,
+  V_DORM_ID IN NUMBER,
+  L_START_PAGE IN VARCHAR2,
+  L_PAGE_SIZE IN VARCHAR2,
+  V_RES OUT VARCHAR2,
+  V_RESULT OUT VARCHAR2,
+  P_CURSOR OUT SYS_REFCURSOR
+) IS
+BEGIN 
+   OPEN P_CURSOR FOR  
+   SELECT  
+     RN,
+     ROWCOUNT,
+     DORM_NAME,
+     OVERALL_DORM_CAPACITY,
+     OVERALL_CHECK_IN_COUNT,
+     CURRENT_CL_EMPLOYEES,
+     CURRENT_HH_EMPLOYEES,
+     NEW_JOINERS,
+     RESIGNED_TODAY,
+     ABSCOND,
+     DORM_SHIFTED_TODAY,
+     GAP,
+        CASE 
+                WHEN SITE = 69941 THEN 'FXCN' 
+                WHEN SITE = 95326 THEN 'FXBL' 
+                ELSE TO_CHAR(SITE) -- Optional ELSE to handle other cases
+            END AS SITE,
+     CASE WHEN OVERALL_DORM_CAPACITY > 0 
+          THEN ROUND((OVERALL_CHECK_IN_COUNT / OVERALL_DORM_CAPACITY) * 100, 2)
+          ELSE 0 
+     END AS PERCENTAGE
+   FROM (
+     SELECT
+       ROW_NUMBER() OVER (ORDER BY D.CREATED_DATE DESC) AS RN,
+       D.SITE,
+       COUNT(1) OVER () AS ROWCOUNT, 
+       D.DORM_NAME,
+       D.DORM_CAPACITY AS OVERALL_DORM_CAPACITY,
+       COUNT(CASE WHEN C.CHECK_IN_FORM_STATUS IN (0, 3, 4) THEN 1 END) AS OVERALL_CHECK_IN_COUNT,
+    COUNT(CASE 
+         WHEN C.CHECK_IN_FORM_STATUS IN (0, 3, 4) 
+              AND (C.EMPLOYEE_ID LIKE 'CL%' OR C.EMPLOYEE_ID LIKE 'SU%') 
+         THEN 1 
+     END) AS CURRENT_CL_EMPLOYEES,
+    COUNT(CASE 
+         WHEN C.CHECK_IN_FORM_STATUS IN (0, 3, 4) 
+              AND NOT (C.EMPLOYEE_ID LIKE 'CL%' OR C.EMPLOYEE_ID LIKE 'SU%') 
+         THEN 1 
+     END) AS CURRENT_HH_EMPLOYEES,
+       COUNT(CASE WHEN C.CHECK_IN_FORM_STATUS = 0 AND TRUNC(C.CHECK_IN_DATE) = TRUNC(SYSDATE - 1) THEN 1 END) AS NEW_JOINERS,
+       COUNT(CASE WHEN C.CHECK_IN_FORM_STATUS = 1 AND TRUNC(C.CHECK_OUT_DATE) = TRUNC(SYSDATE - 1) AND C.EMPLOYEE_STATUS LIKE '%Resigned%' THEN 1 END) AS RESIGNED_TODAY,
+       COUNT(CASE WHEN C.CHECK_IN_FORM_STATUS = 1 AND TRUNC(C.CHECK_OUT_DATE) = TRUNC(SYSDATE - 1) AND C.EMPLOYEE_STATUS LIKE '%Terminated%' THEN 1 END) AS ABSCOND,
+       COUNT(CASE WHEN C.CHECK_IN_FORM_STATUS = 2 AND TRUNC(DS.LAST_EDIT_DATE) = TRUNC(SYSDATE - 1) THEN 1 END) AS DORM_SHIFTED_TODAY,
+       (D.DORM_CAPACITY - COUNT(CASE WHEN C.CHECK_IN_FORM_STATUS IN (0, 3, 4) THEN 1 END)) AS GAP
+     FROM
+       DMS.C_DORM_CREATION_T D
+     INNER JOIN
+       DMS.C_DATA_CONTROL_T DC ON D.ID = DC.DORM_ID
+     LEFT JOIN
+       DMS.C_CHECK_IN_T C ON D.ID = C.DORM_ID
+     LEFT JOIN
+       DMS.C_DORM_SHIFTING_T DS ON C.ID = DS.CHECK_IN_ID AND C.CHECK_IN_FORM_STATUS = 2
+     WHERE
+       DC.EMP_ID = V_EMP_ID
+       AND D.ID = NVL(V_DORM_ID, D.ID)
+       AND D.SITE = NVL(V_SITE, D.SITE)
+       AND D.DEL_FLAG = 0
+     GROUP BY
+       D.DORM_NAME,
+       D.DORM_CAPACITY,
+       D.CREATED_DATE,
+       D.SITE
+   ) 
+  WHERE 
+   RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+      AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE;
+   
+   V_RES := '1';
+   V_RESULT := 'Success';
+EXCEPTION
+  WHEN OTHERS THEN
+    V_RES := '0';
+    V_RESULT := 'Error: ' || SQLERRM;
+END;
+    
+    
+PROCEDURE GET_DORM_SHIFT_REPORT (
+V_EMP_ID IN VARCHAR2,
+V_SITE IN NUMBER,
+V_EMPLOYEE_ID IN VARCHAR2,
+V_DORM_ID IN NUMBER,
+V_START_DATE IN VARCHAR2,
+V_END_DATE IN VARCHAR2,
+L_START_PAGE IN VARCHAR2,
+L_PAGE_SIZE IN VARCHAR2,
+V_RES  OUT VARCHAR2,
+V_RESULT OUT VARCHAR2,
+P_CURSOR OUT SYS_REFCURSOR
+) IS    
+    
+ BEGIN
+	 OPEN P_CURSOR FOR
+	SELECT
+    RN,
+    ROWSCOUNT,
+    ID,
+    EMPLOYEE_ID,
+    EMPLOYEE_NAME,
+   CASE 
+        WHEN SITE = 69941 THEN 'FXCN' 
+        WHEN SITE = 95326 THEN 'FXBL' 
+        ELSE SITE -- Optional ELSE to handle other cases
+    END AS SITE,
+    SITE,
+    DEPARTMENT,
+    CURRENT_DORM,
+    CURRENT_FLOOR,
+    CURRENT_ROOM,
+    CURRENT_BED,
+    SHIFTING_DORM,
+    REASON,
+    MOVED_BY_ID,
+    DORM_SHIFT_FORM_STATUS,
+    FORM_CODE,
+    FORM_ID,
+    FORM_STATUS,
+    DORM_SHIFTED_DATE,
+    LAST_EDIT_BY,
+    LAST_EDIT_DATE,
+    ADD_BY,
+    ADD_BY_DATE,
+    CHECK_IN_ID,
+    CURRENT_DOMR_ID,
+    DORM_SHIFTING_STATUS,
+    SHIFTED_DORM_CODE,
+    BED_ID,
+    DORM_LOCATION
+FROM
+    (
+    SELECT
+        ROW_NUMBER() OVER(ORDER BY DS.DORM_SHIFTED_DATE DESC) AS RN,
+        COUNT(1) OVER () AS ROWSCOUNT,
+        D.DORM_LOCATION,
+        D.SITE,
+        DS.ID,
+        DS.EMPLOYEE_ID,
+        DS.EMPLOYEE_NAME,
+        DS.DEPARTMENT,
+        DS.CURRENT_DORM,
+        DS.CURRENT_FLOOR,
+        DS.CURRENT_ROOM,
+        DS.CURRENT_BED,
+        DS.SHIFTING_DORM,
+        DS.REASON,
+        DS.MOVED_BY_ID,
+        DS.DORM_SHIFT_FORM_STATUS,
+        DS.FORM_CODE,
+        DS.FORM_ID,
+        DS.FORM_STATUS,
+        TO_CHAR( DS.DORM_SHIFTED_DATE,'DD-MM-YYYY HH24:MI:SS') AS DORM_SHIFTED_DATE,
+        DS.LAST_EDIT_BY,
+         TO_CHAR( DS.LAST_EDIT_DATE,'DD-MM-YYYY HH24:MM:SS') AS LAST_EDIT_DATE,
+        DS.ADD_BY,
+        DS.ADD_BY_DATE,
+        DS.CHECK_IN_ID,
+        DS.CURRENT_DOMR_ID,
+        DS.DORM_SHIFTING_STATUS,
+        DS.SHIFTED_DORM_CODE,
+        DS.BED_ID
+    FROM
+        DMS.C_DORM_SHIFTING_T DS
+    LEFT JOIN 
+        C_DORM_CREATION_T D ON
+        DS.CURRENT_DOMR_ID = D.ID AND D.DEL_FLAG=0
+    LEFT JOIN 
+        DMS.C_DATA_CONTROL_T DC ON
+        DS.CURRENT_DOMR_ID = DC.DORM_ID
+    WHERE
+        DC.EMP_ID = V_EMP_ID
+        AND D.SITE = NVL(V_SITE,D.SITE)
+        AND DS.EMPLOYEE_ID = NVL(V_EMPLOYEE_ID, DS.EMPLOYEE_ID)
+        AND DS.CURRENT_DOMR_ID = NVL(V_DORM_ID, DS.CURRENT_DOMR_ID)
+        AND DS.DORM_SHIFTED_DATE >= NVL(TO_DATE(V_START_DATE, 'DD-MM-YYYY'), DS.DORM_SHIFTED_DATE)
+        AND DS.DORM_SHIFTED_DATE <= NVL(TO_DATE(V_END_DATE, 'DD-MM-YYYY') + INTERVAL '1' DAY, DS.DORM_SHIFTED_DATE) ORDER BY DS.DORM_SHIFTED_DATE DESC)
+WHERE RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+             AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE  ;
+	   V_RES := '1';
+	V_RESULT := 'Success';
+	 END ;
+    
+	
+   
+	
+PROCEDURE GET_BED_SHIFT_REPORT(
+    V_EMP_ID IN VARCHAR2,
+    V_EMPLOYEE_ID IN VARCHAR2,
+    V_DORM_ID IN NUMBER,
+    V_START_DATE IN VARCHAR2,
+    V_END_DATE IN VARCHAR2,
+    L_START_PAGE IN VARCHAR2,
+    L_PAGE_SIZE IN VARCHAR2,
+    V_RES  OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
+BEGIN
+    OPEN P_CURSOR FOR
+    SELECT
+        ID,
+        RN,
+        ROWSCOUNT,
+        EMPLOYEE_ID,
+        EMPLOYEE_NAME,
+        DEPARTMENT,
+        CURRENT_BED_NUMBER,
+        CURRENT_FLOOR_NUMBER,
+        CURRENT_ROOM_NUMBER,
+        SHIFTED_BED_NUMBER,
+        SHIFTED_ROOM_NUMBER,
+        SHIFTED_FLOOR_NUMBER,
+        REASON,
+        SHIFTED_BY,
+        SHIFTED_DATE,
+        FORM_ID,
+        FORM_CODE,
+        FORM_STATUS,
+        SHIFTED_DORM_ID,
+        FLOOR_ID,
+        SHIFTED_BED_ID,
+        BED_SHIFTING_STATUS,
+        SHIFTED_ROOM_ID,
+        BED_TYPE,
+        CURRENT_DORM_ID,
+        CURRENT_ROOM_ID,
+        CURRENT_BED_ID,
+        CURRENT_DORM,
+        CHECK_IN_ID,
+        STATUS,
+        CURRENT_FLOOR_ID,
+        SHIFTED_FLOOR_ID,
+        LAST_EDIT_BY,
+        LAST_EDIT_DATE
+    FROM
+    (
+        SELECT
+            BS.ID,
+            ROW_NUMBER() OVER(ORDER BY BS.SHIFTED_DATE DESC) AS RN,
+            COUNT(1) OVER () AS ROWSCOUNT,
+            EMPLOYEE_ID,
+            EMPLOYEE_NAME,
+            DEPARTMENT,
+            CURRENT_BED_NUMBER,
+            CURRENT_FLOOR_NUMBER,
+            CURRENT_ROOM_NUMBER,
+            SHIFTED_BED_NUMBER,
+            SHIFTED_ROOM_NUMBER,
+            SHIFTED_FLOOR_NUMBER,
+            BS.REASON,
+            SHIFTED_BY,
+            TO_CHAR(BS.SHIFTED_DATE,'DD-MM-YYYY HH24:MI:SS') AS SHIFTED_DATE,
+            FORM_ID,
+            FORM_CODE,
+            FORM_STATUS,
+            SHIFTED_DORM_ID,
+            FLOOR_ID,
+            SHIFTED_BED_ID,
+            BED_SHIFTING_STATUS,
+            SHIFTED_ROOM_ID,
+            BED_TYPE,
+            CURRENT_DORM_ID,
+            CURRENT_ROOM_ID,
+            CURRENT_BED_ID,
+            CURRENT_DORM,
+            CHECK_IN_ID,
+            BS.STATUS,
+            CURRENT_FLOOR_ID,
+            SHIFTED_FLOOR_ID,
+            BS.LAST_EDIT_BY AS LAST_EDIT_BY,
+            TO_CHAR(BS.LAST_EDIT_DATE,'DD-MM-YYYY HH24:MI:SS') AS LAST_EDIT_DATE
+        FROM
+            DMS.C_DATA_CONTROL_T DC
+        INNER JOIN DMS.C_BED_SHIFTING_T BS 
+            ON DC.DORM_ID = BS.CURRENT_DORM_ID
+        WHERE
+            DC.DORM_ID = NVL(V_DORM_ID, DC.DORM_ID)
+            AND BS.EMPLOYEE_ID = NVL(V_EMPLOYEE_ID, BS.EMPLOYEE_ID)
+            AND DC.EMP_ID = V_EMP_ID
+            -- ✅ Correct date filter
+            AND (V_START_DATE IS NULL OR TRUNC(BS.SHIFTED_DATE) >= TO_DATE(V_START_DATE,'DD-MM-YYYY'))
+            AND (V_END_DATE   IS NULL OR TRUNC(BS.SHIFTED_DATE) < TO_DATE(V_END_DATE,'DD-MM-YYYY') + 1)
+    )
+    WHERE RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+      AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE;
+
+    V_RES := '1';
+    V_RESULT := 'Success';
+END;
+
+
+
+PROCEDURE GET_DORM_BULK_SHIFT_REPORT(
+ V_EMP_ID IN VARCHAR2,
+V_EMPLOYEE_ID IN VARCHAR2,
+V_CURRENT_DORM_ID IN NUMBER,
+V_START_DATE IN VARCHAR2,
+V_END_DATE IN VARCHAR2,
+L_START_PAGE IN VARCHAR2,
+L_PAGE_SIZE IN VARCHAR2,
+V_RES  OUT VARCHAR2,
+V_RESULT OUT VARCHAR2,
+P_CURSOR OUT SYS_REFCURSOR
+) IS
+BEGIN
+	OPEN P_CURSOR FOR
+	
+	 SELECT 
+            RN,
+            ROWSCOUNT,
+            TEMP.ID,
+            EMPLOYEE_ID,
+            CDI.DORM_NAME AS CURRENT_DORM_NAME,
+            CDI.FLOOR_NUMBER AS CURRENT_FLOOR_NUMBER,
+            CDI.ROOM_NUMBER AS CURRENT_ROOM_NUMBER,
+            CDI.BED_NUMBER AS CURRENT_BED_NUMBER,
+            SDI.DORM_NAME AS SHIFTING_DORM_NAME,
+            SDI.FLOOR_NUMBER AS SHIFTING_FLOOR_NUMBER,
+            SDI.ROOM_NUMBER AS SHIFTING_ROOM_NUMBER,
+            SDI.BED_NUMBER AS SHIFTING_BED_NUMBER,
+            TEMP.REASON,
+            TEMP.SHIFTED_BY,
+            TEMP.SHIFTED_DATE,
+            TEMP.CREATED_DATE 
+        FROM (
+            SELECT
+            ROW_NUMBER () OVER (ORDER BY B.SHIFTED_DATE DESC) AS RN,
+            COUNT(B.ID) OVER () AS ROWSCOUNT,
+            B.ID,
+            B.EMPLOYEE_ID,
+            B.CURRENT_DORM_ID,
+            B.CURRENT_FLOOR_ID,
+            B.CURRENT_ROOM_ID,
+            B.CURRENT_BED_ID,
+            B.SHIFTING_DORM_ID,
+            B.SHIFTING_FLOOR_ID,
+            B.SHIFTING_ROOM_ID,
+            B.SHIFTING_BED_ID,
+            B.REASON,
+            B.SHIFTED_BY,
+            TO_CHAR(B.SHIFTED_DATE,'DD-MM-YYYY HH24:MI:SS') AS SHIFTED_DATE,
+            TO_CHAR(B.CREATED_DATE,'DD-MM-YYYY HH24:MI:SS') AS CREATED_DATE
+           FROM
+          DMS.C_DATA_CONTROL_T DC
+      INNER JOIN 
+            DMS.C_BULK_SHIFTING_T B ON DC.DORM_ID  = B.CURRENT_DORM_ID
+        WHERE 
+            1=1
+            AND DC.EMP_ID  = V_EMP_ID
+            AND (SHIFTED_DATE >= TO_DATE(V_START_DATE, 'DD-MM-YYYY') OR V_START_DATE IS NULL)
+            AND (SHIFTED_DATE <= TO_DATE(V_END_DATE, 'DD-MM-YYYY') + 1 OR V_END_DATE IS NULL)
+            AND B.EMPLOYEE_ID = NVL(V_EMPLOYEE_ID,B.EMPLOYEE_ID)
+            AND B.CURRENT_DORM_ID = NVL (V_CURRENT_DORM_ID,B.CURRENT_DORM_ID)
+        ) TEMP
+        JOIN 
+            DMS.C_BED_CREATION_T CDI ON CDI.ID = TEMP.CURRENT_BED_ID AND CDI.DEL_FLAG=0
+        JOIN 
+            DMS.C_BED_CREATION_T SDI ON SDI.ID = TEMP.SHIFTING_BED_ID AND SDI.DEL_FLAG=0
+        WHERE 
+            RN > (L_START_PAGE - 1) * L_PAGE_SIZE
+            AND RN <= (L_START_PAGE - 1) * L_PAGE_SIZE + L_PAGE_SIZE;
+
+   V_RES := '1';
+	V_RESULT := 'Success';
+END;
+
+
+
+PROCEDURE GET_DASHBOARD_RESPORT(
+V_EMP_ID IN VARCHAR2,
+V_SITE IN NUMBER,
+V_RES OUT VARCHAR2,
+V_RESULT OUT VARCHAR2,
+P_CURSOR OUT SYS_REFCURSOR
+
+)IS
+BEGIN
+	OPEN P_CURSOR FOR
+SELECT
+  SITE,
+  FLOOR_CAPACITY,
+DORM_NAME,
+DORM_ADDRESS,
+DORM_ID,
+DORM_CODE,
+DORM_LOCATION AS LOCATION,
+DORM_CAPACITY AS CAPACITY_OF_DORM,
+FILE_NAME,
+MIMETYPE,
+IMG_SIZE,
+IMG_PATH,
+DORM_FLAG AS DORM_DEL_FLAG,
+DATA_CONTROL_DEL_FLAG AS USER_DEL_FLAG,
+BED_COUNT AS "BED_COUNT",
+FLOOR_COUNT AS "FLOORCOUNT",
+ROOM_COUNT AS "ROOMCOUNT",
+OCCUPIED_COUNT_BED AS "OCCUPIED_COUNT_BED",
+VACANT_COUNT_BED AS "VACANT_COUNT_BED",
+OCCUPIED_BED_RATIO AS "OCCUPIED_BED_RATIO",
+VACANT_BED_RATIO AS "VACANT_BED_RATIO"
+FROM (
+  SELECT
+      DC.SITE,
+      DC.FLOOR_CAPACITY,
+      DC.DORM_NAME,
+      DC.DORM_ADDRESS,
+      D.DORM_ID,
+      DC.DORM_CODE,
+      DC.DORM_LOCATION,
+      DC.DORM_CAPACITY,
+      DC.FILE_NAME,
+      DC.MIMETYPE,
+      DC.IMG_SIZE,
+      DC.IMG_PATH,
+      DC.CREATE_DORM_FORM_STATUS AS DORM_FLAG,
+      D.DEL_FLAG AS DATA_CONTROL_DEL_FLAG,
+      DC.DORM_CAPACITY AS BED_COUNT,
+      F.FLOOR_COUNT,
+      R.ROOM_COUNT,
+      B.OCCUPIED_COUNT_BED,
+      DC.DORM_CAPACITY - B.OCCUPIED_COUNT_BED AS VACANT_COUNT_BED,
+      ROUND((B.OCCUPIED_COUNT_BED / DC.DORM_CAPACITY) * 100, 2) AS OCCUPIED_BED_RATIO,
+      ROUND(((DC.DORM_CAPACITY - B.OCCUPIED_COUNT_BED) / DC.DORM_CAPACITY) * 100, 2) AS VACANT_BED_RATIO
+  FROM
+      DMS.C_DATA_CONTROL_T D
+  JOIN DMS.C_DORM_CREATION_T DC ON D.DORM_ID = DC.ID AND DC.DEL_FLAG =0
+  LEFT JOIN (
+      SELECT F.DORM_ID, COUNT(DISTINCT F.ID) AS FLOOR_COUNT
+      FROM DMS.C_FLOOR_CREATION_T F WHERE F.DEL_FLAG=0
+      GROUP BY F.DORM_ID
+  ) F ON DC.ID = F.DORM_ID
+  LEFT JOIN (
+      SELECT R.DORM_ID, COUNT(DISTINCT R.ID) AS ROOM_COUNT
+      FROM DMS.C_ROOM_CREATION_T R WHERE R.DEL_FLAG =0
+      GROUP BY R.DORM_ID 
+  ) R ON DC.ID = R.DORM_ID
+  LEFT JOIN (
+      SELECT
+          B.DORM_ID,
+          COUNT(DISTINCT B.ID) AS OCCUPIED_COUNT_BED
+      FROM DMS.C_BED_CREATION_T B
+      WHERE B.CREATE_BED_FORM_STATUS = 1 AND B.DEL_FLAG =0
+      GROUP BY B.DORM_ID
+  ) B ON DC.ID = B.DORM_ID
+  WHERE
+      D.DEL_FLAG = 0
+      AND D.EMP_ID = V_EMP_ID
+      AND DC.SITE = NVL(V_SITE,DC.SITE)
+  ORDER BY DC.CREATED_DATE DESC	);
+ 
+ 
+ V_RES:='1';
+ V_RESULT :='Success';
+
+END ;
+
+
+PROCEDURE GET_DASHBOARD_POPUP (
+V_DORM_ID IN  NUMBER,
+V_RES OUT  VARCHAR2,
+V_RESULT OUT VARCHAR2,
+P_CURSOR OUT SYS_REFCURSOR
+
+)IS
+BEGIN
+	OPEN P_CURSOR FOR
+ SELECT 
+    d.DORM_NAME,
+    d.DORM_LOCATION,
+    d.DORM_CAPACITY,
+    d.DORM_ADDRESS,
+    d.FLOOR_CAPACITY,
+    COUNT(f.ID) AS CREATED_FLOOR_COUNT,
+    LISTAGG(f.FLOOR_NUMBER, ', ') WITHIN GROUP (ORDER BY f.FLOOR_NUMBER) AS CREATED_FLOOR_NUMBERS,
+    (SELECT SUM(f.ROOM_CAPACITY) FROM DMS.C_FLOOR_CREATION_T f WHERE f.DORM_ID = d.ID AND f.DEL_FLAG =0) AS SUM_ROOM_CAPACITY,
+    f.ID AS FLOOR_ID,
+    f.FLOOR_NUMBER,
+    f.ROOM_CAPACITY AS FLOOR_BASED_ROOM_CAPACITY,
+    COUNT(r.ID) AS FLOOR_BASED_ROOM_COUNT,
+    LISTAGG(r.ROOM_NUMBER, ', ') WITHIN GROUP (ORDER BY r.ROOM_NUMBER) AS FLOOR_BASED_ROOM_NUMBERS,
+    r.ID AS ROOM_ID,
+    r.ROOM_NUMBER, 
+    r.BED_CAPACITY AS ROOM_ID_BASED_BED_CAPACITY,
+    LISTAGG(b.BED_NUMBER, ', ') WITHIN GROUP (ORDER BY b.BED_NUMBER) AS ROOM_ID_BASED_BED_NUMBERS,
+  
+    r.BED_CAPACITY - COUNT(CASE WHEN b.CREATE_BED_FORM_STATUS = 1 THEN b.ID END) AS AVAILABLE_BEDS,
+    COUNT(CASE WHEN b.CREATE_BED_FORM_STATUS = 1 THEN b.ID END) AS BOOKED_BEDS
+FROM DMS.C_DORM_CREATION_T d
+LEFT JOIN DMS.C_FLOOR_CREATION_T f ON d.ID = f.DORM_ID AND f.DEL_FLAG=0
+LEFT JOIN DMS.C_ROOM_CREATION_T r ON f.ID = r.FLOOR_ID AND r.DEL_FLAG=0 AND r.CREATE_ROOM_FORM_STATUS IN (0, 1, 3,4)
+LEFT JOIN DMS.C_BED_CREATION_T b ON r.ID = b.ROOM_ID AND b.DEL_FLAG =0   AND b.CREATE_BED_FORM_STATUS IN (0, 1, 3,4)
+WHERE d.ID = V_DORM_ID AND d.DEL_FLAG=0
+    --  AND f.FLOOR_NUMBER  =V_FLOOR_NO
+GROUP BY
+    d.ID,
+    d.DORM_NAME,
+    d.DORM_LOCATION,
+    d.DORM_CAPACITY,
+    d.FLOOR_CAPACITY,
+    f.ID,
+    f.FLOOR_NUMBER,
+    f.ROOM_CAPACITY, 
+    r.ID,
+    r.BED_CAPACITY,
+    r.ROOM_NUMBER,
+    d.DORM_ADDRESS 
+ORDER BY d.ID, f.ID, r.ROOM_NUMBER;
+V_RES :='1';
+V_RESULT :='Success';
+END ;
+
+ PROCEDURE GET_LAYOUT_DORM_FLOOR_BED (
+    V_DORM_ID IN NUMBER,
+    V_FLOOR_NUMBER IN NUMBER,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
+BEGIN
+    -- Check if both inputs are not NULL
+    IF V_DORM_ID IS NOT NULL AND V_FLOOR_NUMBER IS NOT NULL THEN
+        OPEN P_CURSOR FOR 
+        SELECT DISTINCT 
+            BC.*, 
+            D.CREATE_DORM_FORM_STATUS AS DORM_DEL_FLAG,
+            FC.CREATE_FLOOR_FORM_STATUS AS FLOOR_DEL_FLAG,
+            R.CREATE_ROOM_FORM_STATUS AS ROOM_DEL_FLAG
+        FROM DMS.C_FLOOR_CREATION_T FC
+        INNER JOIN DMS.C_BED_CREATION_T BC ON FC.ID = BC.FLOOR_ID AND BC.DEL_FLAG = 0
+        INNER JOIN DMS.C_ROOM_CREATION_T R ON R.ID = BC.ROOM_ID AND R.DEL_FLAG = 0
+        INNER JOIN DMS.C_DORM_CREATION_T D ON D.ID = BC.DORM_ID AND D.DEL_FLAG = 0
+        WHERE FC.FLOOR_NUMBER = V_FLOOR_NUMBER
+        AND FC.DORM_ID = V_DORM_ID
+        AND FC.DEL_FLAG = 0
+        ORDER BY BC.BED_NUMBER, BC.ROOM_NUMBER, BC.FLOOR_NUMBER;
+        
+    ELSE
+        OPEN P_CURSOR FOR 
+        SELECT DISTINCT 
+            BC.FLOOR_NUMBER,
+            BC.FLOOR_ID
+        FROM DMS.C_BED_CREATION_T BC
+        WHERE BC.DORM_ID = V_DORM_ID AND BC.DEL_FLAG =0
+        ORDER BY BC.FLOOR_NUMBER ;
+    END IF;
+
+    -- Set output variables after query execution
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+END;
+
+--PROCEDURE GET_FILTERDORM_DORMSHIFT (
+--    V_DORM_ID IN NUMBER,
+--    V_RES OUT VARCHAR2,
+--    V_RESULT OUT VARCHAR2,
+--    P_CURSOR OUT SYS_REFCURSOR
+--) IS
+--V_SITE NUMBER;
+--BEGIN
+--	
+--	SELECT SITE INTO V_SITE  FROM DMS.C_DORM_CREATION_T WHERE ID = V_DORM_ID;
+--OPEN P_CURSOR FOR 
+--    -- Check if both inputs are not NULL
+--   SELECT
+--          D.*,
+--              D.DORM_CAPACITY AS "Bed_Count",
+--              booked_beds,
+--              COALESCE(((D.DORM_CAPACITY - booked_beds) / D.DORM_CAPACITY) * 100, 100) 
+--              AS "Count_Vacancy_Ratio"
+--          FROM DMS.C_DORM_CREATION_T D
+--          LEFT JOIN (
+--              SELECT DORM_NAME, COUNT(*) AS COUNT_BEDS, DORM_ID
+--              FROM DMS.C_BED_CREATION_T B WHERE B.DEL_FLAG =0
+--              GROUP BY DORM_NAME, DORM_ID
+--          ) B ON D.ID = B.DORM_ID
+--          LEFT JOIN ( 
+--              SELECT DORM_ID, COUNT(*) AS booked_beds
+--              FROM DMS.C_BED_CREATION_T
+--              WHERE CREATE_BED_FORM_STATUS = 1 AND DEL_FLAG =0
+--              GROUP BY DORM_ID
+--          ) DelFlag0 ON D.ID = DelFlag0.DORM_ID
+--          WHERE D.ID NOT IN (V_DORM_ID) AND D.DEL_FLAG = '0';
+--    -- Set output variables after query execution
+--    V_RES := '1';
+--    V_RESULT := 'Success';
+--
+--EXCEPTION
+--    WHEN OTHERS THEN
+--        V_RES := '0';
+--        V_RESULT := 'Error: ' || SQLERRM;
+--END;
+PROCEDURE GET_FILTERDORM_DORMSHIFT (
+    V_DORM_ID IN NUMBER,
+    V_RES OUT VARCHAR2,
+    V_RESULT OUT VARCHAR2,
+    P_CURSOR OUT SYS_REFCURSOR
+) IS
+V_SITE NUMBER;
+BEGIN
+    SELECT SITE INTO V_SITE FROM DMS.C_DORM_CREATION_T WHERE ID = V_DORM_ID;
+    
+    OPEN P_CURSOR FOR 
+        SELECT
+            D.*,
+            D.DORM_CAPACITY AS "Bed_Count",
+            booked_beds,
+            CASE 
+                WHEN D.DORM_CAPACITY = 0 THEN 100
+                WHEN booked_beds IS NULL THEN 100
+                ELSE ROUND(((D.DORM_CAPACITY - NVL(booked_beds, 0)) / D.DORM_CAPACITY) * 100, 2)
+            END AS "Count_Vacancy_Ratio"
+        FROM DMS.C_DORM_CREATION_T D
+        LEFT JOIN (
+            SELECT DORM_NAME, COUNT(*) AS COUNT_BEDS, DORM_ID
+            FROM DMS.C_BED_CREATION_T B 
+            WHERE B.DEL_FLAG = 0
+            GROUP BY DORM_NAME, DORM_ID
+        ) B ON D.ID = B.DORM_ID
+        LEFT JOIN ( 
+            SELECT DORM_ID, COUNT(*) AS booked_beds
+            FROM DMS.C_BED_CREATION_T
+            WHERE CREATE_BED_FORM_STATUS = 1 AND DEL_FLAG = 0
+            GROUP BY DORM_ID
+        ) DelFlag0 ON D.ID = DelFlag0.DORM_ID
+        WHERE D.ID NOT IN (V_DORM_ID) AND D.DEL_FLAG = '0';
+    
+    V_RES := '1';
+    V_RESULT := 'Success';
+
+EXCEPTION
+    WHEN OTHERS THEN
+        V_RES := '0';
+        V_RESULT := 'Error: ' || SQLERRM;
+END;
+END DORM_REPORTS;
