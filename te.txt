@@ -14,12 +14,14 @@ import {
 } from '@mui/material';
 
 import { createTheme } from '@mui/material/styles';
+
 import {
   Visibility,
   VisibilityOff
 } from '@mui/icons-material';
 
 import { makeStyles } from '@material-ui/core/styles';
+
 import { QRCodeCanvas } from 'qrcode.react';
 
 import {
@@ -38,20 +40,24 @@ import {
 
 import loginimage from './login-artwork.jpg';
 
-// ======================================================
-// CONFIGURATION
-// ======================================================
 
-// Keep your existing USER_KEY value here
-const USER_KEY = 'YOUR_EXISTING_USER_KEY';
+// ============================================================
+// USER KEYS
+// ============================================================
 
-// Keep your existing authenticator user keys here
-const SECRET_GEN_USER_KEY = 'YOUR_SECRET_GENERATION_USER_KEY';
-const OTP_VERIFY_USER_KEY = 'YOUR_OTP_VERIFY_USER_KEY';
+const USER_KEY =
+  '10A33A67A312E649D907BBC927995B8A';
 
-// ------------------------------------------------------
+const SECRET_GEN_USER_KEY =
+  '10A33A67A312E649D907BBC927995B8A';
+
+const OTP_VERIFY_USER_KEY =
+  '433F1BB575A5F60E2547453C13FAFA32';
+
+
+// ============================================================
 // API IDs
-// ------------------------------------------------------
+// ============================================================
 
 const USER_DETAILS_API_ID =
   'ffff-1743480426986-1020912129-2253';
@@ -74,132 +80,151 @@ const SECRET_GENERATION_API_ID =
 const OTP_VERIFICATION_API_ID =
   'ffff-1694232123378-10208193125-0103';
 
-// ======================================================
+
+// ============================================================
 // GATEWAYS
-// ======================================================
+// ============================================================
 
 const MICRO_GATEWAY =
   'https://microservice.abgind.foxconn.com/india/gateway';
 
-const LOCAL_BACKEND =
+const LOCAL_GATEWAY =
+  'http://10.208.193.125:8086/gateway/manager';
+
+
+// ============================================================
+// LOCAL AUTHENTICATOR BACKEND
+// ============================================================
+
+const LOCAL_AUTH_BACKEND =
   'http://10.209.110.208:5665';
 
-// ======================================================
-// DEVELOPMENT / PRODUCTION
-// ======================================================
+
+// ============================================================
+// ENVIRONMENT
+// ============================================================
 
 const IS_PROD =
   process.env.NODE_ENV === 'production';
 
-// DMS APIs are handled by iwxPost() from Encryptfile.js.
 
-// Authenticator APIs
+// ============================================================
+// AUTHENTICATOR URLs
+// ============================================================
+
 const SECRET_GEN_URL = IS_PROD
   ? MICRO_GATEWAY
-  : `${LOCAL_BACKEND}/G_Authenticator/Key/Generation`;
+  : `${LOCAL_AUTH_BACKEND}/G_Authenticator/Key/Generation`;
 
 const OTP_VERIFY_URL = IS_PROD
   ? MICRO_GATEWAY
-  : `${LOCAL_BACKEND}/G_Authenticator/OTP/User_Verifivation`;
+  : `${LOCAL_AUTH_BACKEND}/G_Authenticator/OTP/User_Verifivation`;
 
-// ======================================================
+
+// ============================================================
 // THEME
-// ======================================================
+// ============================================================
 
 const theme = createTheme();
 
-// ======================================================
+
+// ============================================================
 // STYLES
-// ======================================================
+// ============================================================
 
 const useStyles = makeStyles((theme) => ({
+
   root: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
     width: '100%',
-    backgroundSize: 'cover',
+    height: '100%',
   },
 
   formm: {
     width: '100%',
     maxWidth: '400px',
     padding: theme.spacing(3),
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
     borderRadius: theme.spacing(1),
     boxShadow: '0px 4px 20px rgba(0,0,0,0.25)',
-    fontSize: 16,
-    fontWeight: 900,
     textAlign: 'center',
   },
 
-  textField: {
-    marginBottom: theme.spacing(2),
-  },
-
-  button: {
-    marginBottom: theme.spacing(1),
-  },
 }));
 
-// ======================================================
+
+// ============================================================
 // LOGIN COMPONENT
-// ======================================================
+// ============================================================
 
 const Login = () => {
 
   const navigate = useNavigate();
+
   const classes = useStyles(theme);
 
-  // ====================================================
-  // STATES
-  // ====================================================
 
-  const [isLoading, setIsLoading] = useState(false);
+  // ==========================================================
+  // STATE
+  // ==========================================================
 
-  const [loginStatus, setLoginStatus] = useState('');
+  const [isLoading, setIsLoading] =
+    useState(false);
 
-  const [account, setAccount] = useState('');
+  const [loginStatus, setLoginStatus] =
+    useState('');
 
-  const [password, setPassword] = useState('');
+  const [account, setAccount] =
+    useState('');
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [password, setPassword] =
+    useState('');
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] =
+    useState('');
 
-  const [secretkey, setSecretKey] = useState('');
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  const [otp, setOTP] = useState('');
+  const [secretkey, setSecretKey] =
+    useState('');
 
-  const [showQRCode, setShowQRCode] = useState(false);
+  const [otp, setOTP] =
+    useState('');
 
-  const [otpLoading, setOtpLoading] = useState(false);
+  const [showQRCode, setShowQRCode] =
+    useState(false);
 
-  const [secretLoading, setSecretLoading] = useState(false);
+  const [otpLoading, setOtpLoading] =
+    useState(false);
 
-  // ====================================================
-  // ENCRYPTED VALUES
-  // ====================================================
+  const [secretLoading, setSecretLoading] =
+    useState(false);
 
-  const originalBoolean = true;
 
-  const encryptedBoolean = encrypt(
-    originalBoolean.toString(),
-    getdk(iwxKey)
-  );
+  // ==========================================================
+  // ENCRYPTED FLAGS
+  // ==========================================================
 
-  const originalNumberBoolean = 0;
+  const encryptedBoolean =
+    encrypt(
+      'true',
+      getdk(iwxKey)
+    );
 
-  const encryptedBooleanNum = encrypt(
-    originalNumberBoolean.toString(),
-    getdk(iwxKey)
-  );
+  const encryptedBooleanNum =
+    encrypt(
+      '0',
+      getdk(iwxKey)
+    );
 
-  // ====================================================
+
+  // ==========================================================
   // SESSION VALUES
-  // ====================================================
+  // ==========================================================
 
   const issuccessfullylogin =
     sessionStorage.getItem(
@@ -211,19 +236,23 @@ const Login = () => {
       'qrstatus'
     );
 
-  // ====================================================
-  // PASSWORD TOGGLE
-  // ====================================================
+
+  // ==========================================================
+  // PASSWORD VISIBILITY
+  // ==========================================================
 
   const handleTogglePassword = () => {
+
     setShowPassword(
-      (previous) => !previous
+      previous => !previous
     );
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // ENTER KEY
-  // ====================================================
+  // ==========================================================
 
   const handleKeyPress = (event) => {
 
@@ -231,43 +260,98 @@ const Login = () => {
 
       event.preventDefault();
 
-      handleLogin(event);
+      if (
+        issuccessfullylogin ===
+        encryptedBoolean
+      ) {
+
+        verifyOTP();
+
+      } else {
+
+        handleLogin(event);
+
+      }
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // FETCH USER DETAILS
-  // ====================================================
+  // ==========================================================
 
   const fetchdata = async () => {
 
     try {
 
       const headers = {
-        apiID: USER_DETAILS_API_ID,
-        userKey: USER_KEY
+
+        apiID:
+          USER_DETAILS_API_ID,
+
+        userKey:
+          USER_KEY
+
       };
+
 
       const params = {
 
-        EmpId: account,
+        EmpId:
+          account.trim(),
 
-        EmpName: '',
+        EmpName:
+          '',
 
-        Status: '',
+        Status:
+          '',
 
-        StartPage: 1,
+        StartPage:
+          1,
 
-        PageSize: 999999,
+        PageSize:
+          999999,
 
         Func:
           'UserManagement-Get_user_details_new'
+
       };
 
+
       console.log(
-        'USER DETAILS REQUEST:',
-        params
+        '======================================'
       );
+
+      console.log(
+        'USER DETAILS API'
+      );
+
+      console.log(
+        'Employee:',
+        account
+      );
+
+      console.log(
+        'API ID:',
+        USER_DETAILS_API_ID
+      );
+
+      console.log(
+        'UserKey exists:',
+        Boolean(USER_KEY)
+      );
+
+      console.log(
+        'UserKey length:',
+        USER_KEY.length
+      );
+
+      console.log(
+        '======================================'
+      );
+
 
       const response =
         await iwxPost(
@@ -276,30 +360,66 @@ const Login = () => {
           true
         );
 
+
       console.log(
         'USER DETAILS RESPONSE:',
         response
       );
 
+
       if (
-        !response ||
-        !response.List ||
-        response.List.length === 0
+        !response
       ) {
 
         console.error(
-          'No user details returned'
+          'USER DETAILS: API returned null'
         );
 
         return null;
+
       }
+
+
+      if (
+        !Array.isArray(response.List)
+      ) {
+
+        console.error(
+          'USER DETAILS: List missing',
+          response
+        );
+
+        return null;
+
+      }
+
+
+      if (
+        response.List.length === 0
+      ) {
+
+        console.log(
+          'USER DETAILS: No employee found'
+        );
+
+        return response;
+
+      }
+
+
+      // ======================================================
+      // QR STATUS
+      // ======================================================
 
       const qrStatusValue =
         response.List[0]?.QrStatus;
 
+
       if (
-        qrStatusValue !== undefined &&
-        qrStatusValue !== null
+        qrStatusValue !==
+          undefined &&
+        qrStatusValue !==
+          null
       ) {
 
         const encryptedQRStatus =
@@ -308,11 +428,20 @@ const Login = () => {
             getdk(iwxKey)
           );
 
+
         sessionStorage.setItem(
           'qrstatus',
           encryptedQRStatus
         );
+
+
+        console.log(
+          'QR STATUS:',
+          qrStatusValue
+        );
+
       }
+
 
       return response;
 
@@ -324,12 +453,15 @@ const Login = () => {
       );
 
       return null;
+
     }
+
   };
 
-  // ====================================================
-  // FETCH EMPLOYEE NAME
-  // ====================================================
+
+  // ==========================================================
+  // EMPLOYEE BASIC INFORMATION
+  // ==========================================================
 
   const fetchempName = async () => {
 
@@ -337,30 +469,35 @@ const Login = () => {
 
       const response =
         await fetchempbasicinfo(
-          account
+          account.trim()
         );
+
 
       console.log(
         'EMPLOYEE BASIC INFO:',
         response
       );
 
+
       return response;
 
     } catch (error) {
 
       console.error(
-        'fetchempName ERROR:',
+        'EMPLOYEE BASIC INFO ERROR:',
         error
       );
 
       return null;
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // FETCH ROLE
-  // ====================================================
+  // ==========================================================
 
   const fetchRoleData = async () => {
 
@@ -373,16 +510,25 @@ const Login = () => {
 
         userKey:
           USER_KEY
+
       };
+
 
       const params = {
 
         EmpId:
-          account,
+          account.trim(),
 
         Func:
           'UserManagement-Get_role_based_empid_new'
+
       };
+
+
+      console.log(
+        'ROLE API CALL'
+      );
+
 
       const response =
         await iwxPost(
@@ -391,27 +537,32 @@ const Login = () => {
           true
         );
 
+
       console.log(
         'ROLE RESPONSE:',
         response
       );
+
 
       return response;
 
     } catch (error) {
 
       console.error(
-        'fetchRoleData ERROR:',
+        'ROLE API ERROR:',
         error
       );
 
       return null;
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // STORE LOGIN LOG
-  // ====================================================
+  // ==========================================================
 
   const StoreLoginLog = async (
     msg,
@@ -428,12 +579,29 @@ const Login = () => {
 
         userKey:
           USER_KEY
+
       };
+
+
+      const employeeName =
+        empname &&
+        empname[0]
+          ? empname[0].EmployeeName
+          : '';
+
+
+      const roleName =
+        roles &&
+        roles.List &&
+        roles.List[0]
+          ? roles.List[0].RoleName
+          : '';
+
 
       const params = {
 
         EmpId:
-          account,
+          account.trim(),
 
         SystemIp:
           '',
@@ -442,26 +610,22 @@ const Login = () => {
           msg,
 
         EmpName:
-          empname &&
-          empname[0]
-            ? empname[0].EmployeeName
-            : '',
+          employeeName,
 
         UserRole:
-          roles &&
-          roles.List &&
-          roles.List[0]
-            ? roles.List[0].RoleName
-            : '',
+          roleName,
 
         Func:
           'UserManagement-Insert_login_log_new'
+
       };
 
+
       console.log(
-        'LOGIN LOG REQUEST:',
+        'LOGIN LOG:',
         params
       );
+
 
       const response =
         await iwxPost(
@@ -470,22 +634,22 @@ const Login = () => {
           true
         );
 
+
       console.log(
         'LOGIN LOG RESPONSE:',
         response
       );
 
+
       if (
         !response ||
-        !response.List
+        !Array.isArray(response.List)
       ) {
 
-        console.error(
-          'Login log response missing'
-        );
-
         return undefined;
+
       }
+
 
       return response.List[0]?.Id;
 
@@ -497,12 +661,15 @@ const Login = () => {
       );
 
       return undefined;
+
     }
+
   };
 
-  // ====================================================
-  // UPDATE QR SECRET
-  // ====================================================
+
+  // ==========================================================
+  // UPDATE SECRET KEY
+  // ==========================================================
 
   const updateQRStatus = async () => {
 
@@ -513,9 +680,17 @@ const Login = () => {
           'account'
         );
 
+
       if (!encryptedAccount) {
+
+        console.error(
+          'Account not found'
+        );
+
         return;
+
       }
+
 
       const decryptedAccount =
         decrypt(
@@ -523,15 +698,20 @@ const Login = () => {
           getdk(iwxKey)
         );
 
+
       if (!decryptedAccount) {
+
         return;
+
       }
+
 
       const empnumber =
         decryptedAccount.replace(
           /"/g,
           ''
         );
+
 
       const headers = {
 
@@ -540,7 +720,9 @@ const Login = () => {
 
         userKey:
           USER_KEY
+
       };
+
 
       const params = {
 
@@ -552,23 +734,33 @@ const Login = () => {
 
         Func:
           'UserManagement-Update_secret_key_new'
+
       };
 
-      // QR status = 0 means first-time setup
+
       if (
         isscuessqr ===
         encryptedBooleanNum
       ) {
 
         console.log(
-          'Updating secret key...'
+          'Updating QR secret key'
         );
 
-        await iwxPost(
-          params,
-          { headers },
-          true
+
+        const response =
+          await iwxPost(
+            params,
+            { headers },
+            true
+          );
+
+
+        console.log(
+          'UPDATE SECRET RESPONSE:',
+          response
         );
+
       }
 
     } catch (error) {
@@ -577,22 +769,31 @@ const Login = () => {
         'updateQRStatus ERROR:',
         error
       );
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // GENERATE SECRET
-  // ====================================================
+  // ==========================================================
 
   const handleGenerateSecret = async () => {
 
     if (secretLoading) {
+
       return;
+
     }
+
 
     try {
 
       setSecretLoading(true);
+
+      setErrorMessage('');
+
 
       const headers = {
 
@@ -601,10 +802,12 @@ const Login = () => {
 
         userKey:
           SECRET_GEN_USER_KEY
+
       };
 
+
       console.log(
-        '===================================='
+        '======================================'
       );
 
       console.log(
@@ -621,6 +824,11 @@ const Login = () => {
         SECRET_GENERATION_API_ID
       );
 
+      console.log(
+        '======================================'
+      );
+
+
       const response =
         await axios.post(
           SECRET_GEN_URL,
@@ -631,27 +839,28 @@ const Login = () => {
           }
         );
 
+
       console.log(
         'SECRET RAW RESPONSE:',
         response.data
       );
+
 
       if (
         !response.data
       ) {
 
         setErrorMessage(
-          'Unable to generate authentication secret.'
+          'Authentication server returned empty response.'
         );
 
         return;
+
       }
+
 
       let result = null;
 
-      // ----------------------------------------------
-      // Encrypted response
-      // ----------------------------------------------
 
       if (
         response.data.r
@@ -663,10 +872,12 @@ const Login = () => {
             getdk(iwxKey)
           );
 
+
         console.log(
           'SECRET DECRYPTED:',
           decrypted
         );
+
 
         if (!decrypted) {
 
@@ -675,31 +886,31 @@ const Login = () => {
           );
 
           return;
+
         }
+
 
         result =
           JSON.parse(
             decrypted
           );
-      }
 
-      // ----------------------------------------------
-      // Direct JSON response
-      // ----------------------------------------------
-
-      else if (
+      } else if (
         typeof response.data ===
         'object'
       ) {
 
         result =
           response.data;
+
       }
+
 
       console.log(
         'SECRET RESULT:',
         result
       );
+
 
       if (
         result &&
@@ -714,6 +925,8 @@ const Login = () => {
           true
         );
 
+        setErrorMessage('');
+
       } else {
 
         console.error(
@@ -722,8 +935,10 @@ const Login = () => {
         );
 
         setErrorMessage(
+          result?.Msg ||
           'Unable to generate authentication secret.'
         );
+
       }
 
     } catch (error) {
@@ -733,18 +948,23 @@ const Login = () => {
         error
       );
 
-      if (error.response) {
+
+      if (
+        error.response
+      ) {
 
         console.error(
-          'STATUS:',
+          'SECRET STATUS:',
           error.response.status
         );
 
         console.error(
-          'DATA:',
+          'SECRET DATA:',
           error.response.data
         );
+
       }
+
 
       setErrorMessage(
         'Authentication server error.'
@@ -753,12 +973,15 @@ const Login = () => {
     } finally {
 
       setSecretLoading(false);
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // GENERATE OTP URI
-  // ====================================================
+  // ==========================================================
 
   const generateOTPURI = () => {
 
@@ -767,9 +990,13 @@ const Login = () => {
         'account'
       );
 
+
     if (!encryptedAccount) {
+
       return '';
+
     }
+
 
     const decryptedAccount =
       decrypt(
@@ -777,9 +1004,13 @@ const Login = () => {
         getdk(iwxKey)
       );
 
+
     if (!decryptedAccount) {
+
       return '';
+
     }
+
 
     const empnumber =
       decryptedAccount.replace(
@@ -787,16 +1018,19 @@ const Login = () => {
         ''
       );
 
+
     return (
       `otpauth://totp/DMS:${encodeURIComponent(
         empnumber
       )}?secret=${secretkey}`
     );
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // STORE OTP LOGIN LOG
-  // ====================================================
+  // ==========================================================
 
   const StoreOTPtologinlog = async (
     msg
@@ -809,9 +1043,17 @@ const Login = () => {
           'loginlogID'
         );
 
+
       if (!encryptedLoginLogID) {
+
+        console.error(
+          'Login log ID not found'
+        );
+
         return;
+
       }
+
 
       const decryptedLoginLogID =
         decrypt(
@@ -819,9 +1061,13 @@ const Login = () => {
           getdk(iwxKey)
         );
 
+
       if (!decryptedLoginLogID) {
+
         return;
+
       }
+
 
       const headers = {
 
@@ -830,7 +1076,9 @@ const Login = () => {
 
         userKey:
           USER_KEY
+
       };
+
 
       const params = {
 
@@ -848,12 +1096,9 @@ const Login = () => {
 
         Func:
           'UserManagement-Update_login_log_new'
+
       };
 
-      console.log(
-        'OTP LOGIN LOG:',
-        params
-      );
 
       await iwxPost(
         params,
@@ -861,18 +1106,22 @@ const Login = () => {
         true
       );
 
+
     } catch (error) {
 
       console.error(
         'StoreOTPtologinlog ERROR:',
         error
       );
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // VERIFY OTP
-  // ====================================================
+  // ==========================================================
 
   const verifyOTP = async () => {
 
@@ -883,9 +1132,27 @@ const Login = () => {
       );
 
       return;
+
     }
 
+
+    if (
+      otp.length !== 6
+    ) {
+
+      setErrorMessage(
+        'Please enter a valid 6-digit OTP.'
+      );
+
+      return;
+
+    }
+
+
     setOtpLoading(true);
+
+    setErrorMessage('');
+
 
     try {
 
@@ -894,6 +1161,7 @@ const Login = () => {
           'account'
         );
 
+
       if (!encryptedAccount) {
 
         setErrorMessage(
@@ -901,13 +1169,16 @@ const Login = () => {
         );
 
         return;
+
       }
+
 
       const decryptedAccount =
         decrypt(
           encryptedAccount,
           getdk(iwxKey)
         );
+
 
       if (!decryptedAccount) {
 
@@ -916,13 +1187,16 @@ const Login = () => {
         );
 
         return;
+
       }
+
 
       const empnumber =
         decryptedAccount.replace(
           /"/g,
           ''
         );
+
 
       const headers = {
 
@@ -931,7 +1205,9 @@ const Login = () => {
 
         userKey:
           USER_KEY
+
       };
+
 
       const params = {
 
@@ -952,7 +1228,9 @@ const Login = () => {
 
         Func:
           'UserManagement-Get_user_details_new'
+
       };
+
 
       const response =
         await iwxPost(
@@ -961,14 +1239,16 @@ const Login = () => {
           true
         );
 
+
       console.log(
         'OTP USER DETAILS:',
         response
       );
 
+
       if (
         !response ||
-        !response.List ||
+        !Array.isArray(response.List) ||
         response.List.length === 0
       ) {
 
@@ -977,30 +1257,40 @@ const Login = () => {
         );
 
         return;
+
       }
+
 
       const storedSecret =
         response.List[0]?.SecretKey;
 
-      if (!storedSecret && !secretkey) {
+
+      if (
+        !storedSecret &&
+        !secretkey
+      ) {
 
         setErrorMessage(
           'Authentication secret not found.'
         );
 
         return;
+
       }
+
 
       await verifyOTP22(
         storedSecret
       );
 
+
     } catch (error) {
 
       console.error(
-        'verifyOTP ERROR:',
+        'VERIFY OTP ERROR:',
         error
       );
+
 
       setErrorMessage(
         'Unable to verify OTP. Please try again.'
@@ -1009,12 +1299,15 @@ const Login = () => {
     } finally {
 
       setOtpLoading(false);
+
     }
+
   };
 
-  // ====================================================
-  // VERIFY OTP WITH AUTHENTICATOR
-  // ====================================================
+
+  // ==========================================================
+  // VERIFY OTP AUTHENTICATOR API
+  // ==========================================================
 
   const verifyOTP22 = async (
     storedSecret
@@ -1022,21 +1315,12 @@ const Login = () => {
 
     try {
 
-      const headers = {
-
-        apiID:
-          OTP_VERIFICATION_API_ID,
-
-        userKey:
-          OTP_VERIFY_USER_KEY
-      };
-
-      // First-time QR setup uses newly generated secret.
-      // Existing users use secret stored in DB.
       const secretToVerify =
-        isscuessqr === encryptedBooleanNum
+        isscuessqr ===
+        encryptedBooleanNum
           ? secretkey
           : storedSecret;
+
 
       if (!secretToVerify) {
 
@@ -1045,26 +1329,55 @@ const Login = () => {
         );
 
         return;
+
       }
+
+
+      const headers = {
+
+        apiID:
+          OTP_VERIFICATION_API_ID,
+
+        userKey:
+          OTP_VERIFY_USER_KEY
+
+      };
+
 
       const params =
         dealPostParamsEncrypt({
+
           secret:
             secretToVerify,
 
           otp:
             otp
+
         });
 
+
       console.log(
-        'OTP VERIFY URL:',
+        '======================================'
+      );
+
+      console.log(
+        'OTP VERIFICATION'
+      );
+
+      console.log(
+        'URL:',
         OTP_VERIFY_URL
       );
 
       console.log(
-        'OTP VERIFY API:',
+        'API ID:',
         OTP_VERIFICATION_API_ID
       );
+
+      console.log(
+        '======================================'
+      );
+
 
       const response =
         await axios.post(
@@ -1076,27 +1389,26 @@ const Login = () => {
           }
         );
 
+
       console.log(
         'OTP RAW RESPONSE:',
         response.data
       );
+
 
       if (
         !response.data ||
         !response.data.r
       ) {
 
-        console.error(
-          'OTP verification rejected:',
-          response.data
-        );
-
         setErrorMessage(
           'Unable to verify OTP. Please try again.'
         );
 
         return;
+
       }
+
 
       const decrypted =
         decrypt(
@@ -1104,10 +1416,12 @@ const Login = () => {
           getdk(iwxKey)
         );
 
+
       console.log(
         'OTP DECRYPTED:',
         decrypted
       );
+
 
       if (!decrypted) {
 
@@ -1116,21 +1430,25 @@ const Login = () => {
         );
 
         return;
+
       }
+
 
       const result =
         JSON.parse(
           decrypted
         );
 
+
       console.log(
         'OTP RESULT:',
         result
       );
 
-      // ================================================
+
+      // ======================================================
       // OTP SUCCESS
-      // ================================================
+      // ======================================================
 
       if (
         result.IsOK === 1 ||
@@ -1139,15 +1457,18 @@ const Login = () => {
 
         await updateQRStatus();
 
+
         sessionStorage.setItem(
           'isLoggedIn',
           encryptedBoolean
         );
 
+
         const loginResponse =
           sessionStorage.getItem(
             'loginresponse'
           );
+
 
         if (loginResponse) {
 
@@ -1155,14 +1476,18 @@ const Login = () => {
             'data',
             loginResponse
           );
+
         }
 
+
         await StoreOTPtologinlog(
-          result.Msg
+          result.Msg ||
+          'OTP Success'
         );
 
-        // Clear OTP
+
         setOTP('');
+
 
         navigate(
           '/home/Dashboard',
@@ -1174,18 +1499,25 @@ const Login = () => {
           }
         );
 
+
       } else {
 
-        setErrorMessage(
+        const message =
           result.Msg ||
-          'Incorrect OTP'
+          'Incorrect OTP';
+
+
+        setErrorMessage(
+          message
         );
 
+
         await StoreOTPtologinlog(
-          result.Msg ||
-          'Incorrect OTP'
+          message
         );
+
       }
+
 
     } catch (error) {
 
@@ -1194,7 +1526,10 @@ const Login = () => {
         error
       );
 
-      if (error.response) {
+
+      if (
+        error.response
+      ) {
 
         console.error(
           'OTP STATUS:',
@@ -1205,17 +1540,22 @@ const Login = () => {
           'OTP RESPONSE:',
           error.response.data
         );
+
       }
+
 
       setErrorMessage(
         'OTP verification failed.'
       );
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // LOGIN
-  // ====================================================
+  // ==========================================================
 
   const handleLogin = async (
     event
@@ -1223,20 +1563,31 @@ const Login = () => {
 
     event.preventDefault();
 
+
     if (isLoading) {
+
       return;
+
     }
+
 
     setIsLoading(true);
 
+    setErrorMessage('');
+
+
     try {
 
-      // ----------------------------------------------
-      // Validate fields
-      // ----------------------------------------------
+      // ======================================================
+      // VALIDATION
+      // ======================================================
+
+      const enteredAccount =
+        account.trim();
+
 
       if (
-        !account ||
+        !enteredAccount ||
         !password
       ) {
 
@@ -1245,20 +1596,20 @@ const Login = () => {
         );
 
         return;
+
       }
 
-      setErrorMessage('');
 
-      // ----------------------------------------------
-      // Get user details
-      // ----------------------------------------------
+      // ======================================================
+      // GET USER DETAILS
+      // ======================================================
 
       const userResponse =
         await fetchdata();
 
+
       if (
-        !userResponse ||
-        !userResponse.List
+        !userResponse
       ) {
 
         setErrorMessage(
@@ -1266,28 +1617,67 @@ const Login = () => {
         );
 
         return;
+
       }
+
+
+      if (
+        !Array.isArray(
+          userResponse.List
+        )
+      ) {
+
+        setErrorMessage(
+          'Invalid user details response.'
+        );
+
+        return;
+
+      }
+
 
       const userList =
         userResponse.List;
 
+
+      // ======================================================
+      // FIND EMPLOYEE
+      // ======================================================
+
       const findempdata =
         userList.filter(
-          (user) =>
-            String(user.EmpId)
+          user =>
+            String(
+              user.EmpId
+            )
               .trim()
               .toUpperCase() ===
-            String(account)
-              .trim()
+            enteredAccount
               .toUpperCase()
         );
 
-      // ----------------------------------------------
-      // Employee not found
-      // ----------------------------------------------
+
+      console.log(
+        'ENTERED ACCOUNT:',
+        enteredAccount
+      );
+
+      console.log(
+        'USER LIST:',
+        userList
+      );
+
+      console.log(
+        'MATCHED EMPLOYEE:',
+        findempdata
+      );
+
+
+      // ======================================================
+      // EMPLOYEE NOT FOUND
+      // ======================================================
 
       if (
-        userList.length === 0 ||
         findempdata.length === 0
       ) {
 
@@ -1297,12 +1687,15 @@ const Login = () => {
         const roles =
           await fetchRoleData();
 
+
         const msg =
           "You don't have access to this system";
+
 
         setErrorMessage(
           msg
         );
+
 
         await StoreLoginLog(
           msg,
@@ -1310,15 +1703,20 @@ const Login = () => {
           roles
         );
 
+
         return;
+
       }
 
-      // ----------------------------------------------
-      // Employee deleted
-      // ----------------------------------------------
+
+      // ======================================================
+      // DELETED USER
+      // ======================================================
 
       if (
-        findempdata[0]?.DelFlag === '1'
+        String(
+          findempdata[0]?.DelFlag
+        ) === '1'
       ) {
 
         const empName =
@@ -1327,12 +1725,15 @@ const Login = () => {
         const roles =
           await fetchRoleData();
 
+
         const msg =
           "You don't have access to this system";
+
 
         setErrorMessage(
           msg
         );
+
 
         await StoreLoginLog(
           msg,
@@ -1340,46 +1741,47 @@ const Login = () => {
           roles
         );
 
+
         return;
+
       }
 
-      // ----------------------------------------------
-      // Save account encrypted
-      // ----------------------------------------------
+
+      // ======================================================
+      // SAVE ACCOUNT
+      // ======================================================
 
       const encryptedAccount =
         dealPostParamsEncrypt(
-          account
+          enteredAccount
         );
+
 
       sessionStorage.setItem(
         'account',
         encryptedAccount.s
       );
 
-      // ----------------------------------------------
-      // Get employee information
-      // ----------------------------------------------
+
+      // ======================================================
+      // EMPLOYEE NAME
+      // ======================================================
 
       const empName =
         await fetchempName();
 
+
+      // ======================================================
+      // ROLE
+      // ======================================================
+
       const roles =
         await fetchRoleData();
 
-      console.log(
-        'EMPLOYEE:',
-        empName
-      );
 
-      console.log(
-        'ROLES:',
-        roles
-      );
-
-      // ----------------------------------------------
+      // ======================================================
       // LOGIN API
-      // ----------------------------------------------
+      // ======================================================
 
       const encryptedParams =
         dealPostParamsEncrypt({
@@ -1388,7 +1790,7 @@ const Login = () => {
             'APPFrame-AccountLoginPhoneSpv3-IWX',
 
           Account:
-            account,
+            enteredAccount,
 
           Password:
             password,
@@ -1410,21 +1812,26 @@ const Login = () => {
 
           AppVersion:
             '1'
+
         });
 
+
       console.log(
-        'LOGIN API REQUEST START'
+        'LOGIN API START'
       );
+
 
       const loginResponse =
         await getlogincredentials(
           encryptedParams
         );
 
+
       console.log(
-        'LOGIN RAW RESPONSE:',
+        'LOGIN RESPONSE:',
         loginResponse
       );
+
 
       if (
         !loginResponse ||
@@ -1434,9 +1841,11 @@ const Login = () => {
         const msg =
           'Login service did not return a valid response.';
 
+
         setErrorMessage(
           msg
         );
+
 
         await StoreLoginLog(
           msg,
@@ -1444,12 +1853,15 @@ const Login = () => {
           roles
         );
 
+
         return;
+
       }
 
-      // ----------------------------------------------
-      // Decrypt login response
-      // ----------------------------------------------
+
+      // ======================================================
+      // DECRYPT LOGIN
+      // ======================================================
 
       const decryptedLogin =
         decrypt(
@@ -1457,10 +1869,12 @@ const Login = () => {
           getdk(iwxKey)
         );
 
+
       console.log(
-        'LOGIN DECRYPTED:',
+        'DECRYPTED LOGIN:',
         decryptedLogin
       );
+
 
       if (!decryptedLogin) {
 
@@ -1469,21 +1883,25 @@ const Login = () => {
         );
 
         return;
+
       }
+
 
       const loginResult =
         JSON.parse(
           decryptedLogin
         );
 
+
       console.log(
         'LOGIN RESULT:',
         loginResult
       );
 
-      // ----------------------------------------------
+
+      // ======================================================
       // LOGIN SUCCESS
-      // ----------------------------------------------
+      // ======================================================
 
       if (
         loginResult.IsOK === '1' ||
@@ -1496,6 +1914,7 @@ const Login = () => {
             empName,
             roles
           );
+
 
         if (
           loginLogID ===
@@ -1512,60 +1931,84 @@ const Login = () => {
           );
 
           return;
+
         }
 
-        // --------------------------------------------
-        // Store login information
-        // --------------------------------------------
+
+        // ====================================================
+        // SAVE LOGIN LOG ID
+        // ====================================================
 
         const encryptedLoginLogID =
           encrypt(
-            loginLogID.toString(),
+            String(loginLogID),
             getdk(iwxKey)
           );
+
 
         sessionStorage.setItem(
           'loginlogID',
           encryptedLoginLogID
         );
 
+
+        // ====================================================
+        // SAVE LOGIN RESPONSE
+        // ====================================================
+
         sessionStorage.setItem(
           'loginresponse',
           loginResponse.r
         );
+
+
+        // ====================================================
+        // LOGIN SUCCESS FLAG
+        // ====================================================
 
         sessionStorage.setItem(
           'issuccessfullylogin',
           encryptedBoolean
         );
 
+
         setLoginStatus(
           'success'
         );
 
+
         setErrorMessage('');
+
 
       } else {
 
-        // --------------------------------------------
+        // ====================================================
         // LOGIN FAILED
-        // --------------------------------------------
+        // ====================================================
+
+        const msg =
+          loginResult.Msg ||
+          'Invalid username or password.';
+
 
         await StoreLoginLog(
-          loginResult.Msg,
+          msg,
           empName,
           roles
         );
 
+
         setErrorMessage(
-          loginResult.Msg ||
-          'Invalid username or password.'
+          msg
         );
+
 
         setLoginStatus(
           'error'
         );
+
       }
+
 
     } catch (error) {
 
@@ -1574,7 +2017,10 @@ const Login = () => {
         error
       );
 
-      if (error.response) {
+
+      if (
+        error.response
+      ) {
 
         console.error(
           'STATUS:',
@@ -1582,24 +2028,30 @@ const Login = () => {
         );
 
         console.error(
-          'SERVER RESPONSE:',
+          'RESPONSE:',
           error.response.data
         );
+
       }
+
 
       setErrorMessage(
         'Error checking account availability.'
       );
 
+
     } finally {
 
       setIsLoading(false);
+
     }
+
   };
 
-  // ====================================================
+
+  // ==========================================================
   // BACK TO LOGIN
-  // ====================================================
+  // ==========================================================
 
   const handlebacklogin = () => {
 
@@ -1623,6 +2075,7 @@ const Login = () => {
       'account'
     );
 
+
     setAccount('');
 
     setPassword('');
@@ -1637,12 +2090,15 @@ const Login = () => {
 
     setErrorMessage('');
 
+
     navigate('/login');
+
   };
 
-  // ====================================================
-  // CLEAR ERROR WHEN INPUT CHANGES
-  // ====================================================
+
+  // ==========================================================
+  // CLEAR ERROR
+  // ==========================================================
 
   useEffect(() => {
 
@@ -1650,13 +2106,13 @@ const Login = () => {
 
   }, [
     account,
-    password,
-    otp
+    password
   ]);
 
-  // ====================================================
-  // GENERATE SECRET AFTER LOGIN
-  // ====================================================
+
+  // ==========================================================
+  // GENERATE QR SECRET
+  // ==========================================================
 
   useEffect(() => {
 
@@ -1665,36 +2121,34 @@ const Login = () => {
         'issuccessfullylogin'
       );
 
-    if (
-      currentLogin === null
-    ) {
-
-      return;
-    }
 
     if (
-      currentLogin ===
+      currentLogin !==
       encryptedBoolean
     ) {
 
-      // Existing QR user:
-      // no need to generate new QR secret.
-      if (
-        isscuessqr ===
-        encryptedBooleanNum
-      ) {
+      return;
 
-        handleGenerateSecret();
-      }
+    }
+
+
+    if (
+      isscuessqr ===
+      encryptedBooleanNum
+    ) {
+
+      handleGenerateSecret();
+
     }
 
   }, [
     loginStatus
   ]);
 
-  // ====================================================
+
+  // ==========================================================
   // UI
-  // ====================================================
+  // ==========================================================
 
   return (
 
@@ -1703,7 +2157,8 @@ const Login = () => {
       component="main"
       sx={{
 
-        minHeight: '100vh',
+        minHeight:
+          '100vh',
 
         backgroundImage:
           `url(${loginimage})`,
@@ -1736,13 +2191,16 @@ const Login = () => {
 
           zIndex:
             0
+
         }
+
       }}
     >
 
-      {/* =================================================
-          LOGIN AREA
-      ================================================= */}
+
+      {/* =====================================================
+          LOGIN / MFA AREA
+      ===================================================== */}
 
       <Grid
         item
@@ -1766,6 +2224,7 @@ const Login = () => {
 
           zIndex:
             1
+
         }}
       >
 
@@ -1785,12 +2244,16 @@ const Login = () => {
             }
           >
 
-            {/* LOGO */}
+
+            {/* =================================================
+                LOGO
+            ================================================= */}
 
             <img
               src="/images/logo1.png"
               alt="DMS"
               style={{
+
                 maxWidth:
                   '180px',
 
@@ -1802,8 +2265,10 @@ const Login = () => {
 
                 marginBottom:
                   '15px'
+
               }}
             />
+
 
             {/* =================================================
                 MFA SCREEN
@@ -1816,6 +2281,7 @@ const Login = () => {
 
                 <Typography
                   sx={{
+
                     fontFamily:
                       '"Open Sans","Helvetica","Arial",sans-serif',
 
@@ -1827,20 +2293,23 @@ const Login = () => {
 
                     mb:
                       2
+
                   }}
                 >
                   MFA Auth
                 </Typography>
 
-                {/* ==========================================
+
+                {/* ============================================
                     QR CODE
-                ========================================== */}
+                ============================================ */}
 
                 {isscuessqr ===
                   encryptedBooleanNum && (
 
                   <Box
                     sx={{
+
                       display:
                         'flex',
 
@@ -1852,6 +2321,7 @@ const Login = () => {
 
                       mb:
                         2
+
                     }}
                   >
 
@@ -1867,6 +2337,7 @@ const Login = () => {
                       secretkey && (
 
                         <>
+
                           <QRCodeCanvas
                             value={
                               generateOTPURI()
@@ -1874,8 +2345,10 @@ const Login = () => {
                             size={128}
                           />
 
+
                           <Typography
                             sx={{
+
                               fontSize:
                                 '10px',
 
@@ -1887,23 +2360,31 @@ const Login = () => {
 
                               wordBreak:
                                 'break-all'
+
                             }}
                           >
+
                             Secret Key:
                             <br />
 
                             {secretkey}
+
                           </Typography>
+
                         </>
+
                       )
+
                     )}
 
                   </Box>
+
                 )}
 
-                {/* ==========================================
+
+                {/* ============================================
                     OTP
-                ========================================== */}
+                ============================================ */}
 
                 <TextField
                   fullWidth
@@ -1919,7 +2400,9 @@ const Login = () => {
                   helperText={
                     errorMessage
                   }
-                  onChange={(event) => {
+                  onChange={(
+                    event
+                  ) => {
 
                     const value =
                       event.target.value
@@ -1932,40 +2415,46 @@ const Login = () => {
                           6
                         );
 
+
                     setOTP(
                       value
                     );
+
                   }}
                   inputProps={{
+
                     maxLength:
                       6,
 
                     inputMode:
                       'numeric'
+
                   }}
                 />
 
-                {/* ==========================================
-                    VERIFY OTP
-                ========================================== */}
+
+                {/* ============================================
+                    VERIFY BUTTON
+                ============================================ */}
 
                 <Button
                   fullWidth
                   disabled={
                     !otp ||
-                    otp.length <
-                      6 ||
+                    otp.length !== 6 ||
                     otpLoading
                   }
                   onClick={
                     verifyOTP
                   }
                   sx={{
+
                     mt:
                       3,
 
                     mb:
                       2
+
                   }}
                   variant="contained"
                 >
@@ -1981,14 +2470,17 @@ const Login = () => {
                     />
 
                   ) : (
+
                     'Verify OTP'
+
                   )}
 
                 </Button>
 
-                {/* ==========================================
-                    BACK
-                ========================================== */}
+
+                {/* ============================================
+                    BACK BUTTON
+                ============================================ */}
 
                 <Button
                   onClick={
@@ -2004,6 +2496,7 @@ const Login = () => {
 
             ) : (
 
+
               /* =================================================
                  LOGIN SCREEN
               ================================================= */
@@ -2016,6 +2509,7 @@ const Login = () => {
 
                 <Typography
                   sx={{
+
                     fontFamily:
                       '"Open Sans","Helvetica","Arial",sans-serif',
 
@@ -2027,12 +2521,16 @@ const Login = () => {
 
                     mb:
                       1
+
                   }}
                 >
                   Login
                 </Typography>
 
-                {/* USERNAME */}
+
+                {/* ============================================
+                    USERNAME
+                ============================================ */}
 
                 <TextField
                   margin="normal"
@@ -2042,15 +2540,19 @@ const Login = () => {
                     account
                   }
                   autoComplete="username"
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     setAccount(
                       event.target.value
-                        .trim()
                     )
                   }
                 />
 
-                {/* PASSWORD */}
+
+                {/* ============================================
+                    PASSWORD
+                ============================================ */}
 
                 <TextField
                   autoComplete="current-password"
@@ -2065,12 +2567,15 @@ const Login = () => {
                   value={
                     password
                   }
-                  onChange={(event) =>
+                  onChange={(
+                    event
+                  ) =>
                     setPassword(
                       event.target.value
                     )
                   }
                   InputProps={{
+
                     endAdornment: (
 
                       <InputAdornment
@@ -2085,48 +2590,65 @@ const Login = () => {
                         >
 
                           {showPassword ? (
+
                             <Visibility />
+
                           ) : (
+
                             <VisibilityOff />
+
                           )}
 
                         </IconButton>
 
                       </InputAdornment>
+
                     )
+
                   }}
                 />
 
-                {/* ERROR */}
+
+                {/* ============================================
+                    ERROR
+                ============================================ */}
 
                 {errorMessage && (
 
                   <Typography
                     color="error"
                     sx={{
+
                       mt:
                         1,
 
                       fontSize:
                         '14px'
+
                     }}
                   >
                     {errorMessage}
                   </Typography>
+
                 )}
 
-                {/* LOGIN BUTTON */}
+
+                {/* ============================================
+                    LOGIN BUTTON
+                ============================================ */}
 
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
                   sx={{
+
                     mt:
                       3,
 
                     mb:
                       2
+
                   }}
                   disabled={
                     isLoading
@@ -2144,12 +2666,15 @@ const Login = () => {
                     />
 
                   ) : (
+
                     'LOGIN'
+
                   )}
 
                 </Button>
 
               </form>
+
             )}
 
           </Box>
@@ -2158,9 +2683,10 @@ const Login = () => {
 
       </Grid>
 
-      {/* =================================================
+
+      {/* =====================================================
           FOOTER
-      ================================================= */}
+      ===================================================== */}
 
       <Grid
         item
@@ -2187,11 +2713,13 @@ const Login = () => {
 
           backgroundColor:
             'rgba(255,255,255,0.75)'
+
         }}
       >
 
         <Box
           sx={{
+
             textAlign:
               'center',
 
@@ -2200,6 +2728,7 @@ const Login = () => {
 
             color:
               '#000'
+
           }}
         >
 
@@ -2220,7 +2749,10 @@ const Login = () => {
       </Grid>
 
     </Grid>
+
   );
+
 };
+
 
 export default Login;
