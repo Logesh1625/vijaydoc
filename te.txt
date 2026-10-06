@@ -1,162 +1,2226 @@
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import CryptoJS from 'crypto-js';
+import { useNavigate } from 'react-router-dom';
 
+import {
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Grid,
+  IconButton,
+  InputAdornment,
+  CircularProgress
+} from '@mui/material';
 
+import { createTheme } from '@mui/material/styles';
+import {
+  Visibility,
+  VisibilityOff
+} from '@mui/icons-material';
 
-export const iwxKey = 'azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=';//facd81g656fcd8p7a7lkh6dfa81gf4ik
-// 将加密的密钥解密--字符串中间排列
-// export function getdk(key) {
-//     const str = window.atob(key);
-//     const middle = Math.floor(str.length / 2);
-//     let left = middle - 1;
-//     let right = str.length % 2 === 0 ? middle : middle + 1;
-//     let result = '';
-//     while (left >= 0 && right < str.length) {
-//       result += str[right];
-//       result += str[left];
-//       left--;
-//       right++;
-//     }
-//     return result + str.slice(right) + str.slice(0, left + 1);
-// }
+import { makeStyles } from '@material-ui/core/styles';
+import { QRCodeCanvas } from 'qrcode.react';
 
-export function getdk(_0x172371){const _0x185768=window["\u0061\u0074\u006f\u0062"](_0x172371);const _0x281670=Math["\u0066\u006c\u006f\u006f\u0072"](_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]/(0x89f37^0x89f35));let _0x129f13=_0x281670-(0x5f1d1^0x5f1d0);let _0x3f4c6e=_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]%(0xe670e^0xe670c)===(0x74e40^0x74e40)?_0x281670:_0x281670+(0x8a0f3^0x8a0f2);let _0x287f0c="".split("").reverse().join("");while(_0x129f13>=(0xaa513^0xaa513)&&_0x3f4c6e<_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]){_0x287f0c+=_0x185768[_0x3f4c6e];_0x287f0c+=_0x185768[_0x129f13];_0x129f13--;_0x3f4c6e++;}return _0x287f0c+_0x185768["\u0073\u006c\u0069\u0063\u0065"](_0x3f4c6e)+_0x185768["\u0073\u006c\u0069\u0063\u0065"](0x787e0^0x787e0,_0x129f13+(0x88552^0x88553));}
+import {
+  dealPostParamsEncrypt,
+  iwxKey,
+  getdk,
+  encrypt,
+  decrypt,
+  iwxPost
+} from '../EncryptDecrypt/Encryptfile';
 
+import {
+  fetchempbasicinfo,
+  getlogincredentials
+} from '../Apiconfig/apiforloginandempdetails';
 
-export const dealPostParamsEncrypt = (data = {}) => {
-  const res = {};
-  const o = encrypt(JSON.stringify({ Os: '', DeviceId: 'Utility', AppVer: '0' }), getdk(iwxKey));
-  let s = '';
-  s = encrypt(JSON.stringify(data), getdk(iwxKey));
-  res.s = s;
-  res.o = o;
-  return res;
-};
+import loginimage from './login-artwork.jpg';
 
-export const encrypt = (str, key) => {
-  const k = CryptoJS.enc.Utf8.parse(key);
-  return CryptoJS.AES.encrypt(str, k, {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  }).toString();
-};
+// ======================================================
+// CONFIGURATION
+// ======================================================
 
-export const decrypt = (str, key) => {
-  try {
-    const k = CryptoJS.enc.Utf8.parse(key);
-    const decrypted = CryptoJS.AES.decrypt(str, k, {
-      iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-      mode: CryptoJS.mode.CBC,
-      padding: CryptoJS.pad.Pkcs7,
-    }).toString(CryptoJS.enc.Utf8);
-    return decrypted;
-  } catch (error) {
-    console.error('Decryption error:', error);
-    return null;
-  }
-};
+// Keep your existing USER_KEY value here
+const USER_KEY = 'YOUR_EXISTING_USER_KEY';
 
-export const md5 = (str) => {
-  return CryptoJS.MD5(str)
-    .toString()
-    .toUpperCase();
-};
+// Keep your existing authenticator user keys here
+const SECRET_GEN_USER_KEY = 'YOUR_SECRET_GENERATION_USER_KEY';
+const OTP_VERIFY_USER_KEY = 'YOUR_OTP_VERIFY_USER_KEY';
 
-export const dealPostParams = (data = {}) => {
-  let params = "";
-  let res = null;
+// ------------------------------------------------------
+// API IDs
+// ------------------------------------------------------
 
-  for (const key in data) {
-    // Replacing "=" and "&" with encoded values
-    data[key] = data[key].replace("=", "%3D").replace("&", "%26");
-    // Appending key-value pair to params string
-    params += `${key}=${data[key]}&`;
-  }
+const USER_DETAILS_API_ID =
+  'ffff-1743480426986-1020912129-2253';
 
-  // Removing the last "&"
-  params = params.substring(0, params.length - 1);
+const LOGIN_LOG_INSERT_API_ID =
+  'ffff-1743483394185-1020912129-2312';
 
-  // Returning the resulting params as an object
-  res = {
-    inputString: params,
+const ROLE_API_ID =
+  'ffff-1743482300704-1020912129-2290';
+
+const UPDATE_SECRET_API_ID =
+  'ffff-1743483629535-1020912129-2321';
+
+const UPDATE_LOGIN_LOG_API_ID =
+  'ffff-1743483467265-1020912129-2315';
+
+const SECRET_GENERATION_API_ID =
+  'ffff-1694231787059-10208193125-0099';
+
+const OTP_VERIFICATION_API_ID =
+  'ffff-1694232123378-10208193125-0103';
+
+// ======================================================
+// GATEWAYS
+// ======================================================
+
+const MICRO_GATEWAY =
+  'https://microservice.abgind.foxconn.com/india/gateway';
+
+const LOCAL_BACKEND =
+  'http://10.209.110.208:5665';
+
+// ======================================================
+// DEVELOPMENT / PRODUCTION
+// ======================================================
+
+const IS_PROD =
+  process.env.NODE_ENV === 'production';
+
+// DMS APIs are handled by iwxPost() from Encryptfile.js.
+
+// Authenticator APIs
+const SECRET_GEN_URL = IS_PROD
+  ? MICRO_GATEWAY
+  : `${LOCAL_BACKEND}/G_Authenticator/Key/Generation`;
+
+const OTP_VERIFY_URL = IS_PROD
+  ? MICRO_GATEWAY
+  : `${LOCAL_BACKEND}/G_Authenticator/OTP/User_Verifivation`;
+
+// ======================================================
+// THEME
+// ======================================================
+
+const theme = createTheme();
+
+// ======================================================
+// STYLES
+// ======================================================
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    width: '100%',
+    backgroundSize: 'cover',
+  },
+
+  formm: {
+    width: '100%',
+    maxWidth: '400px',
+    padding: theme.spacing(3),
+    backgroundColor: '#fff',
+    borderRadius: theme.spacing(1),
+    boxShadow: '0px 4px 20px rgba(0,0,0,0.25)',
+    fontSize: 16,
+    fontWeight: 900,
+    textAlign: 'center',
+  },
+
+  textField: {
+    marginBottom: theme.spacing(2),
+  },
+
+  button: {
+    marginBottom: theme.spacing(1),
+  },
+}));
+
+// ======================================================
+// LOGIN COMPONENT
+// ======================================================
+
+const Login = () => {
+
+  const navigate = useNavigate();
+  const classes = useStyles(theme);
+
+  // ====================================================
+  // STATES
+  // ====================================================
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [loginStatus, setLoginStatus] = useState('');
+
+  const [account, setAccount] = useState('');
+
+  const [password, setPassword] = useState('');
+
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [secretkey, setSecretKey] = useState('');
+
+  const [otp, setOTP] = useState('');
+
+  const [showQRCode, setShowQRCode] = useState(false);
+
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  const [secretLoading, setSecretLoading] = useState(false);
+
+  // ====================================================
+  // ENCRYPTED VALUES
+  // ====================================================
+
+  const originalBoolean = true;
+
+  const encryptedBoolean = encrypt(
+    originalBoolean.toString(),
+    getdk(iwxKey)
+  );
+
+  const originalNumberBoolean = 0;
+
+  const encryptedBooleanNum = encrypt(
+    originalNumberBoolean.toString(),
+    getdk(iwxKey)
+  );
+
+  // ====================================================
+  // SESSION VALUES
+  // ====================================================
+
+  const issuccessfullylogin =
+    sessionStorage.getItem(
+      'issuccessfullylogin'
+    );
+
+  const isscuessqr =
+    sessionStorage.getItem(
+      'qrstatus'
+    );
+
+  // ====================================================
+  // PASSWORD TOGGLE
+  // ====================================================
+
+  const handleTogglePassword = () => {
+    setShowPassword(
+      (previous) => !previous
+    );
   };
 
-  return res;
-};
+  // ====================================================
+  // ENTER KEY
+  // ====================================================
 
+  const handleKeyPress = (event) => {
 
-export const getuserAccount = () => {
-  const data = sessionStorage.getItem('data');
-  const decryptedResponse = decrypt(data, getdk(iwxKey));
-  const decryptedResponseObj = JSON.parse(decryptedResponse);
-  const UserName = decryptedResponseObj?.List[0]?.UserName;
-  const account = decryptedResponseObj?.List[0]?.AccountId;
-  return account;
-};
+    if (event.key === 'Enter') {
 
+      event.preventDefault();
 
-// ======================================================
-// Gateway switch: change only the GATEWAY_URL line.
-//   GATEWAYS.micro : the gateway that worked before
-//   GATEWAYS.local : http://10.208.193.125:8086 (needs every apiID
-//                    registered there with your userKey)
-// ======================================================
-// ======================================================
-// Gateway selection (automatic, no .env needed)
-//   npm start      -> development -> http://10.208.193.125:8086  (test)
-//   npm run build  -> production  -> microservice gateway        (live)
-// ======================================================
-const GATEWAYS = {
-  micro: "https://microservice.abgind.foxconn.com/india/gateway",
-  local: "http://10.208.193.125:8086/gateway/manager",
-};
-
-const GATEWAY_URL =
-  process.env.NODE_ENV === 'production' ? GATEWAYS.micro : GATEWAYS.local;
-
-
-
-export const iwxPost = async (params = {}, config = {}, isEncrypt) => {
-  const param = isEncrypt ? dealPostParamsEncrypt(params) : dealPostParams(params);
-
-  try {
-    const result = await axios.post(GATEWAY_URL, param, {
-      headers: {
-        ...config.headers, // apiID and userKey sent by the caller
-      },
-    });
-
-    // Encrypted responses come back as { r: "..." }
-    const res = isEncrypt
-      ? JSON.parse(decrypt(result.data.r, getdk(iwxKey)))
-      : result.data;
-
-    return res;
-  } catch (error) {
-    console.error("Request failed:", error);
-  }
-};
-
-
-export const decryptForWeb = (str) => {
-  const cfg = {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7
+      handleLogin(event);
+    }
   };
-  const key = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
-  const decrypted = CryptoJS.AES.decrypt(str, key, cfg);
-  return CryptoJS.enc.Utf8.stringify(decrypted);
+
+  // ====================================================
+  // FETCH USER DETAILS
+  // ====================================================
+
+  const fetchdata = async () => {
+
+    try {
+
+      const headers = {
+        apiID: USER_DETAILS_API_ID,
+        userKey: USER_KEY
+      };
+
+      const params = {
+
+        EmpId: account,
+
+        EmpName: '',
+
+        Status: '',
+
+        StartPage: 1,
+
+        PageSize: 999999,
+
+        Func:
+          'UserManagement-Get_user_details_new'
+      };
+
+      console.log(
+        'USER DETAILS REQUEST:',
+        params
+      );
+
+      const response =
+        await iwxPost(
+          params,
+          { headers },
+          true
+        );
+
+      console.log(
+        'USER DETAILS RESPONSE:',
+        response
+      );
+
+      if (
+        !response ||
+        !response.List ||
+        response.List.length === 0
+      ) {
+
+        console.error(
+          'No user details returned'
+        );
+
+        return null;
+      }
+
+      const qrStatusValue =
+        response.List[0]?.QrStatus;
+
+      if (
+        qrStatusValue !== undefined &&
+        qrStatusValue !== null
+      ) {
+
+        const encryptedQRStatus =
+          encrypt(
+            String(qrStatusValue),
+            getdk(iwxKey)
+          );
+
+        sessionStorage.setItem(
+          'qrstatus',
+          encryptedQRStatus
+        );
+      }
+
+      return response;
+
+    } catch (error) {
+
+      console.error(
+        'fetchdata ERROR:',
+        error
+      );
+
+      return null;
+    }
+  };
+
+  // ====================================================
+  // FETCH EMPLOYEE NAME
+  // ====================================================
+
+  const fetchempName = async () => {
+
+    try {
+
+      const response =
+        await fetchempbasicinfo(
+          account
+        );
+
+      console.log(
+        'EMPLOYEE BASIC INFO:',
+        response
+      );
+
+      return response;
+
+    } catch (error) {
+
+      console.error(
+        'fetchempName ERROR:',
+        error
+      );
+
+      return null;
+    }
+  };
+
+  // ====================================================
+  // FETCH ROLE
+  // ====================================================
+
+  const fetchRoleData = async () => {
+
+    try {
+
+      const headers = {
+
+        apiID:
+          ROLE_API_ID,
+
+        userKey:
+          USER_KEY
+      };
+
+      const params = {
+
+        EmpId:
+          account,
+
+        Func:
+          'UserManagement-Get_role_based_empid_new'
+      };
+
+      const response =
+        await iwxPost(
+          params,
+          { headers },
+          true
+        );
+
+      console.log(
+        'ROLE RESPONSE:',
+        response
+      );
+
+      return response;
+
+    } catch (error) {
+
+      console.error(
+        'fetchRoleData ERROR:',
+        error
+      );
+
+      return null;
+    }
+  };
+
+  // ====================================================
+  // STORE LOGIN LOG
+  // ====================================================
+
+  const StoreLoginLog = async (
+    msg,
+    empname,
+    roles
+  ) => {
+
+    try {
+
+      const headers = {
+
+        apiID:
+          LOGIN_LOG_INSERT_API_ID,
+
+        userKey:
+          USER_KEY
+      };
+
+      const params = {
+
+        EmpId:
+          account,
+
+        SystemIp:
+          '',
+
+        LoginStatus:
+          msg,
+
+        EmpName:
+          empname &&
+          empname[0]
+            ? empname[0].EmployeeName
+            : '',
+
+        UserRole:
+          roles &&
+          roles.List &&
+          roles.List[0]
+            ? roles.List[0].RoleName
+            : '',
+
+        Func:
+          'UserManagement-Insert_login_log_new'
+      };
+
+      console.log(
+        'LOGIN LOG REQUEST:',
+        params
+      );
+
+      const response =
+        await iwxPost(
+          params,
+          { headers },
+          true
+        );
+
+      console.log(
+        'LOGIN LOG RESPONSE:',
+        response
+      );
+
+      if (
+        !response ||
+        !response.List
+      ) {
+
+        console.error(
+          'Login log response missing'
+        );
+
+        return undefined;
+      }
+
+      return response.List[0]?.Id;
+
+    } catch (error) {
+
+      console.error(
+        'StoreLoginLog ERROR:',
+        error
+      );
+
+      return undefined;
+    }
+  };
+
+  // ====================================================
+  // UPDATE QR SECRET
+  // ====================================================
+
+  const updateQRStatus = async () => {
+
+    try {
+
+      const encryptedAccount =
+        sessionStorage.getItem(
+          'account'
+        );
+
+      if (!encryptedAccount) {
+        return;
+      }
+
+      const decryptedAccount =
+        decrypt(
+          encryptedAccount,
+          getdk(iwxKey)
+        );
+
+      if (!decryptedAccount) {
+        return;
+      }
+
+      const empnumber =
+        decryptedAccount.replace(
+          /"/g,
+          ''
+        );
+
+      const headers = {
+
+        apiID:
+          UPDATE_SECRET_API_ID,
+
+        userKey:
+          USER_KEY
+      };
+
+      const params = {
+
+        EmpId:
+          empnumber,
+
+        SecretKey:
+          secretkey,
+
+        Func:
+          'UserManagement-Update_secret_key_new'
+      };
+
+      // QR status = 0 means first-time setup
+      if (
+        isscuessqr ===
+        encryptedBooleanNum
+      ) {
+
+        console.log(
+          'Updating secret key...'
+        );
+
+        await iwxPost(
+          params,
+          { headers },
+          true
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        'updateQRStatus ERROR:',
+        error
+      );
+    }
+  };
+
+  // ====================================================
+  // GENERATE SECRET
+  // ====================================================
+
+  const handleGenerateSecret = async () => {
+
+    if (secretLoading) {
+      return;
+    }
+
+    try {
+
+      setSecretLoading(true);
+
+      const headers = {
+
+        apiID:
+          SECRET_GENERATION_API_ID,
+
+        userKey:
+          SECRET_GEN_USER_KEY
+      };
+
+      console.log(
+        '===================================='
+      );
+
+      console.log(
+        'SECRET GENERATION'
+      );
+
+      console.log(
+        'URL:',
+        SECRET_GEN_URL
+      );
+
+      console.log(
+        'API ID:',
+        SECRET_GENERATION_API_ID
+      );
+
+      const response =
+        await axios.post(
+          SECRET_GEN_URL,
+          {},
+          {
+            headers,
+            timeout: 30000
+          }
+        );
+
+      console.log(
+        'SECRET RAW RESPONSE:',
+        response.data
+      );
+
+      if (
+        !response.data
+      ) {
+
+        setErrorMessage(
+          'Unable to generate authentication secret.'
+        );
+
+        return;
+      }
+
+      let result = null;
+
+      // ----------------------------------------------
+      // Encrypted response
+      // ----------------------------------------------
+
+      if (
+        response.data.r
+      ) {
+
+        const decrypted =
+          decrypt(
+            response.data.r,
+            getdk(iwxKey)
+          );
+
+        console.log(
+          'SECRET DECRYPTED:',
+          decrypted
+        );
+
+        if (!decrypted) {
+
+          setErrorMessage(
+            'Unable to decrypt authentication response.'
+          );
+
+          return;
+        }
+
+        result =
+          JSON.parse(
+            decrypted
+          );
+      }
+
+      // ----------------------------------------------
+      // Direct JSON response
+      // ----------------------------------------------
+
+      else if (
+        typeof response.data ===
+        'object'
+      ) {
+
+        result =
+          response.data;
+      }
+
+      console.log(
+        'SECRET RESULT:',
+        result
+      );
+
+      if (
+        result &&
+        result.secret
+      ) {
+
+        setSecretKey(
+          result.secret
+        );
+
+        setShowQRCode(
+          true
+        );
+
+      } else {
+
+        console.error(
+          'Secret not found:',
+          result
+        );
+
+        setErrorMessage(
+          'Unable to generate authentication secret.'
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        'SECRET GENERATION ERROR:',
+        error
+      );
+
+      if (error.response) {
+
+        console.error(
+          'STATUS:',
+          error.response.status
+        );
+
+        console.error(
+          'DATA:',
+          error.response.data
+        );
+      }
+
+      setErrorMessage(
+        'Authentication server error.'
+      );
+
+    } finally {
+
+      setSecretLoading(false);
+    }
+  };
+
+  // ====================================================
+  // GENERATE OTP URI
+  // ====================================================
+
+  const generateOTPURI = () => {
+
+    const encryptedAccount =
+      sessionStorage.getItem(
+        'account'
+      );
+
+    if (!encryptedAccount) {
+      return '';
+    }
+
+    const decryptedAccount =
+      decrypt(
+        encryptedAccount,
+        getdk(iwxKey)
+      );
+
+    if (!decryptedAccount) {
+      return '';
+    }
+
+    const empnumber =
+      decryptedAccount.replace(
+        /"/g,
+        ''
+      );
+
+    return (
+      `otpauth://totp/DMS:${encodeURIComponent(
+        empnumber
+      )}?secret=${secretkey}`
+    );
+  };
+
+  // ====================================================
+  // STORE OTP LOGIN LOG
+  // ====================================================
+
+  const StoreOTPtologinlog = async (
+    msg
+  ) => {
+
+    try {
+
+      const encryptedLoginLogID =
+        sessionStorage.getItem(
+          'loginlogID'
+        );
+
+      if (!encryptedLoginLogID) {
+        return;
+      }
+
+      const decryptedLoginLogID =
+        decrypt(
+          encryptedLoginLogID,
+          getdk(iwxKey)
+        );
+
+      if (!decryptedLoginLogID) {
+        return;
+      }
+
+      const headers = {
+
+        apiID:
+          UPDATE_LOGIN_LOG_API_ID,
+
+        userKey:
+          USER_KEY
+      };
+
+      const params = {
+
+        Update:
+          'OTP',
+
+        Id:
+          decryptedLoginLogID,
+
+        Otp:
+          otp,
+
+        OtpStatus:
+          msg,
+
+        Func:
+          'UserManagement-Update_login_log_new'
+      };
+
+      console.log(
+        'OTP LOGIN LOG:',
+        params
+      );
+
+      await iwxPost(
+        params,
+        { headers },
+        true
+      );
+
+    } catch (error) {
+
+      console.error(
+        'StoreOTPtologinlog ERROR:',
+        error
+      );
+    }
+  };
+
+  // ====================================================
+  // VERIFY OTP
+  // ====================================================
+
+  const verifyOTP = async () => {
+
+    if (!otp) {
+
+      setErrorMessage(
+        'Please enter OTP.'
+      );
+
+      return;
+    }
+
+    setOtpLoading(true);
+
+    try {
+
+      const encryptedAccount =
+        sessionStorage.getItem(
+          'account'
+        );
+
+      if (!encryptedAccount) {
+
+        setErrorMessage(
+          'Account information not found.'
+        );
+
+        return;
+      }
+
+      const decryptedAccount =
+        decrypt(
+          encryptedAccount,
+          getdk(iwxKey)
+        );
+
+      if (!decryptedAccount) {
+
+        setErrorMessage(
+          'Invalid account information.'
+        );
+
+        return;
+      }
+
+      const empnumber =
+        decryptedAccount.replace(
+          /"/g,
+          ''
+        );
+
+      const headers = {
+
+        apiID:
+          USER_DETAILS_API_ID,
+
+        userKey:
+          USER_KEY
+      };
+
+      const params = {
+
+        EmpId:
+          empnumber,
+
+        EmpName:
+          '',
+
+        Status:
+          '',
+
+        StartPage:
+          1,
+
+        PageSize:
+          999999,
+
+        Func:
+          'UserManagement-Get_user_details_new'
+      };
+
+      const response =
+        await iwxPost(
+          params,
+          { headers },
+          true
+        );
+
+      console.log(
+        'OTP USER DETAILS:',
+        response
+      );
+
+      if (
+        !response ||
+        !response.List ||
+        response.List.length === 0
+      ) {
+
+        setErrorMessage(
+          'Unable to get OTP information.'
+        );
+
+        return;
+      }
+
+      const storedSecret =
+        response.List[0]?.SecretKey;
+
+      if (!storedSecret && !secretkey) {
+
+        setErrorMessage(
+          'Authentication secret not found.'
+        );
+
+        return;
+      }
+
+      await verifyOTP22(
+        storedSecret
+      );
+
+    } catch (error) {
+
+      console.error(
+        'verifyOTP ERROR:',
+        error
+      );
+
+      setErrorMessage(
+        'Unable to verify OTP. Please try again.'
+      );
+
+    } finally {
+
+      setOtpLoading(false);
+    }
+  };
+
+  // ====================================================
+  // VERIFY OTP WITH AUTHENTICATOR
+  // ====================================================
+
+  const verifyOTP22 = async (
+    storedSecret
+  ) => {
+
+    try {
+
+      const headers = {
+
+        apiID:
+          OTP_VERIFICATION_API_ID,
+
+        userKey:
+          OTP_VERIFY_USER_KEY
+      };
+
+      // First-time QR setup uses newly generated secret.
+      // Existing users use secret stored in DB.
+      const secretToVerify =
+        isscuessqr === encryptedBooleanNum
+          ? secretkey
+          : storedSecret;
+
+      if (!secretToVerify) {
+
+        setErrorMessage(
+          'Secret key is missing.'
+        );
+
+        return;
+      }
+
+      const params =
+        dealPostParamsEncrypt({
+          secret:
+            secretToVerify,
+
+          otp:
+            otp
+        });
+
+      console.log(
+        'OTP VERIFY URL:',
+        OTP_VERIFY_URL
+      );
+
+      console.log(
+        'OTP VERIFY API:',
+        OTP_VERIFICATION_API_ID
+      );
+
+      const response =
+        await axios.post(
+          OTP_VERIFY_URL,
+          params,
+          {
+            headers,
+            timeout: 30000
+          }
+        );
+
+      console.log(
+        'OTP RAW RESPONSE:',
+        response.data
+      );
+
+      if (
+        !response.data ||
+        !response.data.r
+      ) {
+
+        console.error(
+          'OTP verification rejected:',
+          response.data
+        );
+
+        setErrorMessage(
+          'Unable to verify OTP. Please try again.'
+        );
+
+        return;
+      }
+
+      const decrypted =
+        decrypt(
+          response.data.r,
+          getdk(iwxKey)
+        );
+
+      console.log(
+        'OTP DECRYPTED:',
+        decrypted
+      );
+
+      if (!decrypted) {
+
+        setErrorMessage(
+          'Unable to decrypt OTP response.'
+        );
+
+        return;
+      }
+
+      const result =
+        JSON.parse(
+          decrypted
+        );
+
+      console.log(
+        'OTP RESULT:',
+        result
+      );
+
+      // ================================================
+      // OTP SUCCESS
+      // ================================================
+
+      if (
+        result.IsOK === 1 ||
+        result.IsOK === '1'
+      ) {
+
+        await updateQRStatus();
+
+        sessionStorage.setItem(
+          'isLoggedIn',
+          encryptedBoolean
+        );
+
+        const loginResponse =
+          sessionStorage.getItem(
+            'loginresponse'
+          );
+
+        if (loginResponse) {
+
+          sessionStorage.setItem(
+            'data',
+            loginResponse
+          );
+        }
+
+        await StoreOTPtologinlog(
+          result.Msg
+        );
+
+        // Clear OTP
+        setOTP('');
+
+        navigate(
+          '/home/Dashboard',
+          {
+            state: {
+              account:
+                account
+            }
+          }
+        );
+
+      } else {
+
+        setErrorMessage(
+          result.Msg ||
+          'Incorrect OTP'
+        );
+
+        await StoreOTPtologinlog(
+          result.Msg ||
+          'Incorrect OTP'
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        'OTP VERIFY ERROR:',
+        error
+      );
+
+      if (error.response) {
+
+        console.error(
+          'OTP STATUS:',
+          error.response.status
+        );
+
+        console.error(
+          'OTP RESPONSE:',
+          error.response.data
+        );
+      }
+
+      setErrorMessage(
+        'OTP verification failed.'
+      );
+    }
+  };
+
+  // ====================================================
+  // LOGIN
+  // ====================================================
+
+  const handleLogin = async (
+    event
+  ) => {
+
+    event.preventDefault();
+
+    if (isLoading) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+
+      // ----------------------------------------------
+      // Validate fields
+      // ----------------------------------------------
+
+      if (
+        !account ||
+        !password
+      ) {
+
+        setErrorMessage(
+          'Fill in all fields.'
+        );
+
+        return;
+      }
+
+      setErrorMessage('');
+
+      // ----------------------------------------------
+      // Get user details
+      // ----------------------------------------------
+
+      const userResponse =
+        await fetchdata();
+
+      if (
+        !userResponse ||
+        !userResponse.List
+      ) {
+
+        setErrorMessage(
+          'Error checking account availability.'
+        );
+
+        return;
+      }
+
+      const userList =
+        userResponse.List;
+
+      const findempdata =
+        userList.filter(
+          (user) =>
+            String(user.EmpId)
+              .trim()
+              .toUpperCase() ===
+            String(account)
+              .trim()
+              .toUpperCase()
+        );
+
+      // ----------------------------------------------
+      // Employee not found
+      // ----------------------------------------------
+
+      if (
+        userList.length === 0 ||
+        findempdata.length === 0
+      ) {
+
+        const empName =
+          await fetchempName();
+
+        const roles =
+          await fetchRoleData();
+
+        const msg =
+          "You don't have access to this system";
+
+        setErrorMessage(
+          msg
+        );
+
+        await StoreLoginLog(
+          msg,
+          empName,
+          roles
+        );
+
+        return;
+      }
+
+      // ----------------------------------------------
+      // Employee deleted
+      // ----------------------------------------------
+
+      if (
+        findempdata[0]?.DelFlag === '1'
+      ) {
+
+        const empName =
+          await fetchempName();
+
+        const roles =
+          await fetchRoleData();
+
+        const msg =
+          "You don't have access to this system";
+
+        setErrorMessage(
+          msg
+        );
+
+        await StoreLoginLog(
+          msg,
+          empName,
+          roles
+        );
+
+        return;
+      }
+
+      // ----------------------------------------------
+      // Save account encrypted
+      // ----------------------------------------------
+
+      const encryptedAccount =
+        dealPostParamsEncrypt(
+          account
+        );
+
+      sessionStorage.setItem(
+        'account',
+        encryptedAccount.s
+      );
+
+      // ----------------------------------------------
+      // Get employee information
+      // ----------------------------------------------
+
+      const empName =
+        await fetchempName();
+
+      const roles =
+        await fetchRoleData();
+
+      console.log(
+        'EMPLOYEE:',
+        empName
+      );
+
+      console.log(
+        'ROLES:',
+        roles
+      );
+
+      // ----------------------------------------------
+      // LOGIN API
+      // ----------------------------------------------
+
+      const encryptedParams =
+        dealPostParamsEncrypt({
+
+          Func:
+            'APPFrame-AccountLoginPhoneSpv3-IWX',
+
+          Account:
+            account,
+
+          Password:
+            password,
+
+          OsType:
+            '1',
+
+          DeviceId:
+            '1',
+
+          OsVer:
+            '1',
+
+          AppVer:
+            '1',
+
+          DeviceType:
+            '1',
+
+          AppVersion:
+            '1'
+        });
+
+      console.log(
+        'LOGIN API REQUEST START'
+      );
+
+      const loginResponse =
+        await getlogincredentials(
+          encryptedParams
+        );
+
+      console.log(
+        'LOGIN RAW RESPONSE:',
+        loginResponse
+      );
+
+      if (
+        !loginResponse ||
+        !loginResponse.r
+      ) {
+
+        const msg =
+          'Login service did not return a valid response.';
+
+        setErrorMessage(
+          msg
+        );
+
+        await StoreLoginLog(
+          msg,
+          empName,
+          roles
+        );
+
+        return;
+      }
+
+      // ----------------------------------------------
+      // Decrypt login response
+      // ----------------------------------------------
+
+      const decryptedLogin =
+        decrypt(
+          loginResponse.r,
+          getdk(iwxKey)
+        );
+
+      console.log(
+        'LOGIN DECRYPTED:',
+        decryptedLogin
+      );
+
+      if (!decryptedLogin) {
+
+        setErrorMessage(
+          'Unable to decrypt login response.'
+        );
+
+        return;
+      }
+
+      const loginResult =
+        JSON.parse(
+          decryptedLogin
+        );
+
+      console.log(
+        'LOGIN RESULT:',
+        loginResult
+      );
+
+      // ----------------------------------------------
+      // LOGIN SUCCESS
+      // ----------------------------------------------
+
+      if (
+        loginResult.IsOK === '1' ||
+        loginResult.IsOK === 1
+      ) {
+
+        const loginLogID =
+          await StoreLoginLog(
+            loginResult.Msg,
+            empName,
+            roles
+          );
+
+        if (
+          loginLogID ===
+            undefined ||
+          loginLogID === null
+        ) {
+
+          setErrorMessage(
+            'Unable to record the login. Please try again.'
+          );
+
+          setLoginStatus(
+            'error'
+          );
+
+          return;
+        }
+
+        // --------------------------------------------
+        // Store login information
+        // --------------------------------------------
+
+        const encryptedLoginLogID =
+          encrypt(
+            loginLogID.toString(),
+            getdk(iwxKey)
+          );
+
+        sessionStorage.setItem(
+          'loginlogID',
+          encryptedLoginLogID
+        );
+
+        sessionStorage.setItem(
+          'loginresponse',
+          loginResponse.r
+        );
+
+        sessionStorage.setItem(
+          'issuccessfullylogin',
+          encryptedBoolean
+        );
+
+        setLoginStatus(
+          'success'
+        );
+
+        setErrorMessage('');
+
+      } else {
+
+        // --------------------------------------------
+        // LOGIN FAILED
+        // --------------------------------------------
+
+        await StoreLoginLog(
+          loginResult.Msg,
+          empName,
+          roles
+        );
+
+        setErrorMessage(
+          loginResult.Msg ||
+          'Invalid username or password.'
+        );
+
+        setLoginStatus(
+          'error'
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        'LOGIN ERROR:',
+        error
+      );
+
+      if (error.response) {
+
+        console.error(
+          'STATUS:',
+          error.response.status
+        );
+
+        console.error(
+          'SERVER RESPONSE:',
+          error.response.data
+        );
+      }
+
+      setErrorMessage(
+        'Error checking account availability.'
+      );
+
+    } finally {
+
+      setIsLoading(false);
+    }
+  };
+
+  // ====================================================
+  // BACK TO LOGIN
+  // ====================================================
+
+  const handlebacklogin = () => {
+
+    sessionStorage.removeItem(
+      'issuccessfullylogin'
+    );
+
+    sessionStorage.removeItem(
+      'qrstatus'
+    );
+
+    sessionStorage.removeItem(
+      'loginresponse'
+    );
+
+    sessionStorage.removeItem(
+      'loginlogID'
+    );
+
+    sessionStorage.removeItem(
+      'account'
+    );
+
+    setAccount('');
+
+    setPassword('');
+
+    setOTP('');
+
+    setSecretKey('');
+
+    setShowQRCode(false);
+
+    setLoginStatus('');
+
+    setErrorMessage('');
+
+    navigate('/login');
+  };
+
+  // ====================================================
+  // CLEAR ERROR WHEN INPUT CHANGES
+  // ====================================================
+
+  useEffect(() => {
+
+    setErrorMessage('');
+
+  }, [
+    account,
+    password,
+    otp
+  ]);
+
+  // ====================================================
+  // GENERATE SECRET AFTER LOGIN
+  // ====================================================
+
+  useEffect(() => {
+
+    const currentLogin =
+      sessionStorage.getItem(
+        'issuccessfullylogin'
+      );
+
+    if (
+      currentLogin === null
+    ) {
+
+      return;
+    }
+
+    if (
+      currentLogin ===
+      encryptedBoolean
+    ) {
+
+      // Existing QR user:
+      // no need to generate new QR secret.
+      if (
+        isscuessqr ===
+        encryptedBooleanNum
+      ) {
+
+        handleGenerateSecret();
+      }
+    }
+
+  }, [
+    loginStatus
+  ]);
+
+  // ====================================================
+  // UI
+  // ====================================================
+
+  return (
+
+    <Grid
+      container
+      component="main"
+      sx={{
+
+        minHeight: '100vh',
+
+        backgroundImage:
+          `url(${loginimage})`,
+
+        backgroundRepeat:
+          'no-repeat',
+
+        backgroundSize:
+          'cover',
+
+        backgroundPosition:
+          'center',
+
+        position:
+          'relative',
+
+        '&::before': {
+
+          content:
+            '""',
+
+          position:
+            'absolute',
+
+          inset:
+            0,
+
+          backgroundColor:
+            'rgba(255,255,255,0.15)',
+
+          zIndex:
+            0
+        }
+      }}
+    >
+
+      {/* =================================================
+          LOGIN AREA
+      ================================================= */}
+
+      <Grid
+        item
+        xs={12}
+        sx={{
+
+          display:
+            'flex',
+
+          alignItems:
+            'center',
+
+          justifyContent:
+            'center',
+
+          minHeight:
+            'calc(100vh - 80px)',
+
+          position:
+            'relative',
+
+          zIndex:
+            1
+        }}
+      >
+
+        <Box
+          className={
+            classes.root
+          }
+
+          onKeyDown={
+            handleKeyPress
+          }
+        >
+
+          <Box
+            className={
+              classes.formm
+            }
+          >
+
+            {/* LOGO */}
+
+            <img
+              src="/images/logo1.png"
+              alt="DMS"
+              style={{
+                maxWidth:
+                  '180px',
+
+                maxHeight:
+                  '70px',
+
+                objectFit:
+                  'contain',
+
+                marginBottom:
+                  '15px'
+              }}
+            />
+
+            {/* =================================================
+                MFA SCREEN
+            ================================================= */}
+
+            {issuccessfullylogin ===
+            encryptedBoolean ? (
+
+              <Box>
+
+                <Typography
+                  sx={{
+                    fontFamily:
+                      '"Open Sans","Helvetica","Arial",sans-serif',
+
+                    fontWeight:
+                      600,
+
+                    fontSize:
+                      '1rem',
+
+                    mb:
+                      2
+                  }}
+                >
+                  MFA Auth
+                </Typography>
+
+                {/* ==========================================
+                    QR CODE
+                ========================================== */}
+
+                {isscuessqr ===
+                  encryptedBooleanNum && (
+
+                  <Box
+                    sx={{
+                      display:
+                        'flex',
+
+                      flexDirection:
+                        'column',
+
+                      alignItems:
+                        'center',
+
+                      mb:
+                        2
+                    }}
+                  >
+
+                    {secretLoading ? (
+
+                      <CircularProgress
+                        size={30}
+                      />
+
+                    ) : (
+
+                      showQRCode &&
+                      secretkey && (
+
+                        <>
+                          <QRCodeCanvas
+                            value={
+                              generateOTPURI()
+                            }
+                            size={128}
+                          />
+
+                          <Typography
+                            sx={{
+                              fontSize:
+                                '10px',
+
+                              fontWeight:
+                                600,
+
+                              mt:
+                                1,
+
+                              wordBreak:
+                                'break-all'
+                            }}
+                          >
+                            Secret Key:
+                            <br />
+
+                            {secretkey}
+                          </Typography>
+                        </>
+                      )
+                    )}
+
+                  </Box>
+                )}
+
+                {/* ==========================================
+                    OTP
+                ========================================== */}
+
+                <TextField
+                  fullWidth
+                  type="text"
+                  label="OTP"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  error={
+                    Boolean(
+                      errorMessage
+                    )
+                  }
+                  helperText={
+                    errorMessage
+                  }
+                  onChange={(event) => {
+
+                    const value =
+                      event.target.value
+                        .replace(
+                          /\D/g,
+                          ''
+                        )
+                        .slice(
+                          0,
+                          6
+                        );
+
+                    setOTP(
+                      value
+                    );
+                  }}
+                  inputProps={{
+                    maxLength:
+                      6,
+
+                    inputMode:
+                      'numeric'
+                  }}
+                />
+
+                {/* ==========================================
+                    VERIFY OTP
+                ========================================== */}
+
+                <Button
+                  fullWidth
+                  disabled={
+                    !otp ||
+                    otp.length <
+                      6 ||
+                    otpLoading
+                  }
+                  onClick={
+                    verifyOTP
+                  }
+                  sx={{
+                    mt:
+                      3,
+
+                    mb:
+                      2
+                  }}
+                  variant="contained"
+                >
+
+                  {otpLoading ? (
+
+                    <CircularProgress
+                      size={24}
+                      sx={{
+                        color:
+                          '#fff'
+                      }}
+                    />
+
+                  ) : (
+                    'Verify OTP'
+                  )}
+
+                </Button>
+
+                {/* ==========================================
+                    BACK
+                ========================================== */}
+
+                <Button
+                  onClick={
+                    handlebacklogin
+                  }
+                  variant="outlined"
+                  fullWidth
+                >
+                  Back to login
+                </Button>
+
+              </Box>
+
+            ) : (
+
+              /* =================================================
+                 LOGIN SCREEN
+              ================================================= */
+
+              <form
+                onSubmit={
+                  handleLogin
+                }
+              >
+
+                <Typography
+                  sx={{
+                    fontFamily:
+                      '"Open Sans","Helvetica","Arial",sans-serif',
+
+                    fontWeight:
+                      700,
+
+                    fontSize:
+                      '1rem',
+
+                    mb:
+                      1
+                  }}
+                >
+                  Login
+                </Typography>
+
+                {/* USERNAME */}
+
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Username"
+                  value={
+                    account
+                  }
+                  autoComplete="username"
+                  onChange={(event) =>
+                    setAccount(
+                      event.target.value
+                        .trim()
+                    )
+                  }
+                />
+
+                {/* PASSWORD */}
+
+                <TextField
+                  autoComplete="current-password"
+                  margin="normal"
+                  fullWidth
+                  label="Password"
+                  type={
+                    showPassword
+                      ? 'text'
+                      : 'password'
+                  }
+                  value={
+                    password
+                  }
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value
+                    )
+                  }
+                  InputProps={{
+                    endAdornment: (
+
+                      <InputAdornment
+                        position="end"
+                      >
+
+                        <IconButton
+                          onClick={
+                            handleTogglePassword
+                          }
+                          edge="end"
+                        >
+
+                          {showPassword ? (
+                            <Visibility />
+                          ) : (
+                            <VisibilityOff />
+                          )}
+
+                        </IconButton>
+
+                      </InputAdornment>
+                    )
+                  }}
+                />
+
+                {/* ERROR */}
+
+                {errorMessage && (
+
+                  <Typography
+                    color="error"
+                    sx={{
+                      mt:
+                        1,
+
+                      fontSize:
+                        '14px'
+                    }}
+                  >
+                    {errorMessage}
+                  </Typography>
+                )}
+
+                {/* LOGIN BUTTON */}
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt:
+                      3,
+
+                    mb:
+                      2
+                  }}
+                  disabled={
+                    isLoading
+                  }
+                >
+
+                  {isLoading ? (
+
+                    <CircularProgress
+                      size={24}
+                      sx={{
+                        color:
+                          '#fff'
+                      }}
+                    />
+
+                  ) : (
+                    'LOGIN'
+                  )}
+
+                </Button>
+
+              </form>
+            )}
+
+          </Box>
+
+        </Box>
+
+      </Grid>
+
+      {/* =================================================
+          FOOTER
+      ================================================= */}
+
+      <Grid
+        item
+        xs={12}
+        sx={{
+
+          display:
+            'flex',
+
+          alignItems:
+            'center',
+
+          justifyContent:
+            'center',
+
+          py:
+            1,
+
+          position:
+            'relative',
+
+          zIndex:
+            1,
+
+          backgroundColor:
+            'rgba(255,255,255,0.75)'
+        }}
+      >
+
+        <Box
+          sx={{
+            textAlign:
+              'center',
+
+            fontSize:
+              '14px',
+
+            color:
+              '#000'
+          }}
+        >
+
+          <div>
+            FXCN IT: Tel:533-26038 |
+            Email:
+            idpbg-it-tn-dev@mail.foxconn.com
+          </div>
+
+          <div>
+            Copyright 2020-2025
+            Foxconn A Business Group IT.
+            All Rights Reserved
+          </div>
+
+        </Box>
+
+      </Grid>
+
+    </Grid>
+  );
 };
 
-export const encryptForWeb = (str) => {
-  const cfg = {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7
-  };
-  const k = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
-  const encry = CryptoJS.AES.encrypt(str, k, cfg).toString();
-  return encry;
-};
+export default Login;
