@@ -1,1532 +1,240 @@
-// src/controllers/bookingController.js
-const oracledb = require('oracledb');
-const dbConfig = require('../config/dbConfig');
+// ======================================================
+// LOGIN USER DETAILS
+// ======================================================
 
-// Controller logic for booking-related operations
-// Add, update, delete, fetch bookings, etc.
+async function loginUserDetails(req, res) {
 
-oracledb.autoCommit = true;
-
-async function getMenuNamesByEmpId(req, res) {
-  const empId = req.body.emp_id;
+  let connection;
 
   try {
-    // Get a connection from the Oracle database pool
-    const connection = await oracledb.getConnection(dbConfig);
 
-    // Define the output bind variable
-    const resultBind = {
-      dir: oracledb.BIND_OUT,
-      type: oracledb.CURSOR
-    };
+    const { EmpId } = req.body;
 
-    // Prepare and execute the SQL query with input values
-    const query = `
-    SELECT DISTINCT m.id, m.MENU_NAME,m.WEB_URL,m.PARENT_ID
-    FROM DMS.C_MENU_ACCESS_T m
-    LEFT JOIN DMS.C_ROLE_MANAGEMENT_T r ON m.id = r.menu_id
-    LEFT JOIN DMS.C_USER_MANAGEMENT_T u ON r.ROLE_ID = u.ROLE_ID
-    WHERE u.EMP_ID = :empId AND u.USER_STATUS_CONTROL = 0
-       OR m.id IN (
-          SELECT menu_id
-          FROM DMS.C_USER_MANAGEMENT_T
-          WHERE EMP_ID = :empId AND DEL_FLAG = 0 AND u.USER_STATUS_CONTROL = 0 
-       ) ORDER BY ID
-    `;
-
-    const result = await connection.execute(query, [empId]);
-
-    // Retrieve the result from the output bind variable
-
-    // Close the result set and release the connection
-    const columns = result.metaData.map(column => column.name);
-        const data = result.rows.map(row => {
-          const rowObject = {};
-          columns.forEach((column, index) => {
-            rowObject[column] = row[index];
-          });
-          return rowObject;
-        });
-    await connection.close();
-
-    // Send the response with the retrieved data
-    res.json({ empId, menu: data });
-  } catch (error) {
-    console.error('Error executing SQL query:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}
-
-
-//Get for Role Management
-async function getRoles(req, res) {
-  try {
-    const details = req.body.details;
-    const connection = await oracledb.getConnection(dbConfig);
-    let query;
-    if(details===true){
-      query=
-        `SELECT DISTINCT(ROLE_NAME),ROLE_ID FROM DMS.C_Role_Management_T`;
-      }
-      const result = await connection.execute(query);
-      const columns = result.metaData.map(column => column.name);
-      //const rows = await result.getRows(100); // Fetch up to 100 rows at a time
-     const data = result.rows.map(row => {
-        const entry = {};
-        columns.forEach((column, index) => {
-          entry[column] = row[index];
-        });
-        return entry;
-      });
-
-    await connection.close();
-
-    // Send the response with the retrieved data
-    const response = {
-      IsOK: "0",
-      Msg: "Success",
-      Data: data
-    };
-    res.json(response);
-  } catch (error) {
-    console.error('Error retrieving roles:', error);
-    const response = {
-      IsOK: "1",
-      Msg: "Internal server error",
-      Data: []
-    };
-    res.status(500).json(response);
-  }
-}
-
- 
-//Get Menu Names
-async function getMenu(req, res) {
-  try {
-    
-    const details = req.body.details;
-    const connection = await oracledb.getConnection(dbConfig);
-    let query;
-    if(details===true){
-      query=
-        `SELECT * FROM DMS.C_MENU_ACCESS_T`;
-      }
-      const result = await connection.execute(query);
-
-    const columns = result.metaData.map(column => column.name);
-    //const rows = await result.getRows(100); // Fetch up to 100 rows at a time
-   const data = result.rows.map(row => {
-      const entry = {};
-      columns.forEach((column, index) => {
-        entry[column] = row[index];
-      });
-      return entry;
-    });
-
-    const response = {
-      IsOK: "0",
-      Msg: "Success",
-      Data: data
-    };
-    res.json(response);
-
-    await connection.close();
-  } catch (error) {
-    console.error('Error retrieving menu:', error);
-    const response = {
-      IsOK: "1",
-      Msg: "Internal server error",
-      Data: []
-    };
-    res.status(500).json(response);
-  };
-};
-
-//Create User
-async function user_creation(req, res) {
-  try {
-    const connection = await oracledb.getConnection(dbConfig);
-
-    const {
-      DORM_ID,
-      DORM_NAME,
-      EMP_ID,
-      EMP_NAME,
-      ROLE_NAME,
-      MENU_ID,
-      ROLE_ID,
-      CREATED_BY
-    } = req.body;
-
-    const insertQuery = `
-      INSERT INTO DMS.C_USER_MANAGEMENT_T 
-      (ID,DORM_ID, DORM_NAME, EMP_ID, EMP_NAME, 
-        ROLE_NAME, MENU_ID, ROLE_ID, CREATED_BY)
-      VALUES (C_USER_MANAGEMENT_T_NEWSEQ.NEXTVAL, :DORM_ID, :DORM_NAME, :EMP_ID, :EMP_NAME, 
-        :ROLE_NAME, :MENU_ID, :ROLE_ID, :CREATED_BY)
-    `;
-
-    const bindParams = {
-      DORM_ID,
-      DORM_NAME,
-      EMP_ID,
-      EMP_NAME,
-      ROLE_NAME,
-      MENU_ID,
-      ROLE_ID,
-      CREATED_BY
-    };
-
-    const result = await connection.execute(insertQuery, bindParams, { autoCommit: true });
-
-    // Release the connection back to the pool
-    await connection.close();
-
-    const response = {
-      IsOK: "0",
-      Msg: "Data inserted successfully",
-      Data: req.body
-    };
-    res.status(201).json(response);
-    console.log("Data inserted!!!");
-  } catch (error) {
-    console.error('Error creating menu item:', error);
-    const response = {
-      IsOK: "1",
-      Msg: "Internal server error",
-      Data: []
-    };
-    res.status(500).json(response);
-  }
-}
-
-//Get_all_user's
-
-async function get_all_users(req, res) {
-  try {
-    const empId = req.body.empId; // Assuming the 'empId' key is used in the request body
-    const connection = await oracledb.getConnection(dbConfig);
-
-    let sql = `SELECT U.*, M.menu_name
-    FROM DMS.C_USER_MANAGEMENT_T U
-    LEFT JOIN DMS.C_MENU_ACCESS_T M ON U.menu_id = M.id`;
-
-    let queryParams = {};
-
-    if (empId) {
-      sql += ` WHERE U.EMP_ID = :empId`; // Filter by empId if provided
-      queryParams.empId = empId;
-    }
-
-    const result = await connection.execute(sql, queryParams);
-    const columns = result.metaData.map((column) => column.name);
-    const data = result.rows.map((row) => {
-      const rowObject = {};
-      columns.forEach((column, index) => {
-        rowObject[column] = row[index];
-      });
-      return rowObject;
-    });
-
-    // Close Connection
-    await connection.close();
-
-    const response = {
-      IsOK: "0",
-      Msg: "Success",
-      Data: data,
-    };
-
-    res.status(200).json(response);
-  } catch (error) {
-    console.error('Error retrieving employee data', error);
-    res.status(500).json({ IsOK: "0", Msg: "Internal server error", Data: {} });
-  }
-};
-
-
-//new added -- Shojini
-async function accessRevoke(req,res){
-  try {
-    const empId = req.body.empId;
-  const role = req.body.role; // Assuming you're getting the role from the request body
-  const reason = req.body.reason; // Assuming you're getting the reason from the request body
-  const EDIT_BY = req.body.editby;
-
-  console.log(req.body);
-  let updateSql = '';
-  let bindParams = {};
-    const connection = await oracledb.getConnection(dbConfig);
-
-    if (role === 'GA_ADMIN' || role === 'IT_ADMIN') {
-      // Update only based on empid for GA_ADMIN and IT_ADMIN
-      updateSql = `
-      UPDATE DMS.C_USER_MANAGEMENT_T
-      SET USER_STATUS_CONTROL = 1, REASON = :reason, EDIT_BY = :EDIT_BY
-      WHERE EMP_ID = :empId AND DORM_ID = :dormId AND USER_STATUS_CONTROL = 0
-      `;
-      bindParams = { empId: empId, reason: reason ,EDIT_BY:EDIT_BY};
-    } else {
-      // Update based on both empid and dormid for other roles
-      const dormId = req.body.dormId; // Assuming you're getting the dormId from the request body
-      const EDIT_BY = req.body.editby;
-      updateSql = `
-        UPDATE DMS.C_USER_MANAGEMENT_T
-        SET USER_STATUS_CONTROL = 1, REASON = :reason, EDIT_BY = :EDIT_BY
-        WHERE EMP_ID = :empId AND DORM_ID = :dormId AND USER_STATUS_CONTROL = 0
-      `;
-      bindParams = { empId: empId, dormId: dormId, reason: reason, EDIT_BY:EDIT_BY };
-      console.log('bindParams:',bindParams);
-    }
-
-    const result = await connection.execute(updateSql, bindParams, { autoCommit: true });
-
-      await connection.close();
-
-    if (result.rowsAffected === 1) {
-      res.status(200).json({ message: 'Update successful' });
-    } else {
-      res.status(404).json({ message: 'No matching record found' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'An error occurred' });
-  }
-}
-
-async function grantPermission(req,res){
-  try {
-    const empId = req.body.empId;
-    const reason = req.body.reason; // Assuming you're getting the reason from the request body
-    const editby = req.body.editby;
-    console.log(req.body);
-    const connection = await oracledb.getConnection(dbConfig);
-
-    const updateSql = `
-    UPDATE DMS.C_USER_MANAGEMENT_T
-    SET USER_STATUS_CONTROL = 0, REASON = :reason, EDIT_BY = :editby
-    WHERE EMP_ID = :empId AND USER_STATUS_CONTROL = 1
-  `;
-  
-  const result = await connection.execute(updateSql, { 
-    empId: empId, reason: reason, editby: editby 
-  }, { autoCommit: true });
-  
-
-    await connection.close();
-
-    if (result.rowsAffected === 1) {
-      res.status(200).json({ message: 'Update successful' });
-    } else {
-      res.status(404).json({ message: 'No matching record found' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'An error occurred' });
-  }
-}
-
-// GA admin's dorm revoke -->  
-async function revokeDorm(req,res){
-  try {
-    const empId = req.body.empId;
-  const dormId = req.body.dormId;
-  const EDIT_BY = req.body.editby;
-
-    const connection = await oracledb.getConnection(dbConfig);
-    console.log('Dorm Id:',dormId);
-    console.log('empId:',empId);
-    console.log('EDIT_BY:',EDIT_BY);
-    const updateSql = `
-    UPDATE DMS.C_USER_MANAGEMENT_T
-    SET DEL_FLAG = 1, EDIT_BY = :EDIT_BY
-    WHERE EMP_ID = :empId AND DORM_ID = :dormId AND DEL_FLAG = 0`;  
-
-    const result = await connection.execute(updateSql, {empId:empId, dormId:dormId, EDIT_BY:EDIT_BY}, { autoCommit: true });
-
-   await connection.close();
-
-    if (result.rowsAffected === 1) {
-      res.status(200).json({ message: 'Update successful' });
-    } else {
-      res.status(404).json({ message: 'No matching record found' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'An error occurred' });
-  }
-}
-
-//////////////new user controller
-
-async function Menu_Manage (req,res){
-  try {
-      // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const { 
-      MENU_NAME,WEB_URL,CREATED_BY,PARENT_ID,MENU_DESCRIPTION,MENU_TYPE
-  } = req.body;
-
-  const query=`INSERT INTO DMS.C_MENU_ACCESS_T 
-  (ID,MENU_NAME,WEB_URL,CREATED_BY,PARENT_ID,MENU_DESCRIPTION,MENU_TYPE) 
-  VALUES (C_MENU_ACCESS_T_SEQ.NEXTVAL,:MENU_NAME,:WEB_URL,:CREATED_BY,:PARENT_ID,:MENU_DESCRIPTION,:MENU_TYPE)`;
-
-  const Param = {
-      MENU_NAME,WEB_URL,CREATED_BY,PARENT_ID,MENU_DESCRIPTION,MENU_TYPE
-  };
-
-  const result= await connection.execute(query,Param,{ autoCommit: true })
-
-  // Release the connection back to the pool
-  await connection.close();
-
-  const response = {
-    IsOK: "0",
-    Msg: "Data inserted successfully",
-    Data: req.body
-  };
-  res.status(201).json(response);
- // console.log("Data inserted!!!");
-} catch (error) {
-  console.error('Error creating menu item:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: []
-  };
-  res.status(500).json(response);
-};
-};
-
-async function get_menu_manage(req,res){
-try {
-
-const V_MENU_NAME = req.body.V_MENU_NAME;
-
- // Get a connection from the Oracle database pool
- const connection = await oracledb.getConnection(dbConfig);
-
- const query = `SELECT * FROM DMS.C_MENU_ACCESS_T WHERE MENU_NAME = NVL(:V_MENU_NAME,MENU_NAME) AND DEL_FLAG = '0' ORDER BY ID`;
-
- const result = await connection.execute(query,[V_MENU_NAME]);
- const columns = result.metaData.map((column) => column.name);
- const data = result.rows.map((row) => {
-   const rowObject = {};
-   columns.forEach((column, index) => {
-     rowObject[column] = row[index];
-   });
-   return rowObject;
- });
-
- // Close Connection
- await connection.close();
-
- const response = {
-   IsOK: "0",
-   Msg: "Success",
-   Data: data,
- };
-
- res.status(200).json(response);
-} catch (error) {
- console.error('Error retrieving employee data', error);
- res.status(500).json({ IsOK: "0", Msg: "Internal server error", Data: {} });
-}
-};
-
-async function Update_Menu_Manage (req,res){
-try {
-  
-    // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const {
-    V_ID,
-    V_MENU_NAME,
-    V_MENU_DESCRIPTION,
-    V_PARENT_ID,
-    V_WEB_URL,
-    V_EDIT_BY
-} = req.body;
-
-const query = `UPDATE DMS.C_MENU_ACCESS_T 
-              SET MENU_NAME = :V_MENU_NAME,
-                  MENU_DESCRIPTION = :V_MENU_DESCRIPTION,
-                  PARENT_ID = :V_PARENT_ID,
-                  WEB_URL = :V_WEB_URL,
-                  EDIT_BY = :V_EDIT_BY,
-                  EDIT_DATE = SYSDATE
-              WHERE ID = :V_ID`;
-
-const Param = {
-V_ID,
-V_MENU_NAME,
-V_MENU_DESCRIPTION,
-V_PARENT_ID,
-V_WEB_URL,
-V_EDIT_BY
-};
-
-const result = await connection.execute(query, Param, { autoCommit: true });
-
-console.log('++++++');
-// Release the connection back to the pool
-await connection.close();
-
-
-const response = {
-  IsOK: "0",
-  Msg: "Data updated successfully",
-  Data: req.body
-};
-res.status(201).json(response);
-console.log("Data updated !!!");
-} catch (error) {
-// console.error('Error creating menu item:', error);
-const response = {
-  IsOK: "1",
-  Msg: "Internal server error",
-  Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Delete_Menu_Manage(req, res) {
-try {
-  // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const { L_IDS, V_EDIT_BY } = req.body;
-
-  console.log(req.body);
-
-  const sql = await connection.execute(
-    `SELECT COUNT(1) FROM DMS.C_ROLE_MENU_MANAGE_T WHERE MENU_ID = :L_IDS AND DEL_FLAG = 0`,
-    [L_IDS]
-  );
-
-  console.log('+');
-  const count = sql.rows[0][0];
-
-  console.log(count);
-
-  if (count > 0) {
-    const response = {
-      IsOK: "0",
-      Msg: "Data Already exists in Role Table",
-      Data: req.body,
-    };
-    console.log("Data Deleted !!!");
-    return res.status(201).json(response);
-  }
-
-  const query = `UPDATE DMS.C_MENU_ACCESS_T 
-              SET DEL_FLAG = 1,
-                  EDIT_BY = :V_EDIT_BY,
-                  EDIT_DATE = SYSDATE
-              WHERE INSTR(',' || :L_IDS || ',', ',' || ID || ',') > 0 
-              AND DEL_FLAG = 0`;
-
-  const Param = {
-    L_IDS,
-    V_EDIT_BY,
-  };
-
-  const result = await connection.execute(query, Param, { autoCommit: true });
-
-  console.log('++++++');
-  // Release the connection back to the pool
-  await connection.close();
-
-  const response = {
-    IsOK: "0",
-    Msg: "Data Deleted successfully",
-    Data: req.body,
-  };
-  res.status(200).json(response);
-  console.log("Data updated !!!");
-} catch (error) {
-  console.error('Error deleting menu item:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: [],
-  };
-  res.status(500).json(response);
-};
-};
-
-
-async function Role_Manage(req,res){
-  try {
-      const {
-          ROLE_NAME,
-          ROLE_DESCRIPTION,
-          CREATE_BY
-      }=req.body;
-
-       // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const query = 
-  `INSERT INTO DMS.C_NEW_ROLE_MANAGEMENT_T 
-      (ID,
-      ROLE_NAME,
-      ROLE_DESCRIPTION,
-      CREATE_BY) 
-      VALUES 
-      (C_NEW_ROLE_MANAGEMENT_T_SEQ.NEXTVAL,
-      :ROLE_NAME,
-      :ROLE_DESCRIPTION,
-      :CREATE_BY)`;
-
-  Param =     {
-      ROLE_NAME,
-      ROLE_DESCRIPTION,
-      CREATE_BY
-  };
-
-  const result = await connection.execute(query,Param,{ autoCommit: true });
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
- IsOK: "0",
- Msg: "Data inserted successfully",
- Data: req.body
-};
-res.status(201).json(response);
-// console.log("Data inserted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
- IsOK: "1",
- Msg: "Internal server error",
- Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Get_Role_Manage(req,res){
-try {
-    const {
-        V_ROLE_NAME
-    }=req.body;
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const query = 
-`SELECT * FROM DMS.C_NEW_ROLE_MANAGEMENT_T 
-    WHERE ROLE_NAME = NVL(:V_ROLE_NAME,ROLE_NAME) AND DEL_FLAG = '0'`;
-
-Param =     {
-  V_ROLE_NAME
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
- const columns = result.metaData.map((column) => column.name);
- const data = result.rows.map((row) => {
-   const rowObject = {};
-   columns.forEach((column, index) => {
-     rowObject[column] = row[index];
-   });
-   return rowObject;
- });
-
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "IsOk",
-Data: data
-};
-res.status(201).json(response);
-//console.log("Data inserted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Update_Role_Manage(req,res){
-try {
-    const {
-        V_ID,
-        V_ROLE_NAME,
-        V_ROLE_DESCRIPTION,
-        V_LAST_EDIT_BY
-    }=req.body;
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const query = 
-`UPDATE DMS.C_NEW_ROLE_MANAGEMENT_T 
-    SET ROLE_NAME = :V_ROLE_NAME,
-    ROLE_DESCRIPTION = :V_ROLE_DESCRIPTION,
-    LAST_EDIT_BY = :V_LAST_EDIT_BY,
-    LAST_EDIT_DATE = SYSDATE
- WHERE ID = :V_ID`;
-
-Param =     {
-  V_ID,
-  V_ROLE_NAME,
-  V_ROLE_DESCRIPTION,
-  V_LAST_EDIT_BY
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "Data Updated successfully",
-Data: req.body
-};
-res.status(201).json(response);
-console.log("Data Updated!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Delete_Role_Manage (req,res){
-try {
-    const {
-      L_IDS,
-        V_LAST_EDIT_BY
-    }=req.body;
-    console.log(req.body);
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const sql = await 
-connection.execute(`SELECT COUNT(1) FROM DMS.C_USER_AND_ROLE_MANAGE_T WHERE ROLE_ID = :L_IDS AND DEL_FLAG = 0`,[L_IDS]);
-
-const sql2 = await 
-connection.execute(`SELECT COUNT(1) FROM DMS.C_ROLE_MENU_MANAGE_T WHERE ROLE_ID = :L_IDS AND DEL_FLAG = 0`,[L_IDS]);
-
-console.log(L_IDS);
-const value = sql.rows[0][0] || sql2.rows[0][0];
-
-console.log(value);
-
-if(value > 0){
-  const response = {
-    IsOK: "0",
-    Msg: "Data Already exists in Menu Assingment Page or User Role Page",
-    Data: req.body
-   };
-   res.status(201).json(response);
-}else{
-const query = 
-`UPDATE DMS.C_NEW_ROLE_MANAGEMENT_T 
-    SET DEL_FLAG = 1,
-        ROLE_STATUS = 'De-Activated',
-        LAST_EDIT_BY = :V_LAST_EDIT_BY,
-        LAST_EDIT_DATE = SYSDATE
-        WHERE INSTR(',' || :L_IDS || ',', ',' || ID || ',') > 0 
-        AND DEL_FLAG = 0`;
-
-Param = {
-  L_IDS,
-  V_LAST_EDIT_BY
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "Data Deleted successfully",
-Data: req.body
-};
-res.status(201).json(response);
-console.log("Data Deleted!!!");
-}
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Role_Assign(req, res) {
-try {
-  // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const { V_ROLE_ID, V_MENU_ID, V_CREATED_BY } = req.body;
-
-  console.log(req.body);
-
-  // Delete existing rows based on V_ROLE_ID
-  const deleteSql = `
-    DELETE FROM DMS.C_ROLE_MENU_MANAGE_T
-    WHERE ROLE_ID = :V_ROLE_ID`;
-  const deleteResult = await connection.execute(deleteSql, [V_ROLE_ID],{autoCommit : true}); 
-  console.log(deleteResult);
-  console.log(V_ROLE_ID);
-
-  // Iterate over each combination of V_ROLE_ID and V_MENU_ID to insert new rows
-  for (const roleId of V_ROLE_ID.split(',')) {
-    for (const menuId of V_MENU_ID.split(',')) {
-      console.log(roleId,menuId);
-      const insertSql = `
-        INSERT INTO DMS.C_ROLE_MENU_MANAGE_T (ID, ROLE_ID, MENU_ID, CREATED_BY) 
-        VALUES (C_ROLE_MENU_MANAGE_T_SEQ.NEXTVAL, :V_ROLE_ID, :V_MENU_ID, :V_CREATED_BY)`;
-
-      const insertParams = {
-        V_ROLE_ID: roleId,
-        V_MENU_ID: menuId,
-        V_CREATED_BY,
-      };
-
-      const insertResult = await connection.execute(insertSql, insertParams, { autoCommit: true });
-    }
-  } 
-
-  console.log('++++++');
-  // Release the connection back to the pool
-  await connection.close();
-
-  const response = {
-    IsOK: "0",
-    Msg: "Data updated successfully",
-    Data: req.body,
-  };
-  res.status(200).json(response);
-  console.log("Data updated !!!");
-} catch (error) {
-  console.error('Error updating data:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: [],
-  };
-  res.status(500).json(response);
-}
-};
-
-async function Get_Role_Manu_Manage(req,res){
-try {
-    const {
-        V_ROLE_ID
-    }=req.body;
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const query = 
-`SELECT * FROM DMS.C_ROLE_MENU_MANAGE_T 
-    WHERE ROLE_ID = NVL(:V_ROLE_ID,ROLE_ID) AND DEL_FLAG = 0`;
-
-Param =     {
-  V_ROLE_ID
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
- const columns = result.metaData.map((column) => column.name);
- const data = result.rows.map((row) => {
-   const rowObject = {};
-   columns.forEach((column, index) => {
-     rowObject[column] = row[index];
-   });
-   return rowObject;
- });
-
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "IsOk",
-Data: data
-};
-res.status(201).json(response);
-// console.log("Data inserted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function New_User_Manage (req,res){
-  try {
-      // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const {
-      EMP_ID,
-      EMP_NAME,
-      DEPARTMENT,
-      CREATE_BY
-  } = req.body;
-
-  const check_user = await connection.execute(`SELECT COUNT(1) FROM 
-  DMS.C_NEW_USER_MANAGEMENT_T WHERE EMP_ID = :EMP_ID`,[EMP_ID]);
-
-  const check_user2 = check_user.rows[0][0];
-
-  if(check_user2 > 0){
-    const response = {
-      IsOK: "1",
-      Msg: "User Already Exists !!",
-      Data: req.body
-    };
-    return res.status(201).json(response);
-  } else{
-
-  const query=`INSERT INTO DMS.C_NEW_USER_MANAGEMENT_T 
-  (ID,
-      EMP_ID,
-      EMP_NAME,
-      DEPARTMENT,
-      CREATE_BY) 
-  VALUES (C_NEW_USER_MANAGEMENT_T_SEQ.NEXTVAL,
-      :EMP_ID,
-      :EMP_NAME,
-      :DEPARTMENT,
-      :CREATE_BY)`;
-
-  const Param = {
-      EMP_ID,
-      EMP_NAME,
-      DEPARTMENT,
-      CREATE_BY
-  };
-
-  const result= await connection.execute(query,Param,{autoCommit : true});
-
-  // Release the connection back to the pool
-  await connection.close();
-}
-  const response = {
-    IsOK: "0",
-    Msg: "Data inserted successfully",
-    Data: req.body
-  };
-  res.status(201).json(response);
-//  console.log("Data inserted!!!");
-} catch (error) {
-  console.error('Error creating menu item:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: []
-  };
-  res.status(500).json(response);
-};
-};
-
-async function Delete_User_Manage (req,res) {
-try {
-    // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const {
-    V_ID,
-    V_REASON,
-    V_LAST_EDIT_BY
-} = req.body;
-console.log(req.body);
-
-const check_user =`UPDATE DMS.C_NEW_USER_MANAGEMENT_T SET DEL_FLAG = 1,
-REASON = :V_REASON,
-USER_STATUS = 'DE-ACTIVE',
-LAST_EDIT_BY = :V_LAST_EDIT_BY,
-LAST_EDIT_DATE = SYSDATE
-WHERE ID = :V_ID`;
-
-
-
-const query=`UPDATE DMS.C_USER_AND_ROLE_MANAGE_T 
-SET DEL_FLAG = 1,
-REASON = :V_REASON,
-STATUS = 'DE-ACTIVE',
-LAST_EDIT_BY = :V_LAST_EDIT_BY,
-LAST_EDIT_DATE = SYSDATE
-WHERE USER_ID = :V_ID`;
-
-const Param = {
-  V_ID,
-  V_LAST_EDIT_BY,
-  V_REASON
-};
-
-const result1= await connection.execute(check_user,Param,{autoCommit : true});
-
-const result= await connection.execute(query,Param,{autoCommit : true});
-
-// Release the connection back to the pool
-await connection.close();
-const response = {
-  IsOK: "0",
-  Msg: "Data Deleted successfully",
-  Data: req.body
-};
-res.status(201).json(response);
-console.log("Data Deleted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-  IsOK: "1",
-  Msg: "Internal server error",
-  Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function User_Reactive (req,res) {
-try {
-    // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const {
-  V_ID,
-    V_REASON,
-    V_LAST_EDIT_BY
-} = req.body;
-console.log(req.body);
-
-const check_user =`UPDATE DMS.C_NEW_USER_MANAGEMENT_T SET DEL_FLAG = 0,
-USER_STATUS   = 'Active',
-REASON = :V_REASON,
-LAST_EDIT_BY = :V_LAST_EDIT_BY,
-LAST_EDIT_DATE = SYSDATE
-WHERE ID = :V_ID`;
-
-
-
-const query=`UPDATE DMS.C_USER_AND_ROLE_MANAGE_T 
-SET DEL_FLAG = 0,
-STATUS = 'ACTIVE',
-REASON = :V_REASON,
-LAST_EDIT_BY = :V_LAST_EDIT_BY,
-LAST_EDIT_DATE = SYSDATE
-WHERE USER_ID = :V_ID`;
-
-const Param = {
-  V_ID,
-  V_LAST_EDIT_BY,
-  V_REASON
-};
-
-const result1= await connection.execute(check_user,Param,{autoCommit : true});
-
-const result= await connection.execute(query,Param,{autoCommit : true});
-
-// Release the connection back to the pool
-await connection.close();
-const response = {
-  IsOK: "0",
-  Msg: "Data Deleted successfully",
-  Data: req.body
-};
-res.status(201).json(response);
-console.log("Data Deleted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-  IsOK: "1",
-  Msg: "Internal server error",
-  Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function User_and_Role_Assign(req, res) {
-try {
-  // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const { V_USER_ID, V_ROLE_ID, V_CREATE_BY } = req.body;
-
-  console.log(req.body);
-
-  // Delete existing rows based on V_ROLE_ID
-  const deleteSql = `
-    DELETE FROM DMS.C_USER_AND_ROLE_MANAGE_T
-    WHERE USER_ID = :V_USER_ID AND DEL_FLAG = 0`;
-  const deleteResult = await connection.execute(deleteSql, [V_USER_ID],{autoCommit : true}); 
-  console.log(deleteResult);
-  console.log(V_ROLE_ID);
-
-  // Iterate over each combination of V_ROLE_ID and V_MENU_ID to insert new rows
-  for (const roleId of V_ROLE_ID.split(',')) {
-    for (const userId of V_USER_ID.split(',')) {
-      console.log(roleId,userId);
-      const insertSql = `
-        INSERT INTO DMS.C_USER_AND_ROLE_MANAGE_T (ID, ROLE_ID, USER_ID, CREATE_BY) 
-        VALUES (C_USER_AND_ROLE_MANAGE_T_SEQ.NEXTVAL, :V_ROLE_ID, :V_USER_ID, :V_CREATE_BY)`;
-
-      const insertParams = {
-        V_USER_ID: userId,
-        V_ROLE_ID: roleId,
-        V_CREATE_BY,
-      };
-
-      const insertResult = await connection.execute(insertSql, insertParams, { autoCommit : true });
-    }
-  } 
-
-  console.log('++++++');
-  // Release the connection back to the pool
-  await connection.close();
-
-  const response = {
-    IsOK: "0",
-    Msg: "Role Assigned successfully",
-    Data: req.body,
-  };
-  res.status(200).json(response);
-  console.log("Role Assigned !!!");
-} catch (error) {
-  console.error('Error updating data:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: [],
-  };
-  res.status(500).json(response);
-}
-};
-async function Get_User_and_Role_Manage(req,res){
-try {
-    const {
-      V_USER_ID
-    }=req.body;
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const query = 
-`SELECT * FROM DMS.C_USER_AND_ROLE_MANAGE_T 
-    WHERE USER_ID = NVL(:V_USER_ID,USER_ID) AND DEL_FLAG = 0`;
-
-Param =     {
-  V_USER_ID
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
- const columns = result.metaData.map((column) => column.name);
- const data = result.rows.map((row) => {
-   const rowObject = {};
-   columns.forEach((column, index) => {
-     rowObject[column] = row[index];
-   });
-   return rowObject;
- });
-
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "IsOk",
-Data: data
-};
-res.status(201).json(response);
-//console.log("Data inserted!!!");
-} catch (error) {
-console.error('Error while submitting:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Get_New_User_Manage(req,res){
-try {
-    const {
-      V_EMP_ID,
-      V_EMP_NAME,
-      V_STATUS
-    }=req.body;
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const query = 
-`SELECT ID,EMP_ID,EMP_NAME,DEPARTMENT,USER_STATUS,QR_STATUS,REASON,
-  SECRET_KEY,DEL_FLAG,CREATE_BY,TO_CHAR(CREATED_DATE,'DD-MM-YYYY HH24:MI:SS') AS CREATED_DATE,
-  LAST_EDIT_BY,TO_CHAR(LAST_EDIT_DATE,'DD-MM-YYYY HH24:MI:SS') AS LAST_EDIT_DATE FROM DMS.C_NEW_USER_MANAGEMENT_T 
-    WHERE EMP_ID = NVL(:V_EMP_ID,EMP_ID) 
-          AND EMP_NAME = NVL(:V_EMP_NAME,EMP_NAME) 
-          AND USER_STATUS = NVL(:V_STATUS,USER_STATUS)`;
-
-Param =     {
-  V_EMP_ID,
-  V_EMP_NAME,
-  V_STATUS
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
- const columns = result.metaData.map((column) => column.name);
- const data = result.rows.map((row) => {
-   const rowObject = {};
-   columns.forEach((column, index) => {
-     rowObject[column] = row[index];
-   });
-   return rowObject;
- });
-
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "IsOk",
-Data: data
-};
-res.status(201).json(response);
-//console.log("Data inserted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function Update_New_User_Manage (req,res){
-try {
-  
-    // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const {
-    V_ID,
-    V_EMP_ID,
-    V_EMP_NAME,
-    V_LAST_EDIT_BY
-} = req.body;
-
-const query = `UPDATE DMS.C_NEW_USER_MANAGEMENT_T 
-              SET EMP_ID = :V_EMP_ID,
-                  EMP_NAME = :V_EMP_NAME,
-                  LAST_EDIT_BY = :V_LAST_EDIT_BY,
-                  LAST_EDIT_DATE = SYSDATE
-              WHERE ID = :V_ID`;
-
-const Param = {
-V_ID,
-    V_EMP_ID,
-    V_EMP_NAME,
-    V_LAST_EDIT_BY
-};
-
-const result = await connection.execute(query, Param, { autoCommit: true });
-
-console.log('++++++');
-// Release the connection back to the pool
-await connection.close();
-
-
-const response = {
-  IsOK: "0",
-  Msg: "Data updated successfully",
-  Data: req.body
-};
-res.status(201).json(response);
-console.log("Data updated !!!");
-} catch (error) {
-// console.error('Error creating menu item:', error);
-const response = {
-  IsOK: "1",
-  Msg: "Internal server error",
-  Data: []
-};
-res.status(500).json(response);
-};
-};
-
-
-
-async function User_and_Role_Manage (req,res){
-  try {
-      // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const {
-      USER_ID,
-      ROLE_ID,
-      STATUS,
-      CREATE_BY
-  } = req.body;
-
-  const query = `INSERT INTO DMS.C_USER_AND_ROLE_MANAGE_T 
-  (ID,
-      USER_ID,
-      ROLE_ID,
-      STATUS,
-      CREATE_BY) 
-  VALUES (C_USER_AND_ROLE_MANAGE_T_SEQ.NEXTVAL,
-      :USER_ID,
-      :ROLE_ID,
-      :STATUS,
-      :CREATE_BY)`;
-
-  const Param = {
-      USER_ID,
-      ROLE_ID,
-      STATUS,
-      CREATE_BY
-  };
-
-  console.log(Param);
-
-  const result = await connection.execute(query,Param,{ autoCommit: true })
-
-  // Release the connection back to the pool
-  await connection.close();
-
-  const response = {
-    IsOK: "0",
-    Msg: "Data inserted successfully",
-    Data: req.body
-  };
-  res.status(201).json(response);
- // console.log("Data inserted!!!");
-} catch (error) {
-  console.error('Error creating menu item:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: []
-  };
-  res.status(500).json(response);
-};
-};
-
-async function Role_and_Menu_Manage (req,res){
-  try {
-      // Get a connection from the Oracle database pool
-  const connection = await oracledb.getConnection(dbConfig);
-
-  const {
-      ROLE_ID,MENU_ID,CREATED_BY
-  } = req.body;
-
-  const query = `INSERT INTO DMS.C_ROLE_MENU_MANAGE_T 
-  (ID,ROLE_ID,MENU_ID,CREATED_BY) 
-  VALUES (C_ROLE_MENU_MANAGE_T_SEQ.NEXTVAL,:ROLE_ID,:MENU_ID,:CREATED_BY)`;
-
-  const Param = {
-      ROLE_ID,MENU_ID,CREATED_BY
-  };
-
-  console.log(Param);
-
-  const result = await connection.execute(query,Param,{ autoCommit: true })
-
-  // Release the connection back to the pool
-  await connection.close();
-
-  const response = {
-    IsOK: "0",
-    Msg: "Data inserted successfully",
-    Data: req.body
-  };
-  res.status(201).json(response);
-//  console.log("Data inserted!!!");
-} catch (error) {
-  console.error('Error creating menu item:', error);
-  const response = {
-    IsOK: "1",
-    Msg: "Internal server error",
-    Data: []
-  };
-  res.status(500).json(response);
-};
-};
-
-async function EMPID_BASED_GET_MENUS(req,res){
-try {
-    const {
-      V_EMP_ID
-    }=req.body;
-
-     // Get a connection from the Oracle database pool
-const connection = await oracledb.getConnection(dbConfig);
-
-const query = 
-`SELECT
-DISTINCT NUM.EMP_ID,
-NUM.EMP_NAME,
-NUM.DEPARTMENT,
-URM.USER_ID,
-URM.ROLE_ID,
-MA.MENU_ID as ID, 
-M.MENU_NAME,
-M.PARENT_ID,
-M.WEB_URL,
-M.DEL_FLAG AS MENU_DEL_FLAG,
-M.MENU_DESCRIPTION,
-M.MENU_STATUS,
-M.MENU_TYPE
-FROM
-DMS.C_NEW_USER_MANAGEMENT_T NUM
-LEFT JOIN DMS.C_USER_AND_ROLE_MANAGE_T URM  
-ON
-NUM.ID = URM.USER_ID
-LEFT JOIN DMS.C_ROLE_MENU_MANAGE_T MA 
-ON
-URM.ROLE_ID = MA.ROLE_ID
-LEFT JOIN DMS.C_MENU_ACCESS_T M
-ON
-M.ID = MA.MENU_ID
-WHERE 
-NUM.EMP_ID = :V_EMP_ID
-AND NUM.DEL_FLAG = 0
-AND URM.DEL_FLAG = 0
-AND MA.DEL_FLAG = 0
-ORDER BY MA.MENU_ID`;
-
-Param =     {
-  V_EMP_ID
-};
-
-const result = await connection.execute(query,Param,{ autoCommit: true });
- const columns = result.metaData.map((column) => column.name);
- const data = result.rows.map((row) => {
-   const rowObject = {};
-   columns.forEach((column, index) => {
-     rowObject[column] = row[index];
-   });
-   return rowObject;
- });
-
-// Release the connection back to the pool
-await connection.close();
-
-const response = {
-IsOK: "0",
-Msg: "IsOk",
-Data: data
-};
-res.status(201).json(response);
-//console.log("Data inserted!!!");
-} catch (error) {
-console.error('Error creating menu item:', error);
-const response = {
-IsOK: "1",
-Msg: "Internal server error",
-Data: []
-};
-res.status(500).json(response);
-};
-};
-
-async function get_role_based_empId(req,res){
-  try {
-    const connection = await oracledb.getConnection(dbConfig);
-    const {V_EMP_ID}=req.body;
-    let query =  `SELECT R.ROLE_NAME,N.EMP_ID,R.ID AS ROLE_ID FROM DMS.C_USER_AND_ROLE_MANAGE_T U 
-    INNER JOIN DMS.C_NEW_ROLE_MANAGEMENT_T R ON U.ROLE_ID = R.ID 
-    INNER JOIN DMS.C_NEW_USER_MANAGEMENT_T N ON N.ID = U.USER_ID WHERE N.EMP_ID = :V_EMP_ID`;
-    const result = await connection.execute(query,{
-      V_EMP_ID
-    });
-   // const data=result.rows;
-    const columnName = result.metaData.map((column)=>column.name);
-    // const data = result.rows.map((row) => {
-    //   const rowObject = {};
-    //   columnName.forEach((column, index) => {
-    //     rowObject[column] = row[index];
-    //   });
-    //   return rowObject;
-    // });
-    
-    const data = result.rows.map(row =>
-      Object.fromEntries(columnName.map((column, index) => [column, row[index]]))
+    console.log(
+      'LOGIN USER DETAILS REQUEST:',
+      req.body
     );
-   
-   // Release the connection back to the pool
-   await connection.close();
-   
-   const response = {
-   IsOK: "0",
-   Msg: "IsOk",
-   Data: data
-};
-   res.status(201).json(response);
-   //console.log("Data inserted!!!");
-   } catch (error) {
-   console.error('Error creating menu item:', error);
-   const response = {
-   IsOK: "1",
-   Msg: "Internal server error",
-   Data: []
-   };
-   res.status(500).json(response);
-   };
-   };
 
-module.exports = {
-    getMenuNamesByEmpId,
-    getRoles,
-    getMenu,
-    user_creation,
-    get_all_users,
-    accessRevoke,
-    grantPermission,
-    revokeDorm,
-    Menu_Manage,
-    Role_Manage,
-    Get_Role_Manage,
-    Update_Role_Manage,
-    Delete_Role_Manage,
-    New_User_Manage,
-    User_and_Role_Manage,
-    Role_and_Menu_Manage,
-    get_menu_manage,
-    Update_Menu_Manage,
-    Delete_Menu_Manage,
-    Role_Assign,
-    Get_Role_Manu_Manage,
-    Delete_User_Manage,
-    User_and_Role_Assign,
-    Get_New_User_Manage,
-    Update_New_User_Manage,
-    Get_User_and_Role_Manage,
-    EMPID_BASED_GET_MENUS,
-    User_Reactive,
-    get_role_based_empId
-};
+
+    // ----------------------------------------------
+    // Validate EmpId
+    // ----------------------------------------------
+
+    if (!EmpId) {
+
+      return res.status(400).json({
+        IsOK: '0',
+        Msg: 'EmpId is required',
+        List: []
+      });
+
+    }
+
+
+    // ----------------------------------------------
+    // Oracle connection
+    // ----------------------------------------------
+
+    connection =
+      await oracledb.getConnection(
+        dbConfig
+      );
+
+
+    // ----------------------------------------------
+    // Get user
+    // ----------------------------------------------
+
+    const query = `
+
+      SELECT
+
+        ID,
+
+        EMP_ID,
+
+        EMP_NAME,
+
+        DEPARTMENT,
+
+        USER_STATUS,
+
+        QR_STATUS,
+
+        SECRET_KEY,
+
+        DEL_FLAG,
+
+        CREATE_BY,
+
+        CREATED_DATE,
+
+        LAST_EDIT_BY,
+
+        LAST_EDIT_DATE
+
+      FROM DMS.C_NEW_USER_MANAGEMENT_T
+
+      WHERE UPPER(TRIM(EMP_ID))
+            =
+            UPPER(TRIM(:EmpId))
+
+    `;
+
+
+    const result =
+      await connection.execute(
+        query,
+        {
+          EmpId: EmpId
+        },
+        {
+          outFormat:
+            oracledb.OUT_FORMAT_OBJECT
+        }
+      );
+
+
+    console.log(
+      'LOGIN USER DB RESULT:',
+      result.rows
+    );
+
+
+    const rows =
+      result.rows || [];
+
+
+    // ----------------------------------------------
+    // Convert DB response
+    // ----------------------------------------------
+
+    const List =
+      rows.map((row) => {
+
+        return {
+
+          Id:
+            row.ID,
+
+          EmpId:
+            row.EMP_ID,
+
+          EmpName:
+            row.EMP_NAME,
+
+          Department:
+            row.DEPARTMENT,
+
+          UserStatus:
+            row.USER_STATUS,
+
+          QrStatus:
+            row.QR_STATUS,
+
+          SecretKey:
+            row.SECRET_KEY,
+
+          DelFlag:
+            row.DEL_FLAG,
+
+          CreateBy:
+            row.CREATE_BY,
+
+          CreatedDate:
+            row.CREATED_DATE,
+
+          LastEditBy:
+            row.LAST_EDIT_BY,
+
+          LastEditDate:
+            row.LAST_EDIT_DATE
+
+        };
+
+      });
+
+
+    // ----------------------------------------------
+    // No user
+    // ----------------------------------------------
+
+    if (List.length === 0) {
+
+      return res.status(200).json({
+
+        IsOK: '0',
+
+        Msg:
+          'User not found',
+
+        List: []
+
+      });
+
+    }
+
+
+    // ----------------------------------------------
+    // Success
+    // ----------------------------------------------
+
+    return res.status(200).json({
+
+      IsOK: '1',
+
+      Msg:
+        'Success',
+
+      List:
+        List
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'loginUserDetails ERROR:',
+      error
+    );
+
+
+    return res.status(500).json({
+
+      IsOK: '0',
+
+      Msg:
+        'Internal server error',
+
+      List: []
+
+    });
+
+
+  } finally {
+
+    // ----------------------------------------------
+    // Close connection
+    // ----------------------------------------------
+
+    if (connection) {
+
+      try {
+
+        await connection.close();
+
+      } catch (closeError) {
+
+        console.error(
+          'DB CLOSE ERROR:',
+          closeError
+        );
+
+      }
+
+    }
+
+  }
+
+}
