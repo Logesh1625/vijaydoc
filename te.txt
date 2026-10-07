@@ -16,7 +16,7 @@ export let iwxServiceUrlNew1: string;
 
 function urlManage() {
   iwxServiceUrlNew1 = "https://microservice.abgind.foxconn.com/india/gateway";
-  iwxServiceUrllog="http://10.208.193.125:8086/gateway/manager";
+  iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
   iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
   iwxServiceUrl2 = "https://microservice.abgind.foxconn.com/india/gateway";
   serviceUrl = "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";
@@ -32,13 +32,16 @@ function urlManage() {
     host === "10.208.192.44:9001" ||
     host === "10.209.110.101:4207" ||
     host === "10.209.110.94:4207" ||
-    host === "10.209.122.166:4209" ||  
+    host === "10.209.122.166:4209" ||
     host === "localhost:4207" ||
-    host === "10.209.110.208:4207"||
-    host === "10.209.110.187:4207"||
-    host === "localhost:4207" 
+    host === "10.209.110.208:4207" ||
+    host === "10.209.110.187:4207" ||
+    host === "localhost:4207" ||
+     host === "localhost:80"  ||
+      host === "10.209.122.132:80" ||
+        host === "10.209.122.1327:80" 
   ) {
-    iwxServiceUrllog="http://10.208.193.125:8086/gateway/manager";
+    iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
     iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";
     iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
     toolsServiceUrlNew = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
@@ -48,14 +51,14 @@ function urlManage() {
     ouacServiceUrl = "https://ouac.idpbgtn.efoxconn.com?SysCode=LMS_INDIA";
     toolsServiceUrl = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
     uploadFileServiceUrl = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
-  iwxServiceUrllog="http://10.208.193.125:8086/gateway/manager";
+    iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
 
     iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";
     iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
     toolsServiceUrlNew = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
     uploadFileServiceUrlNew = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
   } else {
-      iwxServiceUrllog="http://10.208.193.125:8086/gateway/manager";
+    iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
 
     iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";
     iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";
