@@ -20,7 +20,7 @@ function urlManage() {
   iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
   iwxServiceUrl2 = "https://microservice.abgind.foxconn.com/india/gateway";
   serviceUrl = "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";
-  ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com?SysCode=LMS_INDIA&NewVersion=V401";
+  ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com?SysCode=ISMS_INDIA&NewVersion=V401";
   toolsServiceUrl = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
   uploadFileServiceUrl = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
 
@@ -43,7 +43,7 @@ function urlManage() {
     iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
     toolsServiceUrlNew = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
     uploadFileServiceUrlNew = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
-  } else if (host === "lms.idpbgtn.efoxconn.com") {
+  } else if (host === "isms.idpbgtn.efoxconn.com") {
     serviceUrl = "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";
     ouacServiceUrl = "https://ouac.idpbgtn.efoxconn.com?SysCode=LMS_INDIA";
     toolsServiceUrl = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
