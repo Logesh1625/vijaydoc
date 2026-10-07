@@ -1,14 +1,1197 @@
-SELECT
-    ID,
-    EMP_ID,
-    HOST_NAME,
-    HOST_IP,
-    PROJECT_NAME,
-    FORM_CODE,
-    FORM_STATUS,
-    DEL_FLAG,
-    CREATED_DATE
-FROM TN_FORM.C_DOMAIN_CREATION_T
-WHERE HOST_NAME = 'A03-2F-NPIKPD01'
-   OR HOST_IP = '10.226.81.41'
-ORDER BY CREATED_DATE DESC;
+<template>
+  <div class="App">
+    <!-- <van-loading v-model="loadingVisible" /> -->
+    <div v-if="loadingVisible" class="van-loading-overlay">
+
+      <van-loading v-model="loadingVisible" color="#1989fa" />
+    </div>
+    <div class="title">Applicant Information</div>
+    <a-list class="custom-list" size="small" :data-source='data'>
+      <a-list-item class="item" slot="renderItem" slot-scope="item, index">
+        <span v-if="item.required" class="list-item-label align-top">
+          <span class="mandatory-indicator">*</span>{{ item.label }}
+        </span>
+        <span v-else class="list-item-label align-top">{{ item.label }}</span>
+        <template v-if="item.editable">
+          <a-input class="list-item-input" :placeholder="item.placeholder" :class="{ 'no-border': item.clicked }"
+            @focus="item.clicked = true" @blur="item.clicked = false" :required="item.required" :v-model="item.value"
+            @input="event => item.value = event.target.value" />
+        </template>
+        <template v-else>
+          <span class="list-item-value">{{ item.value }}</span>
+        </template>
+      </a-list-item>
+    </a-list>
+
+    <!-- ****************************************************************************************************************
+****************************************************************************************************************
+**************************************************************************************************************** -->
+
+
+    <div class="title">Basic Information of the list</div>
+    <div class="custom-list">
+      <van-cell-group>
+        <van-cell v-for="(item, index) in data2" :key="index" :class="{ 'no-border': !item.editable }"
+          :title="item.label" :required="item.required" class="custom-field">
+
+          <template v-if="item.editable">
+            <a-input v-if="item.type === 'input'" class="list-item-input1" :placeholder="item.placeholder"
+              :class="{ 'no-border': item.clicked }" @focus="item.clicked = true" @blur="item.clicked = false"
+              :required="item.required" :v-model="item.value" @input="event => item.value = event.target.value" />
+            <a-input-password v-else-if="item.type === 'Password'" class="list-item-input1"
+              :placeholder="item.placeholder" :visibilityToggle="false" :v-model="item.value"
+              @input="event => item.value = event.target.value" />
+            <a-textarea v-else-if="item.type === 'Reason'" class="list-item-input1" :placeholder="item.placeholder"
+              @focus="item.clicked = true" @blur="item.clicked = false" :auto-size="{ minRows: 3, maxRows: 3 }"
+              :required="item.required" :v-model="item.value" @input="event => item.value = event.target.value" />
+
+            <template v-else-if="item.type === 'select'">
+              <van-field readonly clickable :value="item.value" :placeholder="item.placeholder" @click="openPopup(item)"
+                input-align="right" class="borderless-picker" />
+              <van-popup v-model="item.showPopup" round position="bottom">
+                <van-picker title="Select" show-toolbar :columns="item.options" @cancel="hidePopup(item)"
+                  @confirm="value => applicationdatachange(item, value)" confirm-button-text="Confirm"
+                  cancel-button-text="Cancel" />
+              </van-popup>
+            </template>
+          </template>
+          <template v-else>
+            <span class="list-item-value1">{{ item.value }}</span>
+          </template>
+        </van-cell>
+
+      </van-cell-group>
+    </div>
+    <div class="card-container">
+      <div class="card-button">
+        <a-button type="primary" shape="round" @click="submitpopup">Submit</a-button>
+      </div>
+    </div>
+    <terms :showPopup="showPopup" @agreepopup="agreepopup" ref="popup" />
+  </div>
+</template>
+/* eslint-disable no-console */
+
+<script>
+import { Cell, Popup, Picker, CellGroup, Field, Loading } from 'vant';
+import axios from "axios";
+import CryptoJS from "crypto-js";
+import terms from './components/terms.vue';
+import http from '../../../utils/request.js';
+import { set } from 'core-js/core/dict';
+
+// const empId = this.EmpNo;
+export default {
+
+  components: {
+    'van-cell': Cell,
+    'van-popup': Popup,
+    'van-picker': Picker,
+    'van-cell-group': CellGroup,
+    'van-field': Field,
+    'van-loading': Loading,
+
+    terms,
+    http,
+  },
+  data() {
+    return {
+      employee: {
+        empId: "",
+        name: "",
+        department: "",
+        OrgId: ''
+      },
+      NdaStatus: false,
+      Projectsdata: [],
+      projectvalidation: false,
+      applicationType: [],
+      NdaProject: [],
+      Validitydate: [],
+      applicationoptions: [],
+      baseSiteId: '',
+      SalaryGrade: '',
+      loadingVisible: false,
+      formCode: '',
+      error: "",
+      iwxKey: "facd81g656fcd8p7a7lkh6dfa81gf4ik", // Update with your IWx key
+      strID: "",
+      EmpNo: "",
+      adomainstatus: false,
+      value: '',
+      showPicker: false,
+      showPopup: false,
+      data: [
+        { label: 'Employee ID', value: '', placeholder: 'Employee ID', required: true, api: 'EMP_ID' },
+        { label: 'Employee Name', value: '', placeholder: 'Enter Employee Name', api: 'EMP_NAME' },
+        { label: 'Department', value: '', placeholder: 'Department', api: 'DEPARTMENT' },
+        { label: 'Job Title', value: '', placeholder: 'Job Title', api: 'JOB_TITLE' },
+        { label: 'Site', value: '', placeholder: 'Site', api: 'SITE' },
+        { label: 'Salary Grade', value: '', placeholder: 'Salary Grade', api: 'SALARY_GRADE' },
+        { label: 'Ext Number', value: '', editable: true, placeholder: 'Eg: 53326XXX', required: true, api: 'EXIT_NUMBER' },
+        { label: 'Phone', value: '', editable: true, placeholder: 'Phone', required: true, api: 'PHONE' },
+        { label: 'Email', value: '', editable: true, placeholder: 'Email', required: true, api: 'EMAIL' },
+      ],
+
+
+      data2: [
+        { label: 'Account Name', value: '', placeholder: 'Account Name', type: 'data', required: true, api: 'Account_Name' },
+        {
+          label: 'Application Type',
+          value: '',
+          editable: true,
+          type: 'select',
+          options: [],
+          required: true,
+          showPopup: false,
+          api: 'APPLICATION_TYPE',
+          placeholder: 'Application type'
+        },
+        {
+          label: 'Reason',
+          value: '',
+          editable: true,
+          type: 'Reason',
+          placeholder: 'Reason',
+          required: true,
+          api: 'REASON'
+        },
+      ],
+      formdata: [],
+
+    };
+
+  },
+  computed: {
+    indicatorColor() {
+      return {
+        color: '#4686e3',
+
+      };
+    },
+  },
+  beforeDestroy() {
+    // Remove the click event listener when the component is destroyed
+    document.body.removeEventListener("click", this.handleOutsideClick);
+  },
+
+  methods: {
+
+    //////Get EMPNo from app/////////////////////////  
+    getEmpNoByAPP() {
+      this.EmpNo = "HH0027490";
+      // this.EmpNo = 'HH0003261';
+      this.getndaform();
+      this.getUserBaseInfo(this.EmpNo);
+      this.data[0].value = this.EmpNo;
+      this.data2[0].value = this.EmpNo;
+      window.callH5 = (data) => {
+        data = JSON.parse(data);
+        this.EmpNo = data.empNo;
+        this.getndaform();
+        this.getUserBaseInfo(this.EmpNo);
+        // console.log(this.data)
+        this.data[0].value = this.EmpNo;
+        this.data2[0].value = this.EmpNo;
+      };
+      this.$callNative.callNative2({ share: "key" });
+    },
+    /////////////////////EnD of Get EMPNo from app//////////
+
+    handleOutsideClick(event) {
+      if (!this.showPopup || !this.$refs.popup) return; // Prevent errors
+
+      const popupElement = this.$refs.popup.$el;
+      if (popupElement && !popupElement.contains(event.target)) {
+        this.showPopup = false;
+      }
+    },
+
+
+    //////////////////////////////////////////
+    async getndaform() {
+      await this.GetBasecodeinfo();
+      this.$http.iwxPosts2({
+        body: {
+          EmpNo: this.EmpNo,
+          Func: "NDA&ARPA Form-CheckApplyPeopleAPP"
+        },
+        isEncrypt: true,
+        encryptKey: "facd81g656fcd8p7a7lkh6dfa81gf4ik",
+        config: {
+          headers: {
+            apiID: "ffff-1721184618997-10208193125-0443",
+            userKey: "C44F773FD87E7E41174D6A58B162B049",
+          },
+        },
+      }).then((res) => {
+        console.log(res)
+        const resData = res.List;
+        if (res.List && res.List.length > 0) {
+          this.Projectsdata = resData.map(nda => ({
+            projectName: nda.ProductName,
+            validityDate: nda.ValidityEnd
+          }));
+          this.NdaStatus = true
+        } else {
+          this.NdaStatus = false;
+        }
+
+      })
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /////////////Get User Data /////////////////////////////
+
+    async getUserBaseInfo(empId) {
+      this.$http.iwxPosts2({
+        body: {
+          EmployeeCode: empId,
+          Func: "FIHManage-GetEMPBaseInfo"
+        },
+        isEncrypt: true,
+        encryptKey: "facd81g656fcd8p7a7lkh6dfa81gf4ik",
+        config: {
+          headers: {
+            apiID: "ffff-1669620301290-16925411121-5665",
+            userKey: "C44F773FD87E7E41174D6A58B162B049",
+          },
+        },
+      }).then((res) => {
+        if (res.List && res.List.length > 0) {
+          const responseData = res.List[0];
+          // console.log (responseData)
+          this.employee = {
+            empId: empId,
+            name: responseData.EmployeeName,
+            department: responseData.Department,
+            OrgId: responseData.OrgId
+          };
+          this.SalaryGrade = responseData.SalaryGrade;
+          this.baseSiteId = responseData.SiteId;
+          if (responseData.Site == 'FXCN') {
+            this.SiteID = 56688
+          } else if (responseData.Site == 'FXBL') {
+            this.SiteID = 56689
+          }
+          this.data.forEach((item) => {
+            if (item.label === 'Employee Name') {
+              item.value = responseData.EmployeeName;
+            } else if (item.label === 'Department') {
+              item.value = responseData.Department;
+            } else if (item.label === 'Job Title') {
+              item.value = responseData.Designation;
+            }
+            else if (item.label === 'Site') {
+              item.value = responseData.Site;
+            }
+            else if (item.label === 'Salary Grade') {
+              item.value = responseData.SalaryGrade;
+            }
+          },
+          );
+          this.fetchempformStatus();
+        } else {
+          console.error("No employee data found");
+        }
+      }).catch((error) => {
+        console.error(error);
+      })
+    },
+
+    /////////////////////EnD of Get User Data//////////
+
+
+    ///////GEt Engine show flow///////
+    async getEngineShowFlows() {
+      // await this.fetchempformStatus();
+      const body = {
+        strFormID: "9889",
+        strFormCode: "",
+        strFormStatus: "",
+        strIsFix: "N",
+        strProcessValues: this.basecode.toString(),
+        strFactorValue: this.SiteID.toString(),
+        strDeptID: this.employee.OrgId.toString(), // Use orgId property
+        strEmpNo: this.employee.empId,
+        strAssigns: "",
+        strUser: this.employee.empId,
+      };
+
+
+      this.$http.iwxPosts2({
+        body,
+        isEncrypt: false,
+        config: {
+          headers: {
+            apiID: "ffff-1652233446907-17229253125-0373",
+            userKey: '4D0239E133AD024F0BDFEFD75580CA05'
+          }
+        },
+
+      }).then((res) => {
+
+        if (res.length > 0) {
+          const data = res[0];
+          if (data.strErrResult) {
+            this.$message.error(data.strErrResult);
+          } else {
+            this.strID = data.strID;
+            this.formCode = data.strFormCode;
+            console.log(this.formCode)
+            return data.strFormCode; // Return the formCode value
+          }
+        } else {
+          console.error("No data found");
+        }
+      }).catch((error) => {
+        console.error(error);
+      })
+      return '';
+    },
+
+
+
+    async fetchempformStatus() {
+      try {
+        const res = await this.$http.iwxPosts2({
+          body: {
+            emp_id: this.EmpNo,
+          },
+          isEncrypt: false,
+          config: {
+            headers: {
+              apiID: "ffff-1687585700029-17229253125-0164",
+              userKey: "10A33A67A312E649D907BBC927995B8A",
+            },
+          },
+        });
+
+        const Apply = res.Data;
+
+const filteredBookings = Apply.filter(
+  (booking) =>
+    booking.EMP_ID === this.EmpNo &&
+    booking.APPLICATION_TYPE &&
+    booking.CREATED_DATE &&
+    (booking.FORM_STATUS === "1" || booking.FORM_STATUS === "2")
+);
+
+const applicationTypeField = this.data2.find(
+  (field) => field.label === "Application Type"
+);
+
+let allowedValues = [];
+
+if (filteredBookings.length > 0) {
+  for (const booking of filteredBookings) {
+    const { APPLICATION_TYPE: applicationType, FORM_STATUS: formStatus } = booking;
+    const mapid = this.applicationType.find(item => item.label === applicationType);
+
+    // Skip if mapid not found (defensive check)
+    if (!mapid) continue;
+
+    const isFormInProgress = formStatus === "1" || formStatus === "2";
+/// 
+    if (applicationTypeField) {
+      if (!isFormInProgress) {
+        allowedValues = [97717, 97718, 97719];
+      } else {
+        console.log("mapid.value", mapid.value);
+        switch (mapid.value) {
+          case 97719:
+            allowedValues = this.NdaStatus ? [97718, 97717] : [97718];
+            break;
+          case 97717:
+            allowedValues = this.NdaStatus ? [97717, 97718] : [97718];
+            break;
+          case 97718:
+            allowedValues = this.NdaStatus ? [97717, 97718] : [97718];
+            break;
+          default:
+            allowedValues = [97717, 97718, 97719];
+        }
+      }
+
+      applicationTypeField.options = this.applicationType
+        .filter(item => allowedValues.includes(item.value))
+        .map(item => item.label);
+        // console.log("applicationTypeField.options", this.applicationType);
+    }
+
+    // Error if the same type of form is already in progress
+    if (isFormInProgress && formStatus === "1" && [97717, 97718, 97719].includes(mapid.value)) {
+      this.$message.error(
+        `You have already applied for ${applicationType} and it is in signing.`
+      );
+      return false;
+    }
+  }
+          return true;
+        } else {
+          // When there are no prior bookings
+          console.log("mapid", filteredBookings)
+          if (this.NdaStatus && this.SalaryGrade.startsWith("ENG")) {
+            allowedValues = [97718, 97717];
+          } else if (!this.SalaryGrade.startsWith("ENG")) {
+            allowedValues = [97719, 97718, 97717];
+          } else {
+            allowedValues = [97718];
+          }
+          console.log(this.applicationType)
+          if (applicationTypeField) {
+            applicationTypeField.options = this.applicationType
+              .filter((item) => allowedValues.includes(item.value))
+              .map((item) => item.label);
+          }
+
+          return true;
+        }
+      } catch (err) {
+        console.log("异常:", err);
+        throw err;
+      }
+    },
+
+
+    strDiff(s1, s2) {
+      let t, inter, a1, a2, interStr, orgS1, res;
+      a1 = s1.toUpperCase().split('');
+      a2 = s2.toUpperCase().split('');
+      t = a2, a2 = a1, a1 = t;
+      // console.log(a1, a2)
+      inter = a1.filter(function (e) {
+        if (a2.indexOf(e) !== -1) return true;
+      });
+      interStr = inter.join('');
+      orgS1 = s1.toUpperCase();
+      if (interStr.length > 0) {
+        res = orgS1.indexOf(interStr);
+      } else {
+        res = -1;
+      }
+      // console.log(res)
+      return res;
+    },
+
+
+
+
+
+
+
+
+
+
+    checkRequiredFields() {
+      const allData = [...this.data, ...this.data2];
+      for (const item of allData) {
+        // if(item.required && !item.value){
+        //   this.$message.error("Please Fill the "+item.label+" field");
+        //   return false 
+        // }
+
+      }
+      return true;
+    },
+    passwordvalitation(user, pass) {
+      const usernameParts = user.toLowerCase().split(' ');
+      const password = pass.toLowerCase();
+
+      return usernameParts.some(part => password.includes(part));
+    },
+    async submitpopup() {
+
+      if (this.basecode && !this.formCode) {
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+
+      const formcheck = await this.fetchempformStatus();
+
+
+      if (formcheck == true) {
+        if (!this.checkRequiredFields()) {
+          this.$message.error("please Fill all required Fields");
+          return;
+        }
+
+
+        if (!this.adomainstatus && this.basecode === 97717) {
+          this.$message.error("You can't apply for this account, apply for NDA & ARPA");
+          return;
+        }
+
+
+
+
+        const extCheck = this.data.find(item => item.api === 'EXIT_NUMBER');
+        const extvalue = extCheck.value;
+        const extnumberRegex = /^\d+$/;
+
+        if (!extvalue) {
+          this.$message.error('Please fill Extension field');
+          return;
+        } else if (!extnumberRegex.test(extvalue)) {
+          this.$message.error('Fill Extension Number without Symbols like( - , : ; )');
+          return;
+        }
+        if (this.basecode == 97719 || this.basecode == 97718) {
+          const passwordField = this.data2.find(item => item.label === 'Password');
+          const confirmPasswordField = this.data2.find(item => item.label === 'Confirm Password');
+          const password = passwordField.value;
+          const confirmPassword = confirmPasswordField.value;
+
+          const passcheck = this.strDiff(this.employee.name, password)
+          const passusercheck = this.passwordvalitation(this.EmpNo, password)
+
+          if (!password || !confirmPassword) {
+            this.$message.error('Please fill in both password fields');
+            return;
+          } 
+          
+          if (password !== confirmPassword) {
+            this.$message.error('The password and confirm password fields must match.');
+            return;
+          } 
+          
+          if (password.length < 12) {
+            this.$message.error('Password must be at least 12 characters long');
+            return;
+          }
+          
+          if (!/[!@#$%^&*]/.test(password)) {
+            this.$message.error('Password must contain at least one symbol (!, @, #, $, %, ^, &, *)');
+            return;
+          } 
+        
+          if (!/[A-Z]/.test(password)) {
+            this.$message.error('Need to contain atleast one captilization');
+            return;
+          } 
+          
+          if (passcheck != -1) {
+            // console.log("passcheck", passcheck)
+            this.$message.error("Password should not contains your name")
+            return;
+          }
+          
+           if (passusercheck == true) {
+            this.$message.error("Password should not contains your EmpID")
+            return;
+          }
+
+          const emailField = this.data.find(item => item.label === 'Email');
+          const email = emailField.value;
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+          if (!email) {
+            this.$message.error('Please fill in the Email field');
+            return;
+          } else if (!emailRegex.test(email)) {
+            this.$message.error('Invalid email format');
+            return;
+          }
+          const phoneField = this.data.find(item => item.label === 'Phone');
+          const phone = phoneField.value;
+          const phoneRegex = /^\d{10}$/;
+
+          if (!phone) {
+            this.$message.error('Please fill in the Phone field');
+            return;
+          } else if (!phoneRegex.test(phone)) {
+            this.$message.error('Invalid phone number format. Phone number should be 10 digits');
+            return;
+          }
+        }
+        this.showPopup = true;
+      }
+
+    },
+
+    agreepopup() {
+      this.showPopup = false;
+    },
+
+    engFormCreateLog() {
+      console.log(this.strID)
+      this.$http.iwxPosts2({
+        body: {
+          strID: this.strID
+        },
+        isEncrypt: false,
+        config: {
+          headers: {
+            apiID: "ffff-1652233900345-17229253125-0377",
+            userKey: "4D0239E133AD024F0BDFEFD75580CA05"
+          },
+        },
+      }).then((res) => {
+        console.log(res)
+        if (res[0].strRes == '' || res[0].strRes == "True") {
+          this.loadingVisible = false;
+          this.$message.success("Your Form has been submitted..")
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          this.$message.error(res[0].strResult);
+          // this.delForm();
+        }
+      })
+        .catch((error) => {
+          this.$message.error(error)
+          this.loadingVisible = false;
+          console.error(error);
+        });
+    },
+
+
+    async submitForm() {
+      this.loadingVisible = true;
+      const hasEmptyRequiredField = () => {
+        const allFields = [...this.data, ...this.data2];
+        for (const item of allFields) {
+          if (item.required && (!item.value || item.value.trim() === '')) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+
+
+      if (hasEmptyRequiredField()) {
+        this.$message.error("Please fill in all required fields");
+      } else {
+        this.data.forEach((item) => {
+          item.value = item.value || '';
+        });
+        this.data2.forEach((item) => {
+          item.value = item.value || '';
+        });
+        this.$http.iwxPosts2({
+          body: {
+            ...this.data.reduce((obj, item) => {
+              obj[item.api] = item.value;
+              return obj;
+            }, {}),
+            ...this.data2.reduce((obj, item) => {
+              obj[item.api] = item.value;
+              return obj;
+            }, {}),
+            FORM_CODE: this.formCode,
+            ORG_ID: this.employee.OrgId.toString(),
+          },
+          isEncrypt: false,
+          config: {
+            headers: {
+              apiID: "ffff-1687585389149-17229253125-0162",
+              userKey: "10A33A67A312E649D907BBC927995B8A"
+
+            },
+          },
+
+        }).then((res) => {
+          console.log(res)
+          this.loadingVisible = false;
+          this.engFormCreateLog();
+        })
+          .catch((error) => {
+            this.$message.error(error)
+            this.loadingVisible = false;
+            console.error(error);
+          });
+
+      }
+    },
+
+
+    async GetBasecodeinfo() {
+      const body = {
+        Func: "BaseCode-GetBaseCode",
+        CodeTypeId: "95222",
+      };
+      this.$http.iwxPosts2({
+        body,
+        isEncrypt: true,
+        encryptKey: "facd81g656fcd8p7a7lkh6dfa81gf4ik",
+        config: {
+          headers: {
+            apiID: "ffff-1638848676705-17229253125-0342",
+            userKey: '4D0239E133AD024F0BDFEFD75580CA05'
+          }
+        },
+
+      }).then((res) => {
+        if (res.List.length > 0) {
+          console.log(res)
+          const data = res.List;
+
+          if (data.strErrResult) {
+            this.$message.error(data.strErrResult);
+          } else {
+
+            this.applicationType = data.map(item => ({
+              value: item.Id,
+              label: item.CodeDesc
+            }));
+            this.data2.forEach((item) => {
+              if (item.api === 'APPLICATION_TYPE') {
+                const applicationTypeField = this.data2.find(field => field.label == 'Application Type');
+                // applicationTypeField.options = this.applicationType.map(item => item.label);
+                console.log(applicationTypeField.options)
+                this.applicationoptions = this.applicationType.map(item => item.label);
+                //  applicationTypeField.value = this.applicationType.map(item => item.value);
+                //  console.log(applicationTypeField.options)
+              }
+            },)
+
+          }
+        } else {
+          console.error("No data found");
+        }
+      }).catch((error) => {
+        console.error(error);
+      })
+      return '';
+    },
+
+
+
+
+
+
+
+
+    applicationdatachange(item, value) {
+      console.log(item, value)
+      if (item.api == 'PROJECT_NAME') {
+        item.value = value;
+        item.showPopup = false;
+
+
+        const project = this.Projectsdata.find(p => p.projectName.toLowerCase() === value.toLowerCase());
+        console.log("Found Project:", project);
+
+        if (project) {
+          console.log("Validity Date:", project.validityDate);
+          console.log(project.validityDate.split('/'))
+          const [day, month, year] = project.validityDate.split('/');
+          console.log(day, month, year);
+
+
+          const currentDate = new Date();
+          if (day && month && year) {
+            const formattedDate = new Date(`${year}-${month}-${day}`);
+            console.log("Formatted Date:", formattedDate);
+            this.projectvalidation = currentDate < formattedDate;
+
+            if (!this.projectvalidation) {
+              this.$message.error("Project is expired, Apply again for NDA form")
+              item.value = '';
+              return;
+            }
+          } else {
+            console.error("Invalid Date");
+            this.projectvalidation = false;
+          }
+        } else {
+          this.$message.error("Submit a NDA Form for this project")
+          item.value = '';
+        }
+      }
+      else {
+        this.data2 = this.data2.filter(
+              field => !['Host Name', 'Project', 'IP Address', 'Location', 'Reason','Password', 'Confirm Password'].includes(field.label)
+            );
+        const selectedOption = this.applicationType.find(item => item.label === value);
+        this.basecode = selectedOption.value;
+        item.value = selectedOption.label;
+        console.log(this.basecode)
+
+        if (!this.NdaStatus && this.basecode === 97717) {
+          this.$message.error("You can't apply for this account, apply for NDA &ARPA");
+          this.adomainstatus = false;
+          item.showPopup = false;
+        } else {
+          this.adomainstatus = true;
+          item.showPopup = false;
+          this.getEngineShowFlows();
+          setTimeout(() => {
+            this.getProjectDetails();
+          }, 200);
+          this.data2 = this.data2.filter(
+            field => !['Host IP'].includes(field.label)
+          );
+
+          if (this.basecode === 97717) {
+            this.data2 = this.data2.filter(
+              field => !['Host Name', 'Project', 'IP Address', 'Location', 'Reason',].includes(field.label)
+            );
+
+            this.data2.push(
+              { label: 'Host Name', value: '', type: "input", editable: true, placeholder: 'Host Name', required: true, api: 'HOST_NAME' },
+
+
+              // { label: 'Project', value: '', type: "select", options: [], editable: true, placeholder: 'Projects', required: true, api: 'PROJECT_NAME' },
+              {
+                label: 'Project',
+                value: '',
+                editable: true,
+                type: 'select',
+                options: [],
+                required: true,
+                showPopup: false,
+                api: 'PROJECT_NAME',
+                placeholder: 'Project'
+              },
+              { label: 'IP Address', value: '', type: "input", editable: true, placeholder: 'IP Address', required: true, api: 'HOST_IP' },
+              { label: 'Location', value: '', type: "input", editable: true, placeholder: 'Location', required: true, api: 'LOCATION' },
+              {
+                label: 'Reason',
+                value: '',
+                editable: true,
+                type: 'Reason',
+                placeholder: 'Reason',
+                required: true,
+                api: 'REASON'
+              },
+            );
+          }
+            // else if (this.basecode === 97718) {    
+            //   this.data2.push(
+            //   {
+            //     label: 'Reason',
+            //     value: '',
+            //     editable: true,
+            //     type: 'Reason',
+            //     placeholder: 'Reason',
+            //     required: true,
+            //     api: 'REASON'
+            //   },
+            // )
+            //       }
+          else {
+            this.data2 = this.data2.filter(
+              field => !['Password', 'Confirm Password', 'Reason'].includes(field.label)
+            );
+
+            this.data2.push(
+              { label: 'Password', value: '', editable: true, type: 'Password', placeholder: 'Password', required: true, api: 'PASSWORD' },
+              { label: 'Confirm Password', value: '', editable: true, type: 'Password', placeholder: 'Confirm Password', required: true, api: 'PASSWORD' },
+              {
+                label: 'Reason',
+                value: '',
+                editable: true,
+                type: 'Reason',
+                placeholder: 'Reason',
+                required: true,
+                api: 'REASON'
+              },
+            )
+          }
+
+        }
+      }
+    },
+
+
+    async getProjectDetails() {
+      console.log(this.baseSiteId)
+      const body = {
+        Func:  this.baseSiteId === 95326 ? "Basic data-searchProjectBase_BL": "Basic data-searchProjectBase",
+        Factoryid: this.baseSiteId,
+        ProjectStatus: '1',
+        Pageindex: '1',
+        Pagesize: '100000'
+      };
+      this.$http.iwxPosts2({
+        body,
+        isEncrypt: true,
+        encryptKey: "facd81g656fcd8p7a7lkh6dfa81gf4ik",
+        config: {
+          headers: {
+            apiID: this.baseSiteId === 95326 ? "ffff-1497167435203-10208193125-0360" : "ffff-1697167435203-10208193125-0360",
+            userKey: this.baseSiteId === 95326 ?'E4730E73A8ACD9919E4238ADD62C38FF':'1846BE74D8ABA0B708C8ADF0CAB8C8BB'
+          }
+        },
+
+      }).then((res) => {
+        const resdata = res.List;
+        console.log(res)
+        if (res.List && res.List.length > 0) {
+          this.ProductName = Array.from(
+            new Set(resdata.map(item => item.ProjectName))
+          ).map(projectName => ({
+            value: projectName,
+            label: projectName
+          }));
+
+
+
+
+          this.data2.forEach((item) => {
+            if (item.api === 'PROJECT_NAME') {
+              const applicationTypeField = this.data2.find(field => field.label == 'Project');
+
+              applicationTypeField.options = this.ProductName.map(item => item.label);
+              console.log(applicationTypeField.options)
+              //  applicationTypeField.value = this.applicationType.map(item => item.value);
+              //  console.log(applicationTypeField.options)
+            }
+          },)
+
+        } else {
+          console.error("No data found");
+        }
+
+
+      }).catch((error) => {
+        console.error(error);
+      })
+      return '';
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+    openPopup(item) {
+      item.showPopup = true;
+    },
+    hidePopup(item) {
+      item.showPopup = false;
+    },
+    onConfirm(item, value) {
+      item.value = value;
+      item.showPopup = false;
+    },
+    getTitle(item) {
+      if (item.required) {
+        return item.label;
+      }
+      return item.label;
+    },
+    submitPopup() {
+      this.showPopup = false;
+    }
+    ,
+  },
+
+  mounted() {
+
+    this.getEmpNoByAPP();
+
+    this.$bus.$on('submitForm', this.submitForm);
+    document.body.addEventListener("click", this.handleOutsideClick);
+  },
+  beforeDestroy() {
+    this.$bus.$off('submitForm', this.submitForm);
+  },
+  // clearData(){
+  //     this.data.forEach((item) => {
+  //               if (item.label === 'Ext Number') {
+  //                 item.value = '';
+  //               } else if (item.label === 'Phone') {
+  //                 item.value = '';
+  //               } else if (item.label === 'Email') {
+  //                 item.value = '';
+  //               }
+  //               else if(item.label == 'Password' && 'Confirm Password'){
+  //                 item.value = '';
+  //               }
+  //             else if (item.label === 'Application Type') {
+  //                 item.value = '';
+  //               } else if (item.label === 'Reason') {
+  //                 item.value = '';
+  //               }else{
+
+  //               }
+  //             })
+  //   }
+
+
+};
+
+
+
+
+</script>
+
+/* eslint-enable no-console */
+<style lang="scss">
+html body {
+  background-color: #b4b4b436;
+}
+
+.App {
+  padding: 5px;
+  width: 100%;
+}
+
+.title {
+  font-size: 12px;
+  font-weight: 900;
+  color: #3b7fe2;
+  padding: 5px 0px 5px 10px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.custom-list {
+  background-color: #ffffff;
+}
+
+.item {
+  padding: 5px;
+  border-color: rgba(128, 128, 128, 0.137);
+}
+
+.list-item-label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  color: grey;
+}
+
+.list-item-input {
+  width: 50%;
+  border: none;
+  padding: 0;
+  border-color: white;
+  text-align: right;
+  height: 20px;
+  line-height: 20px;
+}
+
+.no-border {
+  border: none;
+  border-color: transparent;
+  outline: none;
+}
+
+.list-item-input1 {
+  width: 100%;
+  border: none;
+  padding: 0;
+  border-color: white;
+  text-align: right;
+  height: 20px;
+  line-height: 20px;
+}
+
+.list-item-input::placeholder {
+  font-size: 12px;
+  color: #3d3d3d59;
+}
+
+.list-item-value {
+  font-size: 12px;
+  color: black;
+}
+
+.list-item-input1::placeholder {
+  font-size: 12px;
+  color: #3d3d3d59;
+}
+
+.list-item-value1 {
+  font-size: 12px;
+  color: black;
+}
+
+
+.van-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.card-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+}
+
+.card-button {
+  text-align: right;
+  justify-content: center;
+  padding: 5px 10px 5px 0;
+}
+
+.align-top {
+  vertical-align: top;
+}
+
+.mandatory-indicator {
+  color: red;
+}
+
+.lablestyle {
+
+  padding: 0;
+}
+
+.borderless-picker {
+  padding: 0;
+
+}
+
+.borderless-picker .van-cell::after {
+  display: none;
+}
+
+.selected-value {
+  flex-grow: 1;
+  text-align: right;
+  color: #999;
+}
+
+.custom-field {
+  padding: 5px 5px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  color: gray,
+
+}
+
+.van-cell--required::before {
+  position: initial;
+  left: 8px;
+  color: #ee0a24;
+  font-size: 14px;
+  content: '*';
+}
+</style>
