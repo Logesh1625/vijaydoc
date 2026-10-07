@@ -1,74 +1,330 @@
 export let ouacServiceUrl: string;
 export let serviceUrl: string;
+
 export let iwxServiceUrl: string;
 export let iwxServiceUrl2: string;
 export let iwxServiceUrllog: string;
 export let iwxServiceUrlNew: string;
+
 export let toolsServiceUrl: string = "";
 export let toolsServiceUrlNew: string = "";
+
 export let uploadFileServiceUrl: string = "";
 export let uploadFileServiceUrlNew: string = "";
+
 export let iwxServiceUrlNew1: string;
 
+
+/**
+ * Initialize URL configuration
+ */
 ((doc) => {
   urlManage();
 })(document);
 
-function urlManage() {
-  iwxServiceUrlNew1 = "https://microservice.abgind.foxconn.com/india/gateway";
-  iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
-  iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
-  iwxServiceUrl2 = "https://microservice.abgind.foxconn.com/india/gateway";
-  serviceUrl = "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";
-  ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com?SysCode=LMS_INDIA&NewVersion=V401";
-  toolsServiceUrl = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
-  uploadFileServiceUrl = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
 
-  const host = window.location.host;
+/**
+ * URL Management
+ */
+function urlManage() {
+
+  // =====================================================
+  // DEFAULT VALUES
+  // =====================================================
+
+  iwxServiceUrlNew1 =
+    "https://microservice.abgind.foxconn.com/india/gateway";
+
+  iwxServiceUrllog =
+    "http://10.208.193.125:8086/gateway/manager";
+
+  iwxServiceUrl =
+    "https://microservice.abgind.foxconn.com/india/gateway";
+
+  iwxServiceUrl2 =
+    "https://microservice.abgind.foxconn.com/india/gateway";
+
+  serviceUrl =
+    "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";
+
+  ouacServiceUrl =
+    "https://ouac.idpbgind.efoxconn.com?SysCode=ISMS_INDIA&NewVersion=V401";
+
+  toolsServiceUrl =
+    "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
+
+  uploadFileServiceUrl =
+    "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
+
+
+  // =====================================================
+  // CURRENT HOST
+  // =====================================================
+
+  const host =
+    window.location.host.toLowerCase();
+
+  console.log("====================================");
+  console.log("Current Host:", host);
+  console.log(
+    "Current Protocol:",
+    window.location.protocol
+  );
+
+
+  // =====================================================
+  // INDIA / LIVE CONFIGURATION
+  // =====================================================
 
   if (
     host === "isms.idpbgind.efoxconn.com" ||
+
     host === "10.208.193.124:8000" ||
+
     host === "10.208.192.44:9001" ||
+
     host === "10.209.110.101:4207" ||
+
     host === "10.209.110.94:4207" ||
+
     host === "10.209.122.166:4209" ||
-    host === "localhost:4207" ||
+
     host === "10.209.110.208:4207" ||
+
     host === "10.209.110.187:4207" ||
+
+    // Local development
     host === "localhost:4207" ||
-     host === "localhost:80"  ||
-      host === "10.209.122.132:80" ||
-        host === "10.209.122.1327:80" 
+
+    // IIS server
+    host === "10.209.122.132" ||
+
+    host === "10.209.122.132:80" ||
+
+    host === "localhost" ||
+
+    host === "localhost:80"
   ) {
-    iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
-    iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";
-    iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
-    toolsServiceUrlNew = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
-    uploadFileServiceUrlNew = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
-  } else if (host === "lms.idpbgtn.efoxconn.com") {
-    serviceUrl = "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";
-    ouacServiceUrl = "https://ouac.idpbgtn.efoxconn.com?SysCode=LMS_INDIA";
-    toolsServiceUrl = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
-    uploadFileServiceUrl = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
-    iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
 
-    iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";
-    iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";
-    toolsServiceUrlNew = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
-    uploadFileServiceUrlNew = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
-  } else {
-    iwxServiceUrllog = "http://10.208.193.125:8086/gateway/manager";
+    console.log(
+      "Environment: INDIA / LIVE CONFIGURATION"
+    );
 
-    iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";
-    iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";
-    toolsServiceUrlNew = "http://10.208.193.152/APIFurnace/api2/N";
-    uploadFileServiceUrlNew = "http://10.208.193.124:5689/FileWebService.asmx";
 
-    if (window.location.protocol === "http:") {
-      ouacServiceUrl = "http://ouac.idpbgind.efoxconn.com:8080/?SysCode=LMS_INDIA&NewVersion=V401";
+    // ---------------------------------------------------
+    // Gateway
+    // ---------------------------------------------------
+
+    iwxServiceUrllog =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrl =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrl2 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrlNew1 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrlNew =
+      "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrlNew =
+      "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
+  }
+
+
+  // =====================================================
+  // TN CONFIGURATION
+  // =====================================================
+
+  else if (
+    host === "lms.idpbgtn.efoxconn.com" ||
+    host === "isms.idpbgtn.efoxconn.com"
+  ) {
+
+    console.log(
+      "Environment: TN CONFIGURATION"
+    );
+
+
+    // ---------------------------------------------------
+    // Service URL
+    // ---------------------------------------------------
+
+    serviceUrl =
+      "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";
+
+
+    // ---------------------------------------------------
+    // OUAC
+    // ---------------------------------------------------
+
+    ouacServiceUrl =
+      "https://ouac.idpbgtn.efoxconn.com?SysCode=LMS_INDIA";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrl =
+      "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrl =
+      "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
+
+
+    // ---------------------------------------------------
+    // Gateway
+    // ---------------------------------------------------
+
+    iwxServiceUrllog =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrl =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrl2 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrlNew1 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrlNew =
+      "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrlNew =
+      "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
+  }
+
+
+  // =====================================================
+  // TEST / OTHER ENVIRONMENT
+  // =====================================================
+
+  else {
+
+    console.log(
+      "Environment: TEST / OTHER CONFIGURATION"
+    );
+
+
+    // ---------------------------------------------------
+    // Gateway
+    // ---------------------------------------------------
+
+    iwxServiceUrllog =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrl =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrl2 =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew1 =
+      "http://10.208.193.125:8086/gateway/manager";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrlNew =
+      "http://10.208.193.152/APIFurnace/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrlNew =
+      "http://10.208.193.124:5689/FileWebService.asmx";
+
+
+    // ---------------------------------------------------
+    // OUAC
+    // ---------------------------------------------------
+
+    if (
+      window.location.protocol === "http:"
+    ) {
+
+      ouacServiceUrl =
+        "http://ouac.idpbgind.efoxconn.com:8080/?SysCode=LMS_INDIA&NewVersion=V401";
+
     } else {
-      ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com/?SysCode=LMS_INDIA&NewVersion=V401";
+
+      ouacServiceUrl =
+        "https://ouac.idpbgind.efoxconn.com/?SysCode=LMS_INDIA&NewVersion=V401";
     }
   }
+
+
+  // =====================================================
+  // FINAL DEBUG
+  // =====================================================
+
+  console.log(
+    "iwxServiceUrl:",
+    iwxServiceUrl
+  );
+
+  console.log(
+    "iwxServiceUrlNew:",
+    iwxServiceUrlNew
+  );
+
+  console.log(
+    "iwxServiceUrllog:",
+    iwxServiceUrllog
+  );
+
+  console.log(
+    "serviceUrl:",
+    serviceUrl
+  );
+
+  console.log(
+    "ouacServiceUrl:",
+    ouacServiceUrl
+  );
+
+  console.log("====================================");
 }
