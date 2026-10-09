@@ -1,4 +1,5 @@
 import { SettingsService, _HttpClient } from "@delon/theme";
+
 import {
   Component,
   OnInit,
@@ -7,19 +8,44 @@ import {
   Optional,
   HostListener
 } from "@angular/core";
+
 import { Router } from "@angular/router";
 import { FormGroup, FormBuilder } from "@angular/forms";
-import { NzMessageService, NzModalService } from "ng-zorro-antd";
-import { ITokenService, DA_SERVICE_TOKEN } from "@delon/auth";
+
+import {
+  NzMessageService,
+  NzModalService
+} from "ng-zorro-antd";
+
+import {
+  ITokenService,
+  DA_SERVICE_TOKEN
+} from "@delon/auth";
+
 import { ReuseTabService } from "@delon/abc";
-import { StartupService, I18NService } from "@core";
+
+import {
+  StartupService,
+  I18NService
+} from "@core";
+
 import { CookieService } from "ngx-cookie-service";
 import { DomSanitizer } from "@angular/platform-browser";
 import { PlatformLocation } from "@angular/common";
-import { MenuService, MenuIcon } from "@delon/theme";
+
+import {
+  MenuService,
+  MenuIcon
+} from "@delon/theme";
+
 import { PublicNetService } from "../../a_Public_net/Public_net.service";
+
 import { security } from "@shared";
-import { ouacServiceUrl, iwxServiceUrl } from "../../a_Public_net/Url";
+
+import {
+  ouacServiceUrl,
+  iwxServiceUrl
+} from "../../a_Public_net/Url";
 
 @Component({
   selector: "passport-login",
@@ -29,18 +55,27 @@ import { ouacServiceUrl, iwxServiceUrl } from "../../a_Public_net/Url";
 export class UserLoginComponent implements OnInit, OnDestroy {
 
   loading = false;
+
   iframeSrc = "";
   iframeSafeSrc: any;
+
   form: FormGroup;
+
   error = "2";
   type = 0;
   count = 0;
+
   interval$: any;
+
   isVisible = false;
   isForgetPassword = false;
+
   toPage: any;
   menuId: any;
+
   isCode = false;
+
+  private loginRequestInProgress = false;
 
   resetInfo = {
     account: "",
@@ -52,23 +87,40 @@ export class UserLoginComponent implements OnInit, OnDestroy {
 
   constructor(
     fb: FormBuilder,
+
     modalSrv: NzModalService,
+
     private router: Router,
-    @Optional() @Inject(ReuseTabService)
+
+    @Optional()
+    @Inject(ReuseTabService)
     private reuseTabService: ReuseTabService,
+
     @Inject(DA_SERVICE_TOKEN)
     private tokenService: ITokenService,
+
     private startupSrv: StartupService,
+
     private settingService: SettingsService,
+
     private cookieService: CookieService,
+
     public http: _HttpClient,
+
     public msg: NzMessageService,
+
     public i18n: I18NService,
+
     public domSanitizer: DomSanitizer,
+
     public location: PlatformLocation,
+
     private menuService: MenuService,
+
     private publicSvr: PublicNetService
+
   ) {
+
     modalSrv.closeAll();
 
     this.form = fb.group({
@@ -77,6 +129,10 @@ export class UserLoginComponent implements OnInit, OnDestroy {
       remember: [true]
     });
   }
+
+  // =====================================================
+  // FORM GETTERS
+  // =====================================================
 
   get userName() {
     return this.form.controls.userName;
@@ -98,168 +154,387 @@ export class UserLoginComponent implements OnInit, OnDestroy {
   // SSO LOGIN
   // =====================================================
 
-// =====================================================
-// SSO LOGIN
-// =====================================================
+  submit(userInfo?: string): void {
 
-submit(userInfo?: string) {
-  this.loading = true;
-
-  try {
-    if (!userInfo || typeof userInfo !== 'string') {
-      throw new Error('OUAC UserInfo is empty or invalid');
+    if (this.loginRequestInProgress) {
+      console.warn("Login request is already in progress.");
+      return;
     }
 
-    console.log('OUAC UserInfo length:', userInfo.length);
+    if (!userInfo || typeof userInfo !== "string") {
 
-    // Step 1: Get the OUAC decryption key
-    const encodedKey =
-      'NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=';
+      this.loading = false;
 
-    const decryptKey =
-      this.publicSvr.security.getDK(encodedKey);
-
-    // Step 2: Validate the key length
-    if (![16, 24, 32].includes(decryptKey.length)) {
-      throw new Error(
-        'Invalid AES key length. Verify the OUAC key.'
+      this.msg.error(
+        "OUAC login information is empty."
       );
+
+      return;
     }
 
-    // Step 3: Decrypt OUAC UserInfo
-    let decryptedUserInfo: string;
+    this.loading = true;
+    this.loginRequestInProgress = true;
+
+    console.log("SSO Step 1: UserInfo received.");
+    console.log("UserInfo length:", userInfo.length);
 
     try {
-      decryptedUserInfo = security.decrypt(
-        userInfo,
-        decryptKey
-      );
-    } catch (error) {
-      console.error('OUAC decryption failed:', error);
 
-      throw new Error(
-        'OUAC decryption failed. Verify the encryption key, IV, mode and padding.'
-      );
-    }
+      // -------------------------------------------------
+      // STEP 1: GET OUAC DECRYPTION KEY
+      // -------------------------------------------------
 
-    // Step 4: Validate the decrypted data
-    if (!decryptedUserInfo) {
-      throw new Error(
-        'Decrypted UserInfo is empty. Check the OUAC encryption configuration.'
-      );
-    }
+      const encodedKey =
+        "NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=";
 
-    // Step 5: Parse JSON
-    let data: any;
+      const decryptKey =
+        this.publicSvr.security.getDK(encodedKey);
 
-    try {
-      data = JSON.parse(decryptedUserInfo);
-    } catch (error) {
-      console.error('Invalid decrypted JSON:', error);
+      if (
+        !decryptKey ||
+        ![16, 24, 32].includes(decryptKey.length)
+      ) {
 
-      throw new Error(
-        'Decrypted UserInfo is not valid JSON.'
-      );
-    }
-
-    // Step 6: Encrypt UserInfo for the login API
-    const userInfo2 = security.encrypt(
-      JSON.stringify(data),
-      '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt'
-    );
-
-    const param = {
-      userInfo: userInfo2
-    };
-
-    // Step 7: Encrypt the request body
-    const body =
-      this.publicSvr.security.encryptForWeb(
-        JSON.stringify(param)
-      );
-
-    // Step 8: Call the login API
-    this.http.post(
-      '/oneAccountLogin?_allow_anonymous=true',
-      body,
-      null,
-      {
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8'
-        }
-      }
-    ).subscribe(
-      (response: any) => {
-        try {
-          const decryptedResponse =
-            this.publicSvr.security.decryptForWeb(response);
-
-          const res = JSON.parse(decryptedResponse);
-
-          if (res.status === 200 && res.data) {
-            const user = {
-              avatar: './assets/tmp/img/avatar.jpg',
-              eeid: res.data.eeid,
-              name: res.data.empName,
-              time: new Date().getTime()
-            };
-
-            this.loginSuccess(
-              user,
-              res.data.JsessionId,
-              res.data.ClientIp
-            );
-          } else {
-            this.msg.error(res.msg || 'Login failed');
-          }
-        } catch (error) {
-          console.error(
-            'Login response processing failed:',
-            error
-          );
-
-          this.msg.error(
-            'Unable to process login response.'
-          );
-        } finally {
-          this.loading = false;
-        }
-      },
-      (error) => {
-        this.loading = false;
-
-        console.error('Login API error:', error);
-
-        this.msg.error(
-          'Login failed. Please try again.'
+        throw new Error(
+          "Invalid AES key length. Verify the OUAC key configuration."
         );
       }
-    );
 
-  } catch (error) {
-    this.loading = false;
-
-    console.error('Login processing error:', error);
-
-    this.msg.error(
-      error.message || 'Unable to process login information.'
-    );
-  }
-}
-
-
-  private resetLoginIframe() {
-    const iframe = document.querySelector(".login-iframe");
-
-    if (iframe) {
-      iframe.setAttribute(
-        "src",
-        this.buildIframeUrl(false)
+      console.log(
+        "SSO Step 2: Decryption key generated."
       );
+
+      // -------------------------------------------------
+      // STEP 2: DECRYPT OUAC USERINFO
+      // -------------------------------------------------
+
+      let decryptedUserInfo: string;
+
+      try {
+
+        decryptedUserInfo = security.decrypt(
+          userInfo,
+          decryptKey
+        );
+
+      } catch (decryptError) {
+
+        console.error(
+          "OUAC decryption failed:",
+          decryptError
+        );
+
+        throw new Error(
+          "OUAC decryption failed. Verify the encryption configuration."
+        );
+      }
+
+      if (
+        !decryptedUserInfo ||
+        typeof decryptedUserInfo !== "string"
+      ) {
+
+        throw new Error(
+          "Decrypted OUAC UserInfo is empty."
+        );
+      }
+
+      console.log(
+        "SSO Step 3: UserInfo decrypted successfully."
+      );
+
+      // -------------------------------------------------
+      // STEP 3: PARSE USERINFO JSON
+      // -------------------------------------------------
+
+      let userData: any;
+
+      try {
+
+        userData = JSON.parse(decryptedUserInfo);
+
+      } catch (parseError) {
+
+        console.error(
+          "UserInfo JSON parsing failed:",
+          parseError
+        );
+
+        throw new Error(
+          "Decrypted UserInfo is not valid JSON."
+        );
+      }
+
+      if (
+        !userData ||
+        typeof userData !== "object" ||
+        Array.isArray(userData)
+      ) {
+
+        throw new Error(
+          "Invalid OUAC user information."
+        );
+      }
+
+      console.log(
+        "SSO Step 4: UserInfo JSON parsed successfully."
+      );
+
+      // -------------------------------------------------
+      // STEP 4: ENCRYPT USERINFO FOR LOGIN API
+      // -------------------------------------------------
+
+      const userInfo2 = security.encrypt(
+        JSON.stringify(userData),
+        "6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt"
+      );
+
+      if (!userInfo2) {
+
+        throw new Error(
+          "Unable to encrypt login UserInfo."
+        );
+      }
+
+      const param = {
+        userInfo: userInfo2
+      };
+
+      // -------------------------------------------------
+      // STEP 5: ENCRYPT REQUEST BODY
+      // -------------------------------------------------
+
+      const body =
+        this.publicSvr.security.encryptForWeb(
+          JSON.stringify(param)
+        );
+
+      if (!body) {
+
+        throw new Error(
+          "Unable to encrypt the login request."
+        );
+      }
+
+      console.log(
+        "SSO Step 5: Login request prepared."
+      );
+
+      // -------------------------------------------------
+      // STEP 6: CALL LOGIN API
+      // -------------------------------------------------
+
+      this.http.post(
+        "/oneAccountLogin?_allow_anonymous=true",
+        body,
+        null,
+        {
+          headers: {
+            "Content-Type": "application/json;charset=UTF-8"
+          }
+        }
+      ).subscribe(
+
+        (response: any) => {
+
+          console.log(
+            "SSO Step 6: Login API response received."
+          );
+
+          try {
+
+            // -------------------------------------------
+            // STEP 7: DECRYPT API RESPONSE
+            // -------------------------------------------
+
+            const decryptedResponse =
+              this.publicSvr.security.decryptForWeb(
+                response
+              );
+
+            if (!decryptedResponse) {
+
+              throw new Error(
+                "Decrypted login response is empty."
+              );
+            }
+
+            // -------------------------------------------
+            // STEP 8: PARSE API RESPONSE
+            // -------------------------------------------
+
+            let res: any;
+
+            try {
+
+              res = JSON.parse(decryptedResponse);
+
+            } catch (parseError) {
+
+              console.error(
+                "Login response JSON parsing failed:",
+                parseError
+              );
+
+              throw new Error(
+                "Login API returned an invalid response."
+              );
+            }
+
+            console.log(
+              "Login response status:",
+              res && res.status
+            );
+
+            // -------------------------------------------
+            // STEP 9: VALIDATE LOGIN RESPONSE
+            // -------------------------------------------
+
+            if (
+              res &&
+              Number(res.status) === 200 &&
+              res.data
+            ) {
+
+              const loginData = res.data;
+
+              if (
+                !loginData.eeid ||
+                !loginData.JsessionId
+              ) {
+
+                throw new Error(
+                  "Login response is missing required session information."
+                );
+              }
+
+              const user = {
+
+                avatar: "./assets/tmp/img/avatar.jpg",
+
+                eeid: loginData.eeid,
+
+                name: loginData.empName || loginData.eeid,
+
+                time: new Date().getTime()
+
+              };
+
+              console.log(
+                "SSO Step 7: Login successful. Initializing session."
+              );
+
+              // -----------------------------------------
+              // STEP 10: LOGIN SUCCESS
+              // -----------------------------------------
+
+              this.loginSuccess(
+                user,
+                loginData.JsessionId,
+                loginData.ClientIp
+              );
+
+            } else {
+
+              console.error(
+                "Login API rejected the request."
+              );
+
+              this.msg.error(
+                (res && res.msg) || "Login failed."
+              );
+
+              this.finishLoginRequest();
+            }
+
+          } catch (responseError) {
+
+            console.error(
+              "Login response processing failed:",
+              responseError
+            );
+
+            this.msg.error(
+              responseError &&
+              responseError.message
+                ? responseError.message
+                : "Unable to process login response."
+            );
+
+            this.finishLoginRequest();
+          }
+        },
+
+        (httpError: any) => {
+
+          console.error(
+            "Login API HTTP error:",
+            {
+              status: httpError && httpError.status,
+              message: httpError && httpError.message
+            }
+          );
+
+          if (httpError && httpError.status === 401) {
+
+            this.msg.error(
+              "Login API returned 401 Unauthorized."
+            );
+
+          } else if (
+            httpError &&
+            httpError.status === 0
+          ) {
+
+            this.msg.error(
+              "Unable to connect to the login server."
+            );
+
+          } else {
+
+            this.msg.error(
+              "Login failed. Please check the Network response."
+            );
+          }
+
+          this.finishLoginRequest();
+        }
+      );
+
+    } catch (error) {
+
+      console.error(
+        "SSO login processing error:",
+        error
+      );
+
+      this.msg.error(
+        error && error.message
+          ? error.message
+          : "Unable to process OUAC login information."
+      );
+
+      this.finishLoginRequest();
     }
   }
 
+  // =====================================================
+  // RESET LOGIN REQUEST STATE
+  // =====================================================
+
+  private finishLoginRequest(): void {
+
+    this.loading = false;
+
+    this.loginRequestInProgress = false;
+  }
+
+  // =====================================================
+  // BUILD OUAC IFRAME URL
+  // =====================================================
+
   private buildIframeUrl(sso: boolean): string {
+
     return (
       `${ouacServiceUrl}` +
       `&CallBack=/assets/login-callback.html?UserInfo` +
@@ -270,46 +545,76 @@ submit(userInfo?: string) {
   }
 
   // =====================================================
-  // OUAC CALLBACK
+  // RESET LOGIN IFRAME
   // =====================================================
 
+  private resetLoginIframe(): void {
 
-
-
-@HostListener("window:message", ["$event"])
-onMessage(event: MessageEvent): void {
-  const info: any = event.data;
-
-  console.log("OUAC callback received:", {
-    msgType: info && info.msgType,
-    hasUserInfo: !!(info && info.UserInfo),
-    userInfoLength:
-      info && typeof info.UserInfo === "string"
-        ? info.UserInfo.length
-        : 0
-  });
-
-  if (!info || info.msgType !== "login") {
-    return;
-  }
-
-  if (
-    !info.UserInfo ||
-    typeof info.UserInfo !== "string"
-  ) {
-    this.loading = false;
-
-    this.msg.error(
-      "Login information was not received."
+    const iframe = document.querySelector(
+      ".login-iframe"
     );
 
-    return;
+    if (iframe) {
+
+      iframe.setAttribute(
+        "src",
+        this.buildIframeUrl(false)
+      );
+    }
   }
 
-  this.submit(info.UserInfo);
-}
+  // =====================================================
+  // OUAC POSTMESSAGE CALLBACK
+  // =====================================================
 
+  @HostListener("window:message", ["$event"])
+  onMessage(event: MessageEvent): void {
 
+    // IMPORTANT:
+    // Add an exact OUAC origin allowlist here once the
+    // actual callback origin is confirmed.
+    //
+    // Do not trust arbitrary cross-origin messages in a
+    // production SSO implementation.
+
+    const info: any = event.data;
+
+    if (
+      !info ||
+      typeof info !== "object" ||
+      info.msgType !== "login"
+    ) {
+
+      return;
+    }
+
+    console.log(
+      "OUAC login callback received.",
+      {
+        hasUserInfo: typeof info.UserInfo === "string",
+        userInfoLength:
+          typeof info.UserInfo === "string"
+            ? info.UserInfo.length
+            : 0
+      }
+    );
+
+    if (
+      !info.UserInfo ||
+      typeof info.UserInfo !== "string"
+    ) {
+
+      this.loading = false;
+
+      this.msg.error(
+        "OUAC login information was not received."
+      );
+
+      return;
+    }
+
+    this.submit(info.UserInfo);
+  }
 
   // =====================================================
   // LOGIN SUCCESS
@@ -319,78 +624,145 @@ onMessage(event: MessageEvent): void {
     user: any,
     token: any,
     ClientIP: any
-  ) {
-    this.settingService.setUser({
-      userInfo: this.publicSvr.security.encryptForWeb(
-        JSON.stringify(user)
-      )
-    });
-
-    this.cookieService.set(
-      "USER_NO",
-      this.publicSvr.security.encryptForWeb(user.eeid)
-    );
-
-    this.cookieService.set(
-      "USER_NAME",
-      this.publicSvr.security.encryptForWeb(user.name)
-    );
-
-    this.cookieService.set("IS_FOREIGN", "");
-    this.cookieService.set("SESSION_ID", "");
-    this.cookieService.set("FIH_TOKEN", "");
-
-    sessionStorage.setItem(
-      "ClientIp",
-      ClientIP || ""
-    );
+  ): Promise<void> {
 
     try {
-      await this.publicSvr.insertLoginData(
-        user.eeid,
-        ClientIP
-      );
-    } catch (error) {
-      console.error("insertLoginData error:", error);
-    }
 
-    if (this.reuseTabService) {
-      this.reuseTabService.clear();
-    }
+      // -----------------------------------------------
+      // STORE USER INFORMATION
+      // -----------------------------------------------
 
-    this.tokenService.set({
-      token: token
-    });
+      this.settingService.setUser({
 
-    this.startupSrv.load()
-      .then(() => {
-        this.getSystemMenu();
-      })
-      .catch((error) => {
-        console.error("Startup loading failed:", error);
-        this.msg.error(
-          "Unable to load application startup data."
-        );
+        userInfo:
+          this.publicSvr.security.encryptForWeb(
+            JSON.stringify(user)
+          )
+
       });
+
+      this.cookieService.set(
+        "USER_NO",
+        this.publicSvr.security.encryptForWeb(
+          user.eeid
+        )
+      );
+
+      this.cookieService.set(
+        "USER_NAME",
+        this.publicSvr.security.encryptForWeb(
+          user.name
+        )
+      );
+
+      this.cookieService.set("IS_FOREIGN", "");
+      this.cookieService.set("SESSION_ID", "");
+      this.cookieService.set("FIH_TOKEN", "");
+
+      sessionStorage.setItem(
+        "ClientIp",
+        ClientIP || ""
+      );
+
+      // -----------------------------------------------
+      // INSERT LOGIN DATA
+      // -----------------------------------------------
+
+      try {
+
+        await this.publicSvr.insertLoginData(
+          user.eeid,
+          ClientIP
+        );
+
+      } catch (insertError) {
+
+        console.error(
+          "insertLoginData failed:",
+          insertError
+        );
+
+        // Keep the existing behavior: login continues
+        // even if login audit insertion fails.
+      }
+
+      // -----------------------------------------------
+      // CLEAR REUSE TABS
+      // -----------------------------------------------
+
+      if (this.reuseTabService) {
+
+        this.reuseTabService.clear();
+      }
+
+      // -----------------------------------------------
+      // STORE AUTH TOKEN
+      // -----------------------------------------------
+
+      this.tokenService.set({
+
+        token: token
+
+      });
+
+      console.log(
+        "Login session stored. Loading startup data."
+      );
+
+      // -----------------------------------------------
+      // LOAD STARTUP CONFIGURATION
+      // -----------------------------------------------
+
+      await this.startupSrv.load();
+
+      this.finishLoginRequest();
+
+      // -----------------------------------------------
+      // LOAD SYSTEM MENU
+      // -----------------------------------------------
+
+      this.getSystemMenu();
+
+    } catch (error) {
+
+      console.error(
+        "Login initialization failed:",
+        error
+      );
+
+      this.finishLoginRequest();
+
+      this.msg.error(
+        "Login succeeded, but application initialization failed."
+      );
+    }
   }
 
   // =====================================================
   // INITIALIZATION
   // =====================================================
 
-  ngOnInit() {
+  ngOnInit(): void {
+
     const url = window.location.href;
+
+    // -----------------------------------------------
+    // FORCE HTTPS ON SPECIFIED DOMAINS
+    // -----------------------------------------------
 
     if (
       window.location.protocol !== "https:" &&
       (
-        url.indexOf("lms.idpbgtn.efoxconn.com") !== -1 ||
-        url.indexOf("lms.idpbgind.efoxconn.com") !== -1
+        window.location.hostname ===
+          "lms.idpbgtn.efoxconn.com" ||
+        window.location.hostname ===
+          "lms.idpbgind.efoxconn.com"
       )
     ) {
+
       window.location.href =
         "https://" +
-        window.location.hostname +
+        window.location.host +
         window.location.pathname +
         window.location.search +
         window.location.hash;
@@ -398,10 +770,15 @@ onMessage(event: MessageEvent): void {
       return;
     }
 
+    // -----------------------------------------------
+    // REDIRECT TN TO INDIA HOST
+    // -----------------------------------------------
+
     if (
       window.location.hostname ===
       "lms.idpbgtn.efoxconn.com"
     ) {
+
       window.location.href = url.replace(
         "lms.idpbgtn.efoxconn.com",
         "lms.idpbgind.efoxconn.com"
@@ -410,76 +787,130 @@ onMessage(event: MessageEvent): void {
       return;
     }
 
+    // -----------------------------------------------
+    // BUILD IFRAME URL
+    // -----------------------------------------------
+
     const currentUrl = this.location.href;
 
     const fromInfo =
       currentUrl.indexOf("?from=iportal") > -1;
 
     this.iframeSafeSrc =
-      this.domSanitizer.bypassSecurityTrustResourceUrl(
-        this.buildIframeUrl(fromInfo)
-      );
+      this.domSanitizer
+        .bypassSecurityTrustResourceUrl(
+          this.buildIframeUrl(fromInfo)
+        );
+
+    // -----------------------------------------------
+    // READ TOPAGE PARAMETER
+    // -----------------------------------------------
 
     const toPageIndex =
       currentUrl.indexOf("&toPage=");
 
     if (toPageIndex > -1) {
+
       this.toPage = currentUrl
         .slice(toPageIndex + 8)
         .replace(/%2F/g, "/");
     }
 
+    // -----------------------------------------------
+    // READ MENUID PARAMETER
+    // -----------------------------------------------
+
     const menuIndex =
       currentUrl.indexOf("&menuId=");
 
     if (menuIndex > -1) {
-      this.menuId = currentUrl.slice(menuIndex + 8);
+
+      this.menuId = currentUrl.slice(
+        menuIndex + 8
+      );
     }
   }
 
-  ngOnDestroy() {
+  // =====================================================
+  // DESTROY
+  // =====================================================
+
+  ngOnDestroy(): void {
+
     if (this.interval$) {
+
       clearInterval(this.interval$);
     }
   }
 
   // =====================================================
-  // SYSTEM MENU
+  // GET SYSTEM MENU
   // =====================================================
 
-  getSystemMenu() {
+  getSystemMenu(): void {
+
     const group: any[] = [
+
       {
         text: "主導航",
         group: true,
         children: []
       }
+
     ];
 
     const userInfo =
       this.publicSvr.getSettingUserINfo();
 
-    if (!userInfo || !userInfo.eeid) {
-      console.error("User information not found.");
-      this.msg.error("User information not found.");
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
+
+      console.error(
+        "User information not found."
+      );
+
+      this.msg.error(
+        "User information not found."
+      );
+
       return;
     }
 
     const params = {
-      Func: "Permission management-GetUserPermitModuleBySystem",
+
+      Func:
+        "Permission management-GetUserPermitModuleBySystem",
+
       SystemId: 30373,
+
       EmpNo: userInfo.eeid
+
     };
 
     const param =
-      this.publicSvr.dealPostParamsEncrypt(params);
+      this.publicSvr.dealPostParamsEncrypt(
+        params
+      );
 
     const config = {
+
       headers: {
-        apiID: "ffff-1687574205823-1020819373-1797",
-        userKey: this.publicSvr.USER_APPLIATION_WEB
+
+        apiID:
+          "ffff-1687574205823-1020819373-1797",
+
+        userKey:
+          this.publicSvr.USER_APPLIATION_WEB
+
       }
+
     };
+
+    console.log(
+      "Loading system menu for current user."
+    );
 
     this.http.post(
       iwxServiceUrl,
@@ -487,15 +918,30 @@ onMessage(event: MessageEvent): void {
       null,
       config
     ).subscribe(
+
       (response: any) => {
+
         try {
-          if (!response || !response.r) {
-            console.error("Invalid menu API response:", response);
+
+          if (
+            !response ||
+            !response.r
+          ) {
+
+            console.error(
+              "Invalid menu API response."
+            );
+
             this.msg.error(
               "Invalid menu response from server."
             );
+
             return;
           }
+
+          // -------------------------------------------
+          // DECRYPT MENU RESPONSE
+          // -------------------------------------------
 
           const decrypted =
             this.publicSvr.security.decrypt(
@@ -503,7 +949,13 @@ onMessage(event: MessageEvent): void {
               this.publicSvr.iwxKInfo
             );
 
-          const result = JSON.parse(decrypted);
+          const result = JSON.parse(
+            decrypted
+          );
+
+          // -------------------------------------------
+          // CHECK PERMISSION
+          // -------------------------------------------
 
           const hasAccess =
             result &&
@@ -512,58 +964,103 @@ onMessage(event: MessageEvent): void {
             result.List.length > 0;
 
           if (!hasAccess) {
+
             this.msg.error(
               "No menu access. Please contact the administrator.",
-              { nzDuration: 3000 }
+              {
+                nzDuration: 3000
+              }
             );
 
             this.publicSvr.logout();
+
             return;
           }
 
-          group[0].children =
-            this.arrayToTree(result.List);
+          // -------------------------------------------
+          // BUILD MENU TREE
+          // -------------------------------------------
 
-          this.menuService.add(group);
+          group[0].children =
+            this.arrayToTree(
+              result.List
+            );
+
+          this.menuService.add(
+            group
+          );
+
+          // -------------------------------------------
+          // NAVIGATION
+          // -------------------------------------------
 
           if (this.toPage) {
-            const userMenu = result.List
-              .filter((item: any) => item.webUrl)
-              .map((item: any) => ({
-                id: item.id,
-                webUrl: item.webUrl
-              }));
 
-            this.goToPage(userMenu, this.toPage);
+            const userMenu =
+              result.List
+                .filter(
+                  (item: any) => item.webUrl
+                )
+                .map(
+                  (item: any) => ({
+                    id: item.id,
+                    webUrl: item.webUrl
+                  })
+                );
+
+            this.goToPage(
+              userMenu,
+              this.toPage
+            );
 
           } else if (this.menuId) {
+
             this.getToMenuData(
               group[0].children,
               this.menuId
             );
 
           } else {
+
             this.router.navigateByUrl(
               "/ism/dashboard"
             );
           }
 
         } catch (error) {
-          console.error("Menu decrypt/parse error:", error);
+
+          console.error(
+            "Menu decrypt/parse error:",
+            error
+          );
 
           this.msg.error(
             "Unable to process menu response."
           );
         }
       },
-      (error) => {
-        console.error("Menu API error:", error);
 
-        if (error && error.status === 401) {
+      (error: any) => {
+
+        console.error(
+          "Menu API HTTP error:",
+          {
+            status: error && error.status,
+            message: error && error.message
+          }
+        );
+
+        if (
+          error &&
+          error.status === 401
+        ) {
+
           this.msg.error(
-            "Menu API Unauthorized (401). Please contact administrator."
+            "Menu API Unauthorized (401). Please check authentication and permissions."
           );
+
         } else {
+
           this.msg.error(
             "Unable to load menu permissions."
           );
@@ -573,48 +1070,116 @@ onMessage(event: MessageEvent): void {
   }
 
   // =====================================================
-  // NAVIGATION
+  // NAVIGATION TO PAGE
   // =====================================================
 
-  goToPage(userMenu: any[], toPageInfo: string) {
-    const matches = userMenu.filter(
-      (item) => item.webUrl === toPageInfo
-    );
+  goToPage(
+    userMenu: any[],
+    toPageInfo: string
+  ): void {
+
+    const matches =
+      userMenu.filter(
+        (item) =>
+          item.webUrl === toPageInfo
+      );
 
     if (matches.length === 0) {
+
+      console.error(
+        "Requested page is not available in user permissions."
+      );
+
       this.publicSvr.logout();
+
       return;
     }
 
-    this.router.navigateByUrl(toPageInfo);
+    this.router.navigateByUrl(
+      toPageInfo
+    );
   }
 
-  getToMenuData(data: any[], menuId: any) {
-    const matches = data.filter(
-      (item) => item.id == menuId
-    );
+  // =====================================================
+  // FIND MENU BY ID
+  // =====================================================
+
+  getToMenuData(
+    data: any[],
+    menuId: any
+  ): void {
+
+    if (!Array.isArray(data)) {
+      return;
+    }
+
+    const matches =
+      data.filter(
+        (item) => item.id == menuId
+      );
 
     if (matches.length === 0) {
-      data.forEach((item) => {
-        if (item.children && item.children.length > 0) {
-          this.getToMenuData(item.children, menuId);
+
+      data.forEach(
+        (item) => {
+
+          if (
+            item.children &&
+            item.children.length > 0
+          ) {
+
+            this.getToMenuData(
+              item.children,
+              menuId
+            );
+          }
         }
-      });
+      );
+
     } else {
-      this.getPage(matches[0]);
+
+      this.getPage(
+        matches[0]
+      );
     }
   }
 
-  getPage(data: any) {
-    if (data.children && data.children.length > 0) {
-      this.getPage(data.children[0]);
-    } else {
-      this.router.navigateByUrl(data.link);
+  // =====================================================
+  // OPEN MENU PAGE
+  // =====================================================
 
-      localStorage.removeItem("fromInfo");
-      localStorage.removeItem("toPageInfo");
-      localStorage.removeItem("userMenu");
-      localStorage.removeItem("userMenuId");
+  getPage(data: any): void {
+
+    if (
+      data.children &&
+      data.children.length > 0
+    ) {
+
+      this.getPage(
+        data.children[0]
+      );
+
+    } else {
+
+      this.router.navigateByUrl(
+        data.link
+      );
+
+      localStorage.removeItem(
+        "fromInfo"
+      );
+
+      localStorage.removeItem(
+        "toPageInfo"
+      );
+
+      localStorage.removeItem(
+        "userMenu"
+      );
+
+      localStorage.removeItem(
+        "userMenuId"
+      );
     }
   }
 
@@ -626,66 +1191,120 @@ onMessage(event: MessageEvent): void {
     list: any[],
     parentId: any = 0
   ): any[] {
+
     if (!Array.isArray(list)) {
       return [];
     }
 
     return list
-      .filter((item) => item.parentId === parentId)
-      .map((item) => {
-        let icon: MenuIcon = null;
 
-        if (item.icon) {
-          const parts = item.icon.split("|");
+      .filter(
+        (item) =>
+          item.parentId === parentId
+      )
 
-          icon = {
-            type: "icon",
-            value: parts[0],
-            theme: parts[1] || "outline"
-          } as MenuIcon;
+      .map(
+        (item) => {
+
+          let icon: MenuIcon = null;
+
+          if (item.icon) {
+
+            const parts =
+              item.icon.split("|");
+
+            icon = {
+
+              type: "icon",
+
+              value: parts[0],
+
+              theme:
+                parts[1] || "outline"
+
+            } as MenuIcon;
+          }
+
+          return {
+
+            text: item.name,
+
+            icon: icon,
+
+            link:
+              item.menuType === "15"
+                ? item.webUrl +
+                  "/" +
+                  item.permissionId
+                : item.webUrl,
+
+            parentId: item.parentId,
+
+            children:
+              this.arrayToTree(
+                list,
+                item.id
+              ),
+
+            menuType: item.menuType,
+
+            id: item.id,
+
+            permissionId:
+              item.permissionId,
+
+            show: true,
+
+            urlKey: item.urlkey
+
+          };
         }
-
-        return {
-          text: item.name,
-          icon: icon,
-          link: item.menuType === "15"
-            ? item.webUrl + "/" + item.permissionId
-            : item.webUrl,
-          parentId: item.parentId,
-          children: this.arrayToTree(list, item.id),
-          menuType: item.menuType,
-          id: item.id,
-          permissionId: item.permissionId,
-          show: true,
-          urlKey: item.urlkey
-        };
-      });
+      );
   }
 
   // =====================================================
   // FORGOT PASSWORD
   // =====================================================
 
-  openForgetPasswordModal() {
+  openForgetPasswordModal(): void {
+
     this.isForgetPassword = true;
   }
 
-  closeForgetPasswordModal() {
+  closeForgetPasswordModal(): void {
+
     this.isForgetPassword = false;
+
     this.isCode = false;
 
     this.resetInfo = {
+
       account: "",
+
       code: "",
+
       newPassword: "",
+
       confirmPassword: "",
+
       email: ""
+
     };
   }
 
-  passwordChange(name: string) {
-    const newPassword = this.resetInfo.newPassword;
-    const confirmPassword = this.resetInfo.confirmPassword;
+  // =====================================================
+  // PASSWORD VALIDATION
+  // =====================================================
+
+  passwordChange(
+    name: string
+  ): boolean {
+
+    const newPassword =
+      this.resetInfo.newPassword;
+
+    const confirmPassword =
+      this.resetInfo.confirmPassword;
 
     const reg =
       /^(?=.*[A-Za-z])(?=.*\d)(?=.*[`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]])[A-Za-z\d`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]]{8,}$/;
@@ -695,12 +1314,16 @@ onMessage(event: MessageEvent): void {
       newPassword &&
       !reg.test(newPassword)
     ) {
+
       this.msg.error(
         "Password must contain at least 8 characters, including letters, numbers and special characters.",
-        { nzDuration: 10000 }
+        {
+          nzDuration: 10000
+        }
       );
 
       this.resetInfo.newPassword = "";
+
       return false;
     }
 
@@ -709,12 +1332,16 @@ onMessage(event: MessageEvent): void {
       confirmPassword &&
       !reg.test(confirmPassword)
     ) {
+
       this.msg.error(
         "Password must contain at least 8 characters, including letters, numbers and special characters.",
-        { nzDuration: 10000 }
+        {
+          nzDuration: 10000
+        }
       );
 
       this.resetInfo.confirmPassword = "";
+
       return false;
     }
 
@@ -723,95 +1350,198 @@ onMessage(event: MessageEvent): void {
       confirmPassword &&
       newPassword !== confirmPassword
     ) {
+
       this.msg.error(
         "The entered passwords do not match.",
-        { nzDuration: 10000 }
+        {
+          nzDuration: 10000
+        }
       );
+
       return false;
     }
 
     return true;
   }
 
-  sendVerifivationCode() {
+  // =====================================================
+  // SEND VERIFICATION CODE
+  // =====================================================
+
+  sendVerifivationCode(): void {
+
     if (!this.resetInfo.account) {
-      this.msg.error("Please enter your account");
-      return false;
+
+      this.msg.error(
+        "Please enter your account."
+      );
+
+      return;
     }
 
     const params = {
+
       EmpNo: this.resetInfo.account,
+
       CaptchaCode: "",
-      Func: "H5-SendVerificationCode-IWX"
+
+      Func:
+        "H5-SendVerificationCode-IWX"
+
     };
 
     this.publicSvr.permitRequest(
+
       params,
+
       {
+
         headers: {
-          apiID: "ffff-1655357911834-16925411121-0153",
-          userKey: this.publicSvr.USER_GQ
+
+          apiID:
+            "ffff-1655357911834-16925411121-0153",
+
+          userKey:
+            this.publicSvr.USER_GQ
+
         }
+
       },
+
       true
-    ).then((result: any) => {
-      if (result && result.IsOK == "1") {
-        this.resetInfo.email = result.Msg;
-      } else {
+
+    ).then(
+
+      (result: any) => {
+
+        if (
+          result &&
+          result.IsOK == "1"
+        ) {
+
+          this.resetInfo.email =
+            result.Msg;
+
+          this.msg.success(
+            "Verification code sent."
+          );
+
+        } else {
+
+          this.msg.error(
+            (result && result.Msg) ||
+            "Unable to send verification code."
+          );
+        }
+      }
+
+    ).catch(
+
+      (error: any) => {
+
+        console.error(
+          "Send verification code error:",
+          error
+        );
+
         this.msg.error(
-          (result && result.Msg) ||
           "Unable to send verification code."
         );
       }
-    }).catch((error) => {
-      console.error("Send verification code error:", error);
-      this.msg.error("Unable to send verification code.");
-    });
+    );
   }
 
-  nextOption() {
+  // =====================================================
+  // VERIFY CODE
+  // =====================================================
+
+  nextOption(): void {
+
     if (!this.resetInfo.code) {
-      this.msg.error("Please enter verification code");
-      return false;
+
+      this.msg.error(
+        "Please enter verification code."
+      );
+
+      return;
     }
 
     const params = {
+
       EmpNo: this.resetInfo.account,
+
       CaptchaCode: this.resetInfo.code,
-      Func: "H5-CheckVerificationCode-IWX"
+
+      Func:
+        "H5-CheckVerificationCode-IWX"
+
     };
 
     this.publicSvr.permitRequest(
+
       params,
+
       {
+
         headers: {
-          apiID: "ffff-1655375927998-16925411121-0200",
-          userKey: this.publicSvr.USER_GQ
+
+          apiID:
+            "ffff-1655375927998-16925411121-0200",
+
+          userKey:
+            this.publicSvr.USER_GQ
+
         }
+
       },
+
       true
-    ).then((result: any) => {
-      if (result && result.IsOK == "1") {
-        this.isCode = true;
-      } else {
+
+    ).then(
+
+      (result: any) => {
+
+        if (
+          result &&
+          result.IsOK == "1"
+        ) {
+
+          this.isCode = true;
+
+          this.msg.success(
+            "Verification code verified."
+          );
+
+        } else {
+
+          this.msg.error(
+            (result && result.Msg) ||
+            "Verification failed."
+          );
+        }
+      }
+
+    ).catch(
+
+      (error: any) => {
+
+        console.error(
+          "Verify code error:",
+          error
+        );
+
         this.msg.error(
-          (result && result.Msg) || "Verification failed."
+          "Unable to verify code."
         );
       }
-    }).catch((error) => {
-      console.error("Verify code error:", error);
-      this.msg.error("Unable to verify code.");
-    });
+    );
   }
 
-  resetPassword() {
-    if (
-      this.resetInfo.newPassword !==
-      this.resetInfo.confirmPassword
-    ) {
-      this.msg.error("The entered passwords do not match.");
-      return false;
-    }
+  // =====================================================
+  // RESET PASSWORD
+  // =====================================================
+
+  resetPassword(): void {
 
     if (
       !this.resetInfo.account ||
@@ -819,42 +1549,116 @@ onMessage(event: MessageEvent): void {
       !this.resetInfo.newPassword ||
       !this.resetInfo.confirmPassword
     ) {
-      this.msg.error("All information is required.");
-      return false;
+
+      this.msg.error(
+        "All information is required."
+      );
+
+      return;
+    }
+
+    if (
+      this.resetInfo.newPassword !==
+      this.resetInfo.confirmPassword
+    ) {
+
+      this.msg.error(
+        "The entered passwords do not match."
+      );
+
+      return;
+    }
+
+    if (
+      !this.passwordChange(
+        "newPassword"
+      )
+    ) {
+
+      return;
     }
 
     const params = {
+
       EmpNo: this.resetInfo.account,
-      Password: this.resetInfo.newPassword,
-      CaptchaCode: this.resetInfo.code,
-      Func: "H5-ChangeEmpPasswordV2-IWX"
+
+      Password:
+        this.resetInfo.newPassword,
+
+      CaptchaCode:
+        this.resetInfo.code,
+
+      Func:
+        "H5-ChangeEmpPasswordV2-IWX"
+
     };
 
     this.publicSvr.permitRequest(
+
       params,
+
       {
+
         headers: {
-          apiID: "ffff-1655376433685-16925411121-0217",
-          userKey: this.publicSvr.USER_GQ
+
+          apiID:
+            "ffff-1655376433685-16925411121-0217",
+
+          userKey:
+            this.publicSvr.USER_GQ
+
         }
+
       },
+
       true
-    ).then((result: any) => {
-      if (result && result.IsOK == "1") {
-        this.msg.success("Password changed successfully");
-        this.closeForgetPasswordModal();
-      } else {
+
+    ).then(
+
+      (result: any) => {
+
+        if (
+          result &&
+          result.IsOK == "1"
+        ) {
+
+          this.msg.success(
+            "Password changed successfully."
+          );
+
+          this.closeForgetPasswordModal();
+
+        } else {
+
+          this.msg.error(
+            (result && result.Msg) ||
+            "Password reset failed."
+          );
+        }
+      }
+
+    ).catch(
+
+      (error: any) => {
+
+        console.error(
+          "Reset password error:",
+          error
+        );
+
         this.msg.error(
-          (result && result.Msg) || "Password reset failed."
+          "Unable to reset password."
         );
       }
-    }).catch((error) => {
-      console.error("Reset password error:", error);
-      this.msg.error("Unable to reset password.");
-    });
+    );
   }
 
-  handleCancel() {
+  // =====================================================
+  // MODAL CANCEL
+  // =====================================================
+
+  handleCancel(): void {
+
     this.isVisible = false;
   }
 }
