@@ -1,65 +1,2339 @@
-You are helping me continue a software project. Read this handoff carefully, then wait for me to paste my code files. Reply to me in Tanglish (Tamil written in English letters, mixed with English technical terms), in short, step-by-step answers.
+Outlining diagnostic steps to compare builds and verify domain registration.
+Issue: SSO login-ku appuram UserInfo-a decrypt panna mudiyala, adhanaala spinner-la nikkudhu.
 
-## GOAL
-Build a desktop software (Windows) for LIVE VOICE TRANSLATION in video meetings (Google Meet, Microsoft Teams, Webex, Zoom; web or desktop apps). It must work like Google Meet's voice translation: translated voice goes into the meeting, ideally with the speaker's original voice quietly in the background.
+Login decrypt error: Error: Malformed UTF-8 data
+  at Object.stringify → Object.decrypt → a.submit → a.onMessage
+Stack-a paartha flow idhu: OUAC iframe UserInfo-a postMessage pannudhu, onMessage adhai submit()-ku anuppudhu, security.decrypt() fail aagudhu. CryptoJS-la key thappaa irundhaalum, data ciphertext-ae illaadhaalum idhe error varum. Idhukku mixed-content CSS issue sambandham illa.
 
-Languages needed: English, Mandarin Chinese (Taiwan, Traditional, zh-TW), Tamil, and Taiwanese Hokkien (Taigi).
+Suspects
 
-## HARD CONSTRAINTS
-- It will be used inside a company. Company information-security rules mean ALL processing must be LOCAL/OFFLINE (no audio or text sent to any cloud).
-- Use only free/open-source components whose licenses allow commercial/company use.
-- Both captions (text) AND translated voice output are required.
-- I develop in VS Code on Windows. My skill level: I am still learning, so give exact commands and explain where each file goes.
+Deploy aana build vera version. “Login decrypt error” nu console-la log pannura code neenga share panna login.component.ts-la illa. Appo server-la (main-es2015.b1bf299…js) run aagurathu vera build. Andha build-la decrypt key thappaa irukkalam, pazhaya LMS key maadhiri. Idhu en best guess.
+OUAC isms.idpbgind.efoxconn.com-a allow pannala. localhost:4207-la login work aana (neenga munnaadi dashboard paartheenga), ana indha domain-la fail aanaa, OUAC indha host-ku ciphertext-ku badhila error text anuppura possibility irukku. Adhai decrypt panna Malformed UTF-8 varum.
+Code maatha vendaam, confirm pannum vazhi
 
-## TWO DIRECTIONS
-1. LISTEN: capture meeting audio (others speaking) -> speech to text -> translate -> captions shown to me. Uses Windows system-audio loopback (no virtual cable needed).
-2. SPEAK: capture my microphone -> speech to text -> translate -> text to speech -> play the translated voice into a virtual audio cable ("CABLE Input") so the meeting app uses "CABLE Output" as its microphone.
+DevTools → Network → Preserve log tick → page reload → filter-la login-callback type pannunga.
+Andha request URL-la UserInfo= ku appuram irukkura value-a paarunga.
+Long, base64 maadhiri (AbC+x/9...==) irundha, ciphertext sariyaa vandhirukku. Appo key mismatch (suspect 1).
+Short-a, plain text-a, illa error message-a irundha, OUAC reject pannudhu (suspect 2).
+Same account-la localhost:4207-la login pannitu, andha request-oda UserInfo length/format-a compare pannunga. Localhost-la work aagudhu na, source code-la irukkura key sari. Appo server-la irukkura build thaan thappu.
+Fix
 
-## ARCHITECTURE (already built, NOT yet tested by me)
-- Python local engine (FastAPI, runs on http://127.0.0.1:8765):
-  - POST /stt : body = raw 16 kHz mono int16 PCM of one utterance; query ?hokkien_mode=true|false; returns {text, lang}. Uses faster-whisper, auto language detect restricted to en/zh/ta, Chinese output converted to Traditional (Taiwan) with OpenCC s2twp.
-  - POST /translate : {text, src, targets[]} using M2M100 (MIT license), default facebook/m2m100_418M (option: 1.2B with GPU).
-  - POST /tts : {text, lang} using Piper CLI voices from a voices/ folder named en.onnx, zh-Hant.onnx, ta.onnx (+ .onnx.json). Returns wav; 404 if no voice installed (UI then shows captions only).
-  - GET /health.
-  - Hokkien: optional HOKKIEN_MODEL env var pointing to a CTranslate2 Whisper model fine-tuned on Taigi (no good pretrained free model exists; I would need to fine-tune).
-  - Env vars: WHISPER_MODEL, MT_MODEL, HOKKIEN_MODEL, VOICES_DIR, HF_HUB_OFFLINE=1 for offline use.
-- Electron app (Node): main.js (window + setDisplayMediaRequestHandler with audio:"loopback"), renderer/index.html (UI, ScriptProcessor-based capture at 16 kHz with simple energy-based voice activity detection that cuts utterances after ~0.8 s silence, max 15 s; sends each utterance to the engine; setSinkId to route translated audio to the CABLE Input device).
+Suspect 1 na: latest source-la irundhu ng build --prod pannitu, dist folder content-a IIS site folder-la (Explore click panna folder) replace pannunga. Appuram browser-la Ctrl+F5 pannunga. Web.config, IIS rewrite rules-a delete pannaadhinga.
+Suspect 2 na: OUAC admin-kitta, ISMS_INDIA system code-ku isms.idpbgind.efoxconn.com (http and https rendum), callback /assets/login-callback.html register aagirukkaa nu kelunga.
+Oru note: screenshot-la Current Protocol: http: nu innum irukku. HTTP → HTTPS redirect innum apply aagala. Adhu thaniya fix, idhukku munnaadi aaga vendiyadhu illa. Aana OUAC callback-um https-ku mathumbodhu update pannanum.
 
-## FILE STRUCTURE
-C:\translator-local\
-  server\ app.py, requirements.txt, voices\ (Piper files), venv\
-  app\ package.json, main.js, renderer\index.html, node_modules\
-  .vscode\launch.json (compound "Engine + App")
+Network-la UserInfo value-oda first 40 characters-a (illa length-a) anuppunga. Appo suspect 1 aa 2 aa nu sollidren.
 
-## LICENSE DECISIONS ALREADY MADE (please keep them in mind)
-- OK for company use: Whisper / faster-whisper (MIT), Silero VAD (MIT), M2M100 (MIT), MADLAD-400 (Apache 2.0), OpenCC, Piper engine (MIT; each voice has its own license, must check), Electron, Node, Python.
-- NOT OK (non-commercial): NLLB-200, Coqui XTTS, Meta MMS-TTS. Avoid unofficial edge-tts.
-- VB-Cable is free for personal use; company use needs a license (still to check). Listen mode does not need it.
+Ran a command
+Image 1 shows that the login itself worked. The OUAC response has IsOK: "1" and Msg: "登录成功" (login success), so your username and password are fine. The failure is the next step, where the app decrypts the UserInfo value. Image 2 shows the same error on localhost:4207. This is therefore not a server deploy problem, and the HTTPS and certificate work isn’t the cause either.
 
-## KNOWN LIMITATIONS / OPEN ISSUES
-1. Code is untested. I will paste any errors I get.
-2. A free, commercial-friendly Tamil TTS voice is hard to find (Tamil may stay captions-only).
-3. Taiwanese Hokkien has no good free pretrained model (needs fine-tuning).
-4. Voice cloning (speaker's own voice, like Google Meet) has no free commercial-friendly option yet.
-5. Latency: translation happens after each utterance ends (not word-by-word streaming). CPU-only gives about 3 to 6 s delay.
-6. Original voice mixed quietly in background (like Google Meet) is not implemented yet. Idea: route mic through a WebAudio GainNode (~0.15) and mix with the translated TTS into one stream sent to CABLE Input.
-7. Tamil translation quality of M2M100 is average; larger model or better model may be needed.
-8. Need to avoid feedback/echo loops (headphones; TTS goes only to CABLE Input).
-9. Hardware: I will tell you whether I have an NVIDIA GPU.
+Root cause
+The decrypt key in login.component.ts is the old LMS key, and ISMS_INDIA needs its own. I decoded the key string in your submit() code:
 
-## NEXT STEPS I WANT HELP WITH (in this order)
-1. Help me run the engine and the app and fix first-run errors.
-2. Improve latency (streaming / partial results, Silero VAD instead of simple energy VAD, keep Piper process loaded).
-3. Add original-voice-in-background mixing.
-4. Add a better Tamil voice option and Taiwan Mandarin voice if possible.
-5. Plan how to fine-tune a Whisper model for Taiwanese Hokkien and plug it in as HOKKIEN_MODEL.
-6. Package for company use (installer, offline model folder, security review notes).
+getDK('NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=')
+  → F88743A28400788A7937B313BEB14497
+That is the same key as the comment in your own code: const str='F88743A28400788A7937B313BEB14497' --LMS_INDIA. The login page now asks OUAC for SysCode=ISMS_INDIA&NewVersion=V401, so OUAC encrypts UserInfo with the ISMS_INDIA key. The app decrypts it with the LMS key, and CryptoJS fails with Malformed UTF-8 data. The spinner in Image 2 stays on because the exception stops the flow.
 
-## HOW TO ANSWER ME
-- Reply in Tanglish, step by step.
-- Give full file contents when you change code, and tell me exact file path.
-- Do not suggest cloud APIs (Azure, Google, OpenAI) because of company security rules.
-- Warn me about any license that is not safe for company use.
-- Ask me at most one question at a time.
+What to do
+Step 1: Get the ISMS_INDIA key from the OUAC admin.
+Send them this:
 
-Now wait. I will paste my 5 files one by one: app.py, requirements.txt, package.json, main.js, renderer/index.html. After that, tell me you are ready and ask what error or step I am on.
+For system code ISMS_INDIA (NewVersion V401), what is the AES key used to encrypt the UserInfo returned by the login callback? Please also confirm the algorithm (AES-CBC, PKCS7, IV all zeros, same as the current LMS_INDIA setup?).
+
+Step 2: Turn the key into the scrambled string your code uses.
+Your code never stores the raw key. It stores a scrambled, base64-encoded version and rebuilds the key with getDK(). Open the browser console on any page and paste this, replacing the key:
+
+js
+const str = 'PUT_THE_32_CHAR_ISMS_INDIA_KEY_HERE';
+const arr = str.split("").reverse();
+let arr1 = [], arr2 = [];
+arr.forEach((e, i) => { if (i % 2 == 0) arr1.push(e); else arr2.push(e); });
+arr2 = arr2.reverse();
+console.log(window.btoa(arr1.concat(arr2).join("")));
+I tested the same procedure against the LMS key and it round-trips correctly. Copy the printed string.
+
+Step 3: Replace the string in submit().
+In login.component.ts, change:
+
+ts
+this.publicSvr.security.getDK('NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=')
+to:
+
+ts
+this.publicSvr.security.getDK('<the string printed in step 2>')
+Keep the getDK() call. Only replace the string inside it.
+
+Step 4: Test on localhost:4207.
+Log in again. The console should no longer show Login decrypt error, and you should reach the dashboard.
+
+What can still go wrong
+Same key, different algorithm. If the admin says the key is unchanged, then V401 may use a different cipher than the old version. The admin will know, and I can adapt the decrypt code.
+The second key. After decrypting, your code re-encrypts with '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt' and sends it to /oneAccountLogin. That key must match what the ISMS backend (springboot-indiaEisp-pg) expects. If login passes the decrypt step but then fails with a 401 or an error message from the server, that’s the place to look.
+Send me the admin’s reply, or the new error if one appears after the key change.
+
+
+// import { SettingsService, _HttpClient } from "@delon/theme"; // import { Component, OnInit, OnDestroy, Inject, Optional, HostListener } from "@angular/core"; // import { Router } from "@angular/router"; // import { FormGroup, FormBuilder, Validators } from "@angular/forms"; // import { NzMess
+
+pasted
+
+Drafting a diagnostic function to test each candidate key.
+Idha paartha, submit()-la decrypt key innum LMS key thaan:
+
+ts
+this.publicSvr.security.getDK('NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=')
+Munnaadi decode pannina F88743A28400788A7937B313BEB14497 (LMS_INDIA key) varum. Adhunaala Malformed UTF-8 data error ippo kooda varum. Neenga add panna try/catch error-a mattum kaattudhu, fix pannala. Idha pannunga:
+
+Step 1: Project-la irukkura keys-a test pannunga
+OUAC admin reply varaikkum wait pannaama, ISMS_INDIA ku ethaavadhu already irukkura key-ai use pannirukkalam. Adhai check panna oru temporary function add pannunga.
+
+login.component.ts kulla (submit()-ku keezha) idhai add pannunga:
+
+ts
+  // TEMP: decrypt-ku edhu key work aagudhu nu kandupidikka. Kandupidichadhum delete pannunga.
+  private tryKnownKeys(userInfo: string) {
+    const sec = this.publicSvr.security;
+    const candidates: { [name: string]: string } = {
+      'current (LMS)': sec.getDK('NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk='),
+      'iwxKInfo': this.publicSvr.iwxKInfo,
+      'java key': sec.getDK('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='),
+      'oneAccount key': '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt',
+      'vue key': 'eaa34f53daf201e309e15d079eec15d5',
+      'vue key2': 'facd81g656fcd8p7a7lkh6dfa81gf4ik',
+    };
+    Object.keys(candidates).forEach((name) => {
+      try {
+        JSON.parse(security.decrypt(userInfo, candidates[name]));
+        console.log('KEY WORKS:', name);
+      } catch (e) {
+        console.log('no:', name);
+      }
+    });
+  }
+Appuram submit()-la catch (error) block-la, console.error("Login decrypt error:", error); keezha oru line add pannunga:
+
+ts
+      this.tryKnownKeys(userInfo);
+Step 2: Login pannitu console-a paarunga
+KEY WORKS: <name> nu vandha: adhu thaan sariyaana key.
+iwxKInfo na, getDK(...) expression-ai this.publicSvr.iwxKInfo nu maathunga.
+Vera key na, scramble snippet-a use pannunga (munnaadi kuduthadhu). Mudhal line-la string-a andha key-ku maathi, vara base64-a getDK('...')-kulla podunga.
+Ellaam no: na: ISMS_INDIA key project-la illa. OUAC admin-kitta key-a kelunga (munnaadi kuduththa message).
+Test mudinjadhum tryKnownKeys-um andha call-um delete pannunga. Console-la keys log aagradhu temporary-a mattum irukkanum.
+
+Step 3: Login fail aana spinner-la nikkaama iruka (optional)
+Decrypt fail aana iframe spinner-la nikkudhu, user retry pannave mudiyaadhu. catch block-ku ulla idhai add pannunga:
+
+ts
+      const iframe = document.querySelector('.login-iframe');
+      if (iframe) {
+        iframe.setAttribute(
+          'src',
+          `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=0`
+        );
+      }
+Cleanup (key fix aanadhum)
+File-oda top-la irukkura periya commented block (pazhaya copy) delete pannunga, confusing-a irukkum.
+ngOnInit()-la lms.idpbgtn / lms.idpbgind redirect code ISMS-ku velai illa. Delete pannalaam.
+HTTPS certificate fix aanadhum, adhe redirect condition-la 'isms.idpbgind.efoxconn.com' add panni, IIS rule illama code-layum http → https redirect pannalaam.
+Step 2-oda console output-a (KEY WORKS illa no: list) anuppunga, adhai paathu adutha step sollidren.
+// import { SettingsService, _HttpClient } from "@delon/theme";
+// import { Component, OnInit, OnDestroy, Inject, Optional, HostListener } from "@angular/core";
+// import { Router } from "@angular/router";
+// import { FormGroup, FormBuilder, Validators } from "@angular/forms";
+// import { NzMessageService, NzModalService } from "ng-zorro-antd";
+// import {
+//   ITokenService,
+//   DA_SERVICE_TOKEN
+// } from "@delon/auth";
+// import { ReuseTabService } from "@delon/abc";
+// import { StartupService } from "@core";
+// import { I18NService } from '@core';
+// import { CookieService } from 'ngx-cookie-service';
+// import { DomSanitizer } from '@angular/platform-browser';
+// import { PlatformLocation } from "@angular/common";
+
+// import { ScrollService, MenuService, MenuIcon } from '@delon/theme';
+// import { isArray } from 'util';
+// import { PublicNetService } from "../../a_Public_net/Public_net.service";
+// import { security } from '@shared';
+// import { serviceUrl, ouacServiceUrl } from "../../a_Public_net/Url";
+
+// @Component({
+//   selector: "passport-login",
+//   templateUrl: "./login.component.html",
+//   styleUrls: ["./login.component.less"],
+// })
+// export class UserLoginComponent implements OnInit, OnDestroy {
+//   loading = false;
+//   iframeSrc: string = '';
+//   iframeSafeSrc: any;
+
+//   constructor(
+//     fb: FormBuilder,
+//     modalSrv: NzModalService,
+//     private router: Router,
+//     @Optional()
+//     @Inject(ReuseTabService)
+//     private reuseTabService: ReuseTabService,
+//     @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
+//     private startupSrv: StartupService,
+//     private settingService: SettingsService,
+//     private cookieService: CookieService,
+//     public http: _HttpClient,
+//     public msg: NzMessageService,
+//     public i18n: I18NService,
+//     public domSanitizer: DomSanitizer,
+//     public location: PlatformLocation,
+//     private menuService: MenuService,
+//     private publicSvr: PublicNetService,
+//   ) {
+//     modalSrv.closeAll();
+//   }
+
+//   // #region fields
+//   get userName() {
+//     return this.form.controls.userName;
+//   }
+//   get password() {
+//     return this.form.controls.pwdInfo;
+//   }
+//   get remember() {
+//     return this.form.controls.remember;
+//   }
+//   form: FormGroup;
+//   error = "2";
+//   type = 0;
+
+//   // #region get captcha
+//   count = 0;
+//   interval$: any;
+//   // #endregion
+
+//   switch(ret: any) {
+//     this.type = ret.index;
+//   }
+
+//   // #endregion
+//   submit(userInfo?: string) {
+//     // 一賬通返回信息解密
+//     const data = JSON.parse(security.decrypt(userInfo, this.publicSvr.security.getDK('NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=')));
+
+//     let userInfo2 = security.encrypt(JSON.stringify(data), '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt');
+//     const param = {
+//       url: "/oneAccountLogin?_allow_anonymous=true",
+//       data: {
+//         userInfo: userInfo2,
+//       }
+//     };
+
+//     const body = security.encryptForWeb(JSON.stringify(param.data));
+//     this.http.post(param.url, body, null, { headers: { "Content-Type": "application/json;charset=UTF-8" } }).subscribe(data => {
+//       const res = JSON.parse(security.decryptForWeb(data));
+//       this.loading = false;
+//       if (res.status === 200) {
+//         const user = {
+//           avatar: "./assets/tmp/img/avatar.jpg",
+//           eeid: res.data.eeid,
+//           name: res.data.empName,
+//           time: new Date().getTime()
+//         };
+//         this.loginSuccess(user, res.data.JsessionId, res.data.ClientIp);
+//       } else {
+//         this.msg.error(res.msg);
+
+//         // 根據地址判斷是否需要登錄信息
+//         let fromInfo = this.location.href.indexOf("?from=iportal");
+//         if (fromInfo > -1) {
+//           this.router.navigateByUrl("/passport/login");
+//           localStorage.removeItem("fromInfo");
+//           localStorage.removeItem("toPageInfo");
+//         }
+//         const iframeSrc = `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=0`;
+//         document.querySelector('.login-iframe').setAttribute('src', iframeSrc);
+//       }
+//     });
+//   }
+
+//   // 监听iframe一账通登录回调页面传来的信息
+//   @HostListener('window:message', ['$event'])
+//   onMessage(e) {
+//     let info = e.data;
+//     if (info.msgType === 'login') {
+//       let str = info.UserInfo;
+//       this.submit(str);
+//     }
+//   }
+
+//   // #region social
+//   async loginSuccess(user, token, ClientIP) {
+//     // 用户信息：包括姓名、头像、邮箱地址
+//     this.settingService.setUser({ userInfo: this.publicSvr.security.encryptForWeb(JSON.stringify(user)) });
+//     // 保存到cookie
+//     this.cookieService.set("USER_NO", this.publicSvr.security.encryptForWeb(user.eeid));
+//     this.cookieService.set("USER_NAME", this.publicSvr.security.encryptForWeb(user.name));
+//     this.cookieService.set("IS_FOREIGN", '');
+//     this.cookieService.set("SESSION_ID", '');
+//     this.cookieService.set('FIH_TOKEN', '');
+//     sessionStorage.setItem('ClientIp', ClientIP);
+
+//     console.log("Login Details", user, token, ClientIP);
+
+//     // 清空路由复用信息
+//     await this.publicSvr.insertLoginData(user.eeid, ClientIP);
+
+//     this.reuseTabService.clear();
+//     // 设置用户Token信息
+//     this.tokenService.set({ token: token });
+//     // 重新获取 StartupService 内容
+//     this.startupSrv.load().then(() => {
+//       // menu access check + navigation getSystemMenu()-kulla nadakkum
+//       this.getSystemMenu();
+//     });
+//   }
+
+//   isVisible: boolean = false;
+//   isForgetPassword: boolean = false; // 是否顯示忘記密碼彈框
+//   toPage: any;
+//   menuId: any;
+
+//   ngOnInit() {
+//     let url = window.location.href;
+//     // 判斷是否是https網址，不是的話自動轉成https，測試網址和本地測試地址除外
+//     if (window.location.protocol !== 'https:' && url.indexOf('lms.idpbgtn.efoxconn.com') != -1 || url.indexOf('lms.idpbgind.efoxconn.com') != -1) {
+//       window.location.href = 'https://' + window.location.hostname + window.location.pathname + window.location.search + window.location.hash;
+//     }
+
+//     // 2024/6/12： 判斷當前登錄的url域名是否是fms.idpbgtn.efoxconn.com,是，則將當前url跳轉為fms.idpbgind.efoxconn.com
+//     if (window.location.hostname == "lms.idpbgtn.efoxconn.com") {
+//       window.location.href = url.replace("lms.idpbgtn.efoxconn.com", "lms.idpbgind.efoxconn.com");
+//     }
+
+//     // 根據地址判斷是否需要登錄信息
+//     let fromInfo = this.location.href.indexOf("?from=iportal");
+
+//     // 從門戶網跳轉過來，免登陸
+//     if (fromInfo > -1) {
+
+//       let origin = window.location.origin;
+//       if (!origin) {
+//         origin = `${window.location.protocol}//${window.location.host}`;
+//       }
+
+//       const iframeSrc = `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=1`;
+//       this.iframeSafeSrc = this.domSanitizer.bypassSecurityTrustResourceUrl(iframeSrc);
+
+//       // 是否有目標頁面
+//       let toPageIndex = this.location.href.indexOf("&toPage=");
+//       if (toPageIndex > -1) {
+//         this.toPage = this.location.href.slice(toPageIndex + 8).replace(/%2F/g, '/');
+//       }
+
+//       // 是否存在menuId
+//       const menuIndex = this.location.href.indexOf("&menuId=");
+//       if (menuIndex > -1) {
+//         this.menuId = this.location.href.slice(menuIndex + 8);
+//       }
+
+//     } else {
+//       let origin = window.location.origin;
+//       if (!origin) {
+//         origin = `${window.location.protocol}//${window.location.host}`;
+//       }
+
+//       const iframeSrc = `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=0`;
+
+//       this.iframeSafeSrc = this.domSanitizer.bypassSecurityTrustResourceUrl(iframeSrc);
+//     }
+//   }
+//   // #endregion
+
+//   ngOnDestroy(): void {
+//     if (this.interval$) {
+//       clearInterval(this.interval$);
+//     }
+//   }
+
+//   getSystemMenu() {
+//     const group = [
+//       {
+//         text: "主導航",
+//         group: true,
+//         children: [],
+//       },
+//     ];
+
+//     const params = {
+//       Func: "Permission management-GetUserPermitModuleBySystem",
+//       SystemId: 30373,
+//       EmpNo: this.publicSvr.getSettingUserINfo().eeid,
+//     };
+
+//     const param = this.publicSvr.dealPostParamsEncrypt(params);
+
+//     new Promise((resolve, reject) => {
+//       this.http
+//         .post(
+//           'https://microservice.abgind.foxconn.com/india/gateway',
+//           param,
+//           null,
+//           {
+//             headers: {
+//               apiID: "ffff-1687574205823-1020819373-1797",
+//               userKey: this.publicSvr.USER_APPLIATION_WEB,
+//             },
+//           }
+//         )
+//         .subscribe(
+//           (data) => {
+//             resolve(JSON.parse(this.publicSvr.security.decrypt(data.r, this.publicSvr.iwxKInfo)));
+//           },
+//           (err) => reject(err)
+//         );
+//     })
+//       .then((res: any) => {
+//         // Menu access check
+//         const hasAccess = res && res.IsOK == "1" && res.List && res.List.length > 0;
+//         // Dashboard menu thaan venum nu strict-a venum na, mela line-a idhukku maathunga:
+//         // const hasAccess = res && res.IsOK == "1" && res.List &&
+//         //   res.List.some((m) => (m.webUrl || '').indexOf('/ism/dashboard') > -1);
+
+//         // Menu access illa na: message kaattitu logout
+//         if (!hasAccess) {
+//           this.msg.error("您暫無可查看的菜單，請聯繫管理員開通！ (No menu access, please contact the administrator)", {
+//             nzDuration: 1000 * 3,
+//           });
+//           this.publicSvr.logout();
+//           return;
+//         }
+
+//         // Menu access irukku: menu add pannu
+//         group[0].children = this.arrayToTree(res.List);
+//         this.menuService.add(group);
+
+//         if (this.toPage) {
+//           // portal-la irundhu specific page-kku vandha
+//           const userMenu = res.List
+//             .filter((item) => item.webUrl)
+//             .map((item) => ({ id: item.id, webUrl: item.webUrl }));
+//           this.goToPage(userMenu, this.toPage);
+//         } else if (this.menuId) {
+//           this.getToMenuData(group[0].children, this.menuId);
+//         } else {
+//           // normal login: dashboard-kku po
+//           this.router.navigateByUrl('/ism/dashboard');
+//         }
+//       })
+//       .catch((err) => {
+//         console.error("Menu API error", err);
+//         this.msg.error("Unable to load menu permissions");
+//       });
+//   }
+
+//   // 跳轉目標頁面
+//   goToPage(userMenu, toPageInfo) {
+//     const toMenuData = userMenu.filter((item) => {
+//       return item.webUrl == toPageInfo;
+//     });
+
+//     // 找不到指定頁面或沒有權限
+//     if (toMenuData.length == 0) {
+//       // 找不到相關頁面，返回登錄頁面
+//       this.publicSvr.logout();
+//       this.ngOnInit();
+//     } else {
+//       this.router.navigateByUrl(toPageInfo);
+//     }
+//   }
+
+//   getToMenuData(data, menuId) {
+//     const toMenuData = data.filter(item => {
+//       return item.id == menuId;
+//     });
+//     if (toMenuData.length == 0) {
+//       data.forEach((item) => {
+//         if (item.children.length != 0) {
+//           const list = item.children;
+//           this.getToMenuData(list, menuId);
+//         }
+//       });
+//     } else {
+//       const menuData = toMenuData[0];
+//       this.getPage(menuData);
+//     }
+//   }
+
+//   getPage(data) {
+//     if (data.children.length > 0) {
+//       const list = data.children[0];
+//       this.getPage(list);
+//     } else {
+//       const toPage = data.link;
+//       this.router.navigateByUrl(toPage);
+//       localStorage.removeItem("fromInfo");
+//       localStorage.removeItem("toPageInfo");
+//       localStorage.removeItem("userMenu");
+//       localStorage.removeItem("userMenuId");
+//     }
+//   }
+
+//   arrayToTree(list, parentId = 0) {
+//     return list.filter(item => item.parentId === parentId).map(item => {
+//       let icon = item.icon ? {
+//         type: 'icon',
+//         value: item.icon.split('|')[0],
+//         theme: item.icon.split('|')[1] || 'outline'
+//       } as MenuIcon : null;
+//       return {
+//         text: item.name,
+//         icon: icon,
+//         link: item.menuType === '15' ? item.webUrl + '/' + item.permissionId : item.webUrl,
+//         parentId: item.parentId,
+//         children: this.arrayToTree(list, item.id),
+//         menuType: item.menuType,
+//         id: item.id,
+//         permissionId: item.permissionId,
+//         show: true,
+//         urlKey: item.urlkey
+//       };
+//     });
+//   }
+
+//   resetInfo = {
+//     account: "",
+//     code: "",
+//     newPassword: "",
+//     confirmPassword: "",
+//     email: "",
+//   };
+
+//   isCode: boolean = false; // 判斷驗證碼是否一致
+
+//   // 顯示忘記密碼彈框
+//   openForgetPasswordModal() {
+//     this.isForgetPassword = true;
+//   }
+
+//   closeForgetPasswordModal() {
+//     this.isForgetPassword = false;
+//     this.isCode = false;
+//     this.resetInfo = {
+//       account: "",
+//       code: "",
+//       newPassword: "",
+//       confirmPassword: "",
+//       email: ""
+//     };
+//   }
+
+//   // 密碼校驗
+//   passwordChange(name) {
+
+//     const newPassword = this.resetInfo.newPassword;
+//     const confirmPassword = this.resetInfo.confirmPassword;
+
+//     if (newPassword || confirmPassword) {
+//       // 密碼至少8位數，並且要包含字數字、字母、特殊符
+//       var reg = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]])[A-Za-z\d`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]]{8,}$/;
+//       if (name == "newPassword") {
+//         const newPasswordResult = reg.test(newPassword);
+//         if (!newPasswordResult) {
+//           this.msg.error('The password must have at least 8 digits and must contain digits, letters, and special characters.', {
+//             nzDuration: 10000
+//           });
+//           this.resetInfo.newPassword = "";
+//           return false;
+//         }
+//       }
+
+//       if (name == "confirmPassword") {
+//         const confirmResult = reg.test(confirmPassword);
+//         if (!confirmResult) {
+//           this.msg.error('The password must have at least 8 digits and must contain digits, letters, and special characters.', {
+//             nzDuration: 10000
+//           });
+//           this.resetInfo.confirmPassword = "";
+//           return false;
+//         }
+//       }
+
+//       if (newPassword && confirmPassword) {
+//         if (newPassword != confirmPassword) {
+//           // 輸入的密碼信息不一致
+//           this.msg.error('The entered password information is inconsistent.', {
+//             nzDuration: 10000
+//           });
+//         }
+//       }
+//     }
+//   }
+
+//   // 獲取驗證碼
+//   sendVerifivationCode() {
+//     if (!this.resetInfo.account) {
+//       this.msg.error('Please enter your account');
+//       return false;
+//     }
+//     const params = {
+//       EmpNo: this.resetInfo.account,
+//       CaptchaCode: "",
+//       Func: "H5-SendVerificationCode-IWX"
+//     };
+//     this.publicSvr.permitRequest(params, {
+//       headers: {
+//         apiID: "ffff-1655357911834-16925411121-0153",
+//         userKey: this.publicSvr.USER_GQ
+//       }
+//     }, true).then((res: any) => {
+//       if (res.IsOK == "1") {
+//         this.resetInfo.email = res.Msg;
+//       } else {
+//         this.msg.error(res.Msg);
+//       }
+//     });
+//   }
+
+//   // 下一步--校验验证码
+//   nextOption() {
+//     if (!this.resetInfo.code) {
+//       this.msg.error('Please enter verification code');
+//       return false;
+//     }
+
+//     const params = {
+//       EmpNo: this.resetInfo.account,
+//       CaptchaCode: this.resetInfo.code,
+//       Func: "H5-CheckVerificationCode-IWX"
+//     };
+//     this.publicSvr.permitRequest(params, {
+//       headers: {
+//         apiID: "ffff-1655375927998-16925411121-0200",
+//         userKey: this.publicSvr.USER_GQ
+//       }
+//     }, true).then((res: any) => {
+//       if (res.IsOK == "1") {
+//         this.isCode = true;
+//       } else {
+//         this.msg.error(res.Msg);
+//       }
+//     });
+//   }
+
+//   // 重置密碼
+//   resetPassword() {
+//     if (this.resetInfo.newPassword && this.resetInfo.confirmPassword && this.resetInfo.newPassword != this.resetInfo.confirmPassword) {
+//       // 輸入的密碼信息不一致
+//       return false;
+//     }
+//     if (!this.resetInfo.account || !this.resetInfo.code || !this.resetInfo.newPassword || !this.resetInfo.confirmPassword) {
+//       this.msg.error("All information is required.");
+//       return false;
+//     }
+
+//     const params = {
+//       EmpNo: this.resetInfo.account,
+//       Password: this.resetInfo.newPassword,
+//       CaptchaCode: this.resetInfo.code,
+//       Func: "H5-ChangeEmpPasswordV2-IWX"
+//     };
+//     this.publicSvr.permitRequest(params, {
+//       headers: {
+//         apiID: "ffff-1655376433685-16925411121-0217",
+//         userKey: this.publicSvr.USER_GQ
+//       }
+//     }, true).then((res: any) => {
+//       if (res.IsOK == "1") {
+//         this.msg.success("Password changed successfully");
+//         this.closeForgetPasswordModal();
+//       } else {
+//         this.msg.error(res.Msg);
+//       }
+//     });
+//   }
+
+//   // 關閉彈框
+//   handleCancel() {
+//     this.isVisible = false;
+//   }
+
+// }
+
+
+
+
+import { SettingsService, _HttpClient } from "@delon/theme";
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Inject,
+  Optional,
+  HostListener
+} from "@angular/core";
+
+import { Router } from "@angular/router";
+
+import {
+  FormGroup,
+  FormBuilder,
+  Validators
+} from "@angular/forms";
+
+import {
+  NzMessageService,
+  NzModalService
+} from "ng-zorro-antd";
+
+import {
+  ITokenService,
+  DA_SERVICE_TOKEN
+} from "@delon/auth";
+
+import { ReuseTabService } from "@delon/abc";
+
+import { StartupService } from "@core";
+import { I18NService } from "@core";
+
+import { CookieService } from "ngx-cookie-service";
+
+import {
+  DomSanitizer
+} from "@angular/platform-browser";
+
+import {
+  PlatformLocation
+} from "@angular/common";
+
+import {
+  ScrollService,
+  MenuService,
+  MenuIcon
+} from "@delon/theme";
+
+import { isArray } from "util";
+
+import {
+  PublicNetService
+} from "../../a_Public_net/Public_net.service";
+
+import {
+  security
+} from "@shared";
+
+import {
+  serviceUrl,
+  ouacServiceUrl,
+  iwxServiceUrl
+} from "../../a_Public_net/Url";
+
+
+@Component({
+  selector: "passport-login",
+  templateUrl: "./login.component.html",
+  styleUrls: ["./login.component.less"],
+})
+export class UserLoginComponent implements OnInit, OnDestroy {
+
+  loading = false;
+
+  iframeSrc: string = '';
+
+  iframeSafeSrc: any;
+
+
+  constructor(
+    fb: FormBuilder,
+    modalSrv: NzModalService,
+
+    private router: Router,
+
+    @Optional()
+    @Inject(ReuseTabService)
+    private reuseTabService: ReuseTabService,
+
+    @Inject(DA_SERVICE_TOKEN)
+    private tokenService: ITokenService,
+
+    private startupSrv: StartupService,
+
+    private settingService: SettingsService,
+
+    private cookieService: CookieService,
+
+    public http: _HttpClient,
+
+    public msg: NzMessageService,
+
+    public i18n: I18NService,
+
+    public domSanitizer: DomSanitizer,
+
+    public location: PlatformLocation,
+
+    private menuService: MenuService,
+
+    private publicSvr: PublicNetService,
+
+  ) {
+
+    modalSrv.closeAll();
+  }
+
+
+  // =====================================================
+  // Fields
+  // =====================================================
+
+  get userName() {
+    return this.form.controls.userName;
+  }
+
+  get password() {
+    return this.form.controls.pwdInfo;
+  }
+
+  get remember() {
+    return this.form.controls.remember;
+  }
+
+
+  form: FormGroup;
+
+  error = "2";
+
+  type = 0;
+
+
+  // =====================================================
+  // Captcha
+  // =====================================================
+
+  count = 0;
+
+  interval$: any;
+
+
+  switch(ret: any) {
+
+    this.type = ret.index;
+
+  }
+
+
+  // =====================================================
+  // LOGIN
+  // =====================================================
+
+  submit(userInfo?: string) {
+
+    try {
+
+      // One Account response decrypt
+      const data = JSON.parse(
+        security.decrypt(
+          userInfo,
+          this.publicSvr.security.getDK(
+            'FBAE976732CEE3E396066625D133B493'
+          )
+        )
+      );
+
+
+      const userInfo2 =
+        security.encrypt(
+          JSON.stringify(data),
+          '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt'
+        );
+
+
+      const param = {
+
+        url: "/oneAccountLogin?_allow_anonymous=true",
+
+        data: {
+
+          userInfo: userInfo2
+
+        }
+
+      };
+
+
+      const body =
+        security.encryptForWeb(
+          JSON.stringify(param.data)
+        );
+
+
+      this.http
+        .post(
+          param.url,
+          body,
+          null,
+          {
+            headers: {
+              "Content-Type":
+                "application/json;charset=UTF-8"
+            }
+          }
+        )
+        .subscribe(
+
+          (data) => {
+
+            const res =
+              JSON.parse(
+                security.decryptForWeb(data)
+              );
+
+
+            this.loading = false;
+
+
+            if (res.status === 200) {
+
+              const user = {
+
+                avatar:
+                  "./assets/tmp/img/avatar.jpg",
+
+                eeid:
+                  res.data.eeid,
+
+                name:
+                  res.data.empName,
+
+                time:
+                  new Date().getTime()
+
+              };
+
+
+              this.loginSuccess(
+                user,
+                res.data.JsessionId,
+                res.data.ClientIp
+              );
+
+            }
+
+            else {
+
+              this.msg.error(res.msg);
+
+
+              let fromInfo =
+                this.location.href
+                  .indexOf("?from=iportal");
+
+
+              if (fromInfo > -1) {
+
+                this.router.navigateByUrl(
+                  "/passport/login"
+                );
+
+                localStorage.removeItem(
+                  "fromInfo"
+                );
+
+                localStorage.removeItem(
+                  "toPageInfo"
+                );
+              }
+
+
+              const iframeSrc =
+                `${ouacServiceUrl}` +
+                `&CallBack=/assets/login-callback.html?UserInfo` +
+                `&CssLink=/assets/sso-login.css` +
+                `&State=RxFdv2p7KsDq38CX` +
+                `&SSO=0`;
+
+
+              const iframe =
+                document.querySelector(
+                  '.login-iframe'
+                );
+
+              if (iframe) {
+
+                iframe.setAttribute(
+                  'src',
+                  iframeSrc
+                );
+              }
+            }
+
+          },
+
+          (error) => {
+
+            this.loading = false;
+
+            console.error(
+              "Login API error:",
+              error
+            );
+
+            this.msg.error(
+              "Login failed. Please try again."
+            );
+
+          }
+
+        );
+
+    }
+
+    catch (error) {
+
+      this.loading = false;
+
+      console.error(
+        "Login decrypt error:",
+        error
+      );
+
+      this.msg.error(
+        "Unable to process login information."
+      );
+    }
+  }
+
+
+  // =====================================================
+  // IFRAME LOGIN CALLBACK
+  // =====================================================
+
+  @HostListener(
+    'window:message',
+    ['$event']
+  )
+  onMessage(e) {
+
+    const info = e.data;
+
+    if (
+      info &&
+      info.msgType === 'login'
+    ) {
+
+      const str =
+        info.UserInfo;
+
+      this.submit(str);
+    }
+  }
+
+
+  // =====================================================
+  // LOGIN SUCCESS
+  // =====================================================
+
+  async loginSuccess(
+    user,
+    token,
+    ClientIP
+  ) {
+
+    // User information
+    this.settingService.setUser({
+
+      userInfo:
+        this.publicSvr.security.encryptForWeb(
+          JSON.stringify(user)
+        )
+
+    });
+
+
+    // Cookies
+    this.cookieService.set(
+      "USER_NO",
+      this.publicSvr.security.encryptForWeb(
+        user.eeid
+      )
+    );
+
+
+    this.cookieService.set(
+      "USER_NAME",
+      this.publicSvr.security.encryptForWeb(
+        user.name
+      )
+    );
+
+
+    this.cookieService.set(
+      "IS_FOREIGN",
+      ''
+    );
+
+
+    this.cookieService.set(
+      "SESSION_ID",
+      ''
+    );
+
+
+    this.cookieService.set(
+      'FIH_TOKEN',
+      ''
+    );
+
+
+    sessionStorage.setItem(
+      'ClientIp',
+      ClientIP
+    );
+
+
+    console.log(
+      "Login Details",
+      user,
+      token,
+      ClientIP
+    );
+
+
+    // Login data
+    try {
+
+      await this.publicSvr.insertLoginData(
+        user.eeid,
+        ClientIP
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "insertLoginData error:",
+        error
+      );
+    }
+
+
+    // Clear route reuse
+    this.reuseTabService.clear();
+
+
+    // Token
+    this.tokenService.set({
+      token: token
+    });
+
+
+    // Startup
+    this.startupSrv
+      .load()
+      .then(() => {
+
+        // Load menu
+        this.getSystemMenu();
+
+      });
+
+  }
+
+
+  // =====================================================
+  // MENU / PORTAL
+  // =====================================================
+
+  isVisible: boolean = false;
+
+  isForgetPassword: boolean = false;
+
+  toPage: any;
+
+  menuId: any;
+
+
+  // =====================================================
+  // INIT
+  // =====================================================
+
+  ngOnInit() {
+
+    let url =
+      window.location.href;
+
+
+    // HTTPS redirect
+    if (
+      window.location.protocol !== 'https:' &&
+      (
+        url.indexOf(
+          'lms.idpbgtn.efoxconn.com'
+        ) != -1 ||
+
+        url.indexOf(
+          'lms.idpbgind.efoxconn.com'
+        ) != -1
+      )
+    ) {
+
+      window.location.href =
+        'https://' +
+        window.location.hostname +
+        window.location.pathname +
+        window.location.search +
+        window.location.hash;
+
+    }
+
+
+    // TN -> IND
+    if (
+      window.location.hostname ==
+      "lms.idpbgtn.efoxconn.com"
+    ) {
+
+      window.location.href =
+        url.replace(
+          "lms.idpbgtn.efoxconn.com",
+          "lms.idpbgind.efoxconn.com"
+        );
+    }
+
+
+    // Portal login
+    let fromInfo =
+      this.location.href
+        .indexOf("?from=iportal");
+
+
+    if (fromInfo > -1) {
+
+      let origin =
+        window.location.origin;
+
+      if (!origin) {
+
+        origin =
+          `${window.location.protocol}//${window.location.host}`;
+
+      }
+
+
+      const iframeSrc =
+        `${ouacServiceUrl}` +
+        `&CallBack=/assets/login-callback.html?UserInfo` +
+        `&CssLink=/assets/sso-login.css` +
+        `&State=RxFdv2p7KsDq38CX` +
+        `&SSO=1`;
+
+
+      this.iframeSafeSrc =
+        this.domSanitizer
+          .bypassSecurityTrustResourceUrl(
+            iframeSrc
+          );
+
+
+      // toPage
+      let toPageIndex =
+        this.location.href
+          .indexOf("&toPage=");
+
+
+      if (toPageIndex > -1) {
+
+        this.toPage =
+          this.location.href
+            .slice(
+              toPageIndex + 8
+            )
+            .replace(
+              /%2F/g,
+              '/'
+            );
+      }
+
+
+      // menuId
+      const menuIndex =
+        this.location.href
+          .indexOf("&menuId=");
+
+
+      if (menuIndex > -1) {
+
+        this.menuId =
+          this.location.href
+            .slice(
+              menuIndex + 8
+            );
+      }
+
+    }
+
+
+    // Normal login
+    else {
+
+      let origin =
+        window.location.origin;
+
+      if (!origin) {
+
+        origin =
+          `${window.location.protocol}//${window.location.host}`;
+
+      }
+
+
+      const iframeSrc =
+        `${ouacServiceUrl}` +
+        `&CallBack=/assets/login-callback.html?UserInfo` +
+        `&CssLink=/assets/sso-login.css` +
+        `&State=RxFdv2p7KsDq38CX` +
+        `&SSO=0`;
+
+
+      this.iframeSafeSrc =
+        this.domSanitizer
+          .bypassSecurityTrustResourceUrl(
+            iframeSrc
+          );
+    }
+  }
+
+
+  // =====================================================
+  // DESTROY
+  // =====================================================
+
+  ngOnDestroy(): void {
+
+    if (this.interval$) {
+
+      clearInterval(
+        this.interval$
+      );
+
+    }
+  }
+
+
+  // =====================================================
+  // GET SYSTEM MENU
+  // =====================================================
+
+  getSystemMenu() {
+
+    const group = [
+
+      {
+
+        text: "主導航",
+
+        group: true,
+
+        children: []
+
+      }
+
+    ];
+
+
+    const userInfo =
+      this.publicSvr.getSettingUserINfo();
+
+
+    if (
+      !userInfo ||
+      !userInfo.eeid
+    ) {
+
+      console.error(
+        "User information not found"
+      );
+
+      this.msg.error(
+        "User information not found"
+      );
+
+      return;
+    }
+
+
+    const params = {
+
+      Func:
+        "Permission management-GetUserPermitModuleBySystem",
+
+      SystemId:
+        30373,
+
+      EmpNo:
+        userInfo.eeid
+
+    };
+
+
+    const param =
+      this.publicSvr.dealPostParamsEncrypt(
+        params
+      );
+
+
+    const config = {
+
+      headers: {
+
+        apiID:
+          "ffff-1687574205823-1020819373-1797",
+
+        userKey:
+          this.publicSvr.USER_APPLIATION_WEB
+
+      }
+
+    };
+
+
+    // Debug
+    console.log(
+      "========== MENU API =========="
+    );
+
+    console.log(
+      "Menu URL:",
+      iwxServiceUrl
+    );
+
+    console.log(
+      "Employee:",
+      userInfo.eeid
+    );
+
+    console.log(
+      "apiID:",
+      config.headers.apiID
+    );
+
+    console.log(
+      "=============================="
+    );
+
+
+    this.http
+      .post(
+        iwxServiceUrl,
+        param,
+        null,
+        config
+      )
+      .subscribe(
+
+        (data: any) => {
+
+          console.log(
+            "Menu API response:",
+            data
+          );
+
+
+          try {
+
+            if (
+              !data ||
+              !data.r
+            ) {
+
+              console.error(
+                "Invalid menu API response:",
+                data
+              );
+
+              this.msg.error(
+                "Invalid menu response from server"
+              );
+
+              return;
+            }
+
+
+            const decrypted =
+              this.publicSvr.security.decrypt(
+                data.r,
+                this.publicSvr.iwxKInfo
+              );
+
+
+            console.log(
+              "Menu decrypted response:",
+              decrypted
+            );
+
+
+            const res =
+              typeof decrypted === "string"
+                ? JSON.parse(decrypted)
+                : decrypted;
+
+
+            console.log(
+              "Menu parsed response:",
+              res
+            );
+
+
+            // =================================================
+            // MENU ACCESS CHECK
+            // =================================================
+
+            const hasAccess =
+              res &&
+              res.IsOK == "1" &&
+              res.List &&
+              res.List.length > 0;
+
+
+            if (!hasAccess) {
+
+              this.msg.error(
+                "您暫無可查看的菜單，請聯繫管理員開通！ (No menu access, please contact the administrator)",
+                {
+                  nzDuration: 3000
+                }
+              );
+
+
+              this.publicSvr.logout();
+
+              return;
+            }
+
+
+            // =================================================
+            // MENU TREE
+            // =================================================
+
+            group[0].children =
+              this.arrayToTree(
+                res.List
+              );
+
+
+            this.menuService.add(
+              group
+            );
+
+
+            // =================================================
+            // NAVIGATION
+            // =================================================
+
+            if (this.toPage) {
+
+              const userMenu =
+                res.List
+                  .filter(
+                    (item) =>
+                      item.webUrl
+                  )
+                  .map(
+                    (item) => ({
+
+                      id:
+                        item.id,
+
+                      webUrl:
+                        item.webUrl
+
+                    })
+                  );
+
+
+              this.goToPage(
+                userMenu,
+                this.toPage
+              );
+
+            }
+
+
+            else if (this.menuId) {
+
+              this.getToMenuData(
+                group[0].children,
+                this.menuId
+              );
+
+            }
+
+
+            else {
+
+              this.router.navigateByUrl(
+                '/ism/dashboard'
+              );
+
+            }
+
+          }
+
+
+          catch (error) {
+
+            console.error(
+              "Menu decrypt/parse error:",
+              error
+            );
+
+            this.msg.error(
+              "Unable to process menu response"
+            );
+          }
+
+        },
+
+
+        // ===================================================
+        // API ERROR
+        // ===================================================
+
+        (err) => {
+
+          console.error(
+            "Menu API error:",
+            err
+          );
+
+
+          if (
+            err &&
+            err.status === 401
+          ) {
+
+            console.error(
+              "401 Unauthorized"
+            );
+
+            console.error(
+              "URL:",
+              iwxServiceUrl
+            );
+
+
+            this.msg.error(
+              "Menu API Unauthorized (401). Please contact administrator."
+            );
+
+          }
+
+          else {
+
+            this.msg.error(
+              "Unable to load menu permissions"
+            );
+
+          }
+
+        }
+
+      );
+
+  }
+
+
+  // =====================================================
+  // GO TO PAGE
+  // =====================================================
+
+  goToPage(
+    userMenu,
+    toPageInfo
+  ) {
+
+    const toMenuData =
+      userMenu.filter(
+        (item) => {
+
+          return item.webUrl ==
+            toPageInfo;
+
+        }
+      );
+
+
+    if (
+      toMenuData.length == 0
+    ) {
+
+      this.publicSvr.logout();
+
+      this.ngOnInit();
+
+    }
+
+    else {
+
+      this.router.navigateByUrl(
+        toPageInfo
+      );
+
+    }
+
+  }
+
+
+  // =====================================================
+  // GET MENU DATA
+  // =====================================================
+
+  getToMenuData(
+    data,
+    menuId
+  ) {
+
+    const toMenuData =
+      data.filter(
+        item => {
+
+          return item.id ==
+            menuId;
+
+        }
+      );
+
+
+    if (
+      toMenuData.length == 0
+    ) {
+
+      data.forEach(
+        (item) => {
+
+          if (
+            item.children.length != 0
+          ) {
+
+            const list =
+              item.children;
+
+            this.getToMenuData(
+              list,
+              menuId
+            );
+
+          }
+
+        }
+      );
+
+    }
+
+    else {
+
+      const menuData =
+        toMenuData[0];
+
+      this.getPage(
+        menuData
+      );
+
+    }
+
+  }
+
+
+  // =====================================================
+  // GET PAGE
+  // =====================================================
+
+  getPage(data) {
+
+    if (
+      data.children.length > 0
+    ) {
+
+      const list =
+        data.children[0];
+
+      this.getPage(
+        list
+      );
+
+    }
+
+    else {
+
+      const toPage =
+        data.link;
+
+      this.router.navigateByUrl(
+        toPage
+      );
+
+
+      localStorage.removeItem(
+        "fromInfo"
+      );
+
+      localStorage.removeItem(
+        "toPageInfo"
+      );
+
+      localStorage.removeItem(
+        "userMenu"
+      );
+
+      localStorage.removeItem(
+        "userMenuId"
+      );
+
+    }
+
+  }
+
+
+  // =====================================================
+  // ARRAY TO TREE
+  // =====================================================
+
+  arrayToTree(
+    list,
+    parentId = 0
+  ) {
+
+    if (
+      !list ||
+      !Array.isArray(list)
+    ) {
+
+      return [];
+
+    }
+
+
+    return list
+      .filter(
+        item =>
+          item.parentId === parentId
+      )
+      .map(
+        item => {
+
+          let icon = null;
+
+
+          if (
+            item.icon
+          ) {
+
+            const iconParts =
+              item.icon.split("|");
+
+
+            icon = {
+
+              type: "icon",
+
+              value:
+                iconParts[0],
+
+              theme:
+                iconParts[1] ||
+                "outline"
+
+            } as MenuIcon;
+
+          }
+
+
+          return {
+
+            text:
+              item.name,
+
+            icon:
+              icon,
+
+            link:
+              item.menuType === "15"
+
+                ? item.webUrl +
+                  "/" +
+                  item.permissionId
+
+                : item.webUrl,
+
+            parentId:
+              item.parentId,
+
+            children:
+              this.arrayToTree(
+                list,
+                item.id
+              ),
+
+            menuType:
+              item.menuType,
+
+            id:
+              item.id,
+
+            permissionId:
+              item.permissionId,
+
+            show:
+              true,
+
+            urlKey:
+              item.urlkey
+
+          };
+
+        }
+      );
+
+  }
+
+
+  // =====================================================
+  // FORGOT PASSWORD
+  // =====================================================
+
+  resetInfo = {
+
+    account: "",
+
+    code: "",
+
+    newPassword: "",
+
+    confirmPassword: "",
+
+    email: ""
+
+  };
+
+
+  isCode: boolean = false;
+
+
+  // =====================================================
+  // OPEN FORGET PASSWORD
+  // =====================================================
+
+  openForgetPasswordModal() {
+
+    this.isForgetPassword = true;
+
+  }
+
+
+  closeForgetPasswordModal() {
+
+    this.isForgetPassword = false;
+
+    this.isCode = false;
+
+
+    this.resetInfo = {
+
+      account: "",
+
+      code: "",
+
+      newPassword: "",
+
+      confirmPassword: "",
+
+      email: ""
+
+    };
+
+  }
+
+
+  // =====================================================
+  // PASSWORD CHANGE
+  // =====================================================
+
+  passwordChange(name) {
+
+    const newPassword =
+      this.resetInfo.newPassword;
+
+    const confirmPassword =
+      this.resetInfo.confirmPassword;
+
+
+    if (
+      newPassword ||
+      confirmPassword
+    ) {
+
+      const reg =
+        /^(?=.*[A-Za-z])(?=.*\d)(?=.*[`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]])[A-Za-z\d`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]]{8,}$/;
+
+
+      if (
+        name ==
+        "newPassword"
+      ) {
+
+        const newPasswordResult =
+          reg.test(
+            newPassword
+          );
+
+
+        if (!newPasswordResult) {
+
+          this.msg.error(
+            'The password must have at least 8 digits and must contain digits, letters, and special characters.',
+            {
+              nzDuration: 10000
+            }
+          );
+
+
+          this.resetInfo.newPassword =
+            "";
+
+          return false;
+
+        }
+
+      }
+
+
+      if (
+        name ==
+        "confirmPassword"
+      ) {
+
+        const confirmResult =
+          reg.test(
+            confirmPassword
+          );
+
+
+        if (!confirmResult) {
+
+          this.msg.error(
+            'The password must have at least 8 digits and must contain digits, letters, and special characters.',
+            {
+              nzDuration: 10000
+            }
+          );
+
+
+          this.resetInfo.confirmPassword =
+            "";
+
+          return false;
+
+        }
+
+      }
+
+
+      if (
+        newPassword &&
+        confirmPassword
+      ) {
+
+        if (
+          newPassword !=
+          confirmPassword
+        ) {
+
+          this.msg.error(
+            'The entered password information is inconsistent.',
+            {
+              nzDuration: 10000
+            }
+          );
+
+        }
+
+      }
+
+    }
+
+  }
+
+
+  // =====================================================
+  // SEND VERIFICATION CODE
+  // =====================================================
+
+  sendVerifivationCode() {
+
+    if (
+      !this.resetInfo.account
+    ) {
+
+      this.msg.error(
+        'Please enter your account'
+      );
+
+      return false;
+
+    }
+
+
+    const params = {
+
+      EmpNo:
+        this.resetInfo.account,
+
+      CaptchaCode:
+        "",
+
+      Func:
+        "H5-SendVerificationCode-IWX"
+
+    };
+
+
+    this.publicSvr
+      .permitRequest(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              "ffff-1655357911834-16925411121-0153",
+
+            userKey:
+              this.publicSvr.USER_GQ
+
+          }
+
+        },
+
+        true
+
+      )
+      .then(
+        (res: any) => {
+
+          if (
+            res.IsOK == "1"
+          ) {
+
+            this.resetInfo.email =
+              res.Msg;
+
+          }
+
+          else {
+
+            this.msg.error(
+              res.Msg
+            );
+
+          }
+
+        }
+      );
+
+  }
+
+
+  // =====================================================
+  // VERIFY CODE
+  // =====================================================
+
+  nextOption() {
+
+    if (
+      !this.resetInfo.code
+    ) {
+
+      this.msg.error(
+        'Please enter verification code'
+      );
+
+      return false;
+
+    }
+
+
+    const params = {
+
+      EmpNo:
+        this.resetInfo.account,
+
+      CaptchaCode:
+        this.resetInfo.code,
+
+      Func:
+        "H5-CheckVerificationCode-IWX"
+
+    };
+
+
+    this.publicSvr
+      .permitRequest(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              "ffff-1655375927998-16925411121-0200",
+
+            userKey:
+              this.publicSvr.USER_GQ
+
+          }
+
+        },
+
+        true
+
+      )
+      .then(
+        (res: any) => {
+
+          if (
+            res.IsOK == "1"
+          ) {
+
+            this.isCode =
+              true;
+
+          }
+
+          else {
+
+            this.msg.error(
+              res.Msg
+            );
+
+          }
+
+        }
+      );
+
+  }
+
+
+  // =====================================================
+  // RESET PASSWORD
+  // =====================================================
+
+  resetPassword() {
+
+    if (
+      this.resetInfo.newPassword &&
+      this.resetInfo.confirmPassword &&
+      this.resetInfo.newPassword !=
+      this.resetInfo.confirmPassword
+    ) {
+
+      return false;
+
+    }
+
+
+    if (
+      !this.resetInfo.account ||
+      !this.resetInfo.code ||
+      !this.resetInfo.newPassword ||
+      !this.resetInfo.confirmPassword
+    ) {
+
+      this.msg.error(
+        "All information is required."
+      );
+
+      return false;
+
+    }
+
+
+    const params = {
+
+      EmpNo:
+        this.resetInfo.account,
+
+      Password:
+        this.resetInfo.newPassword,
+
+      CaptchaCode:
+        this.resetInfo.code,
+
+      Func:
+        "H5-ChangeEmpPasswordV2-IWX"
+
+    };
+
+
+    this.publicSvr
+      .permitRequest(
+
+        params,
+
+        {
+
+          headers: {
+
+            apiID:
+              "ffff-1655376433685-16925411121-0217",
+
+            userKey:
+              this.publicSvr.USER_GQ
+
+          }
+
+        },
+
+        true
+
+      )
+      .then(
+        (res: any) => {
+
+          if (
+            res.IsOK == "1"
+          ) {
+
+            this.msg.success(
+              "Password changed successfully"
+            );
+
+            this.closeForgetPasswordModal();
+
+          }
+
+          else {
+
+            this.msg.error(
+              res.Msg
+            );
+
+          }
+
+        }
+      );
+
+  }
+
+
+  // =====================================================
+  // CLOSE MODAL
+  // =====================================================
+
+  handleCancel() {
+
+    this.isVisible = false;
+
+  }
+
+}
