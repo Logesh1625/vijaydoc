@@ -1,23 +1,64 @@
-const decryptKey =
-  this.publicSvr.security.getDK(encodedKey);
-
-if (![16, 24, 32].includes(decryptKey.length)) {
-  throw new Error(
-    'Invalid AES key length. Verify the OUAC key.'
-  );
-}
-
-let decryptedUserInfo: string;
-
-try {
-  decryptedUserInfo = security.decrypt(
-    userInfo,
-    decryptKey
-  );
-} catch (error) {
-  console.error('OUAC decryption failed:', error);
-
-  throw new Error(
-    'OUAC decryption failed. Verify the encryption key, IV, mode and padding.'
-  );
-}
+一帐通已加载完成,当前版本为:4.2.3
+Login.js?V=423:431 一帳通登錄驗證完成:
+Login.js?V=423:432 {"SupportWays":null,"MFAUUID":null,"IsOK":"1","Msg":"登录成功","UserInfo":"UUXfXmi02m1twWJ4kP6O98nqOZhYbrDveu7YWVpg030pscGp3JVhE8jg2GG9ZH38/0/AbvZfwOqEkjjt6SoMZTtk96eq10s+zon4TBlwvHErR1U9jPHjRyVsd07gqE6nUS7woqc+7+EgnztOrD6hSwymF3P7OZX6hw/STMiGhlHxMqZlNCcnDtJSkC9Bou8NaJPQIn4fzUkt13j00oSSKYSDNtPtHi7snj+Td5RK7dmSelilcSg4wn6q97siQy/r38lW8IH8ejgv6X6rEA+Mu7OdzvwFHzUTOmi6XgSyzPhwy9j3vYOtG5Hpaz7qvzmMM8Apv7507YXsYTeyZ7TZ2OnYTZSO6Tl4AcKbdYDEsi0QryIgJz4ob/mz7VeWMPojNPA6cdSIMZCVH0Aqa6NvBoxH0HXs1BsrIUCBNV/T6GmaZQEjY2q3maMQxqs8kz+Y","Token":null,"oAuthToken":null,"ClientIp":"10.209.110.208","LoginType":null,"Jwt":null}
+login.component.ts:577 OUAC login callback received. {hasUserInfo: true, userInfoLength: 448}
+login.component.ts:178 SSO Step 1: UserInfo received.
+login.component.ts:179 UserInfo length: 448
+login.component.ts:208 OUAC decryption failed: Error: Malformed UTF-8 data
+    at Object.stringify (core.js:478:1)
+    at Object.decrypt (aes.ts:57:34)
+    at UserLoginComponent.submit (login.component.ts:201:38)
+    at UserLoginComponent.onMessage (login.component.ts:602:10)
+    at Object.eval [as handleEvent] (UserLoginComponent_Host.ngfactory.js:1:1)
+    at handleEvent (core.js:43992:77)
+    at callWithDebugContext (core.js:45631:1)
+    at Object.debugHandleEvent [as handleEvent] (core.js:45246:1)
+    at dispatchEvent (core.js:29803:1)
+    at core.js:42924:1
+submit @ login.component.ts:208
+onMessage @ login.component.ts:602
+(anonymous) @ UserLoginComponent_Host.ngfactory.js:1
+(anonymous) @ core.js:43992
+callWithDebugContext @ core.js:45631
+debugHandleEvent @ core.js:45246
+dispatchEvent @ core.js:29803
+(anonymous) @ core.js:42924
+(anonymous) @ platform-browser.js:2668
+invokeTask @ zone-evergreen.js:391
+(anonymous) @ core.js:39679
+invokeTask @ zone-evergreen.js:390
+runTask @ zone-evergreen.js:168
+invokeTask @ zone-evergreen.js:465
+(anonymous) @ zone-evergreen.js:1603
+(anonymous) @ zone-evergreen.js:1629
+postMessage
+(anonymous) @ VM15085 login-callback.html:17
+login.component.ts:492 SSO login processing error: Error: OUAC decryption failed. Verify the encryption configuration.
+    at UserLoginComponent.submit (login.component.ts:213:15)
+    at UserLoginComponent.onMessage (login.component.ts:602:10)
+    at Object.eval [as handleEvent] (UserLoginComponent_Host.ngfactory.js:1:1)
+    at handleEvent (core.js:43992:77)
+    at callWithDebugContext (core.js:45631:1)
+    at Object.debugHandleEvent [as handleEvent] (core.js:45246:1)
+    at dispatchEvent (core.js:29803:1)
+    at core.js:42924:1
+    at platform-browser.js:2668:1
+    at ZoneDelegate.invokeTask (zone-evergreen.js:391:1)
+submit @ login.component.ts:492
+onMessage @ login.component.ts:602
+(anonymous) @ UserLoginComponent_Host.ngfactory.js:1
+(anonymous) @ core.js:43992
+callWithDebugContext @ core.js:45631
+debugHandleEvent @ core.js:45246
+dispatchEvent @ core.js:29803
+(anonymous) @ core.js:42924
+(anonymous) @ platform-browser.js:2668
+invokeTask @ zone-evergreen.js:391
+(anonymous) @ core.js:39679
+invokeTask @ zone-evergreen.js:390
+runTask @ zone-evergreen.js:168
+invokeTask @ zone-evergreen.js:465
+(anonymous) @ zone-evergreen.js:1603
+(anonymous) @ zone-evergreen.js:1629
+postMessage
+(anonymous) @ VM15085 login-callback.html:17
