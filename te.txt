@@ -1,174 +1,111 @@
-import { SettingsService, _HttpClient } from "@delon/theme";
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  Inject,
-  Optional,
-  HostListener
-} from "@angular/core";
-import { Router } from "@angular/router";
-import { FormGroup, FormBuilder } from "@angular/forms";
-import { NzMessageService, NzModalService } from "ng-zorro-antd";
-import { ITokenService, DA_SERVICE_TOKEN } from "@delon/auth";
-import { ReuseTabService } from "@delon/abc";
-import { StartupService, I18NService } from "@core";
-import { CookieService } from "ngx-cookie-service";
-import { DomSanitizer } from "@angular/platform-browser";
-import { PlatformLocation } from "@angular/common";
-import { MenuService, MenuIcon } from "@delon/theme";
-import { PublicNetService } from "../../a_Public_net/Public_net.service";
-import { security } from "@shared";
-import { ouacServiceUrl, iwxServiceUrl } from "../../a_Public_net/Url";
+// =====================================================
+// SSO LOGIN
+// =====================================================
 
-@Component({
-  selector: "passport-login",
-  templateUrl: "./login.component.html",
-  styleUrls: ["./login.component.less"]
-})
-export class UserLoginComponent implements OnInit, OnDestroy {
-
-  loading = false;
-  iframeSrc = "";
-  iframeSafeSrc: any;
-  form: FormGroup;
-  error = "2";
-  type = 0;
-  count = 0;
-  interval$: any;
-  isVisible = false;
-  isForgetPassword = false;
-  toPage: any;
-  menuId: any;
-  isCode = false;
-
-  resetInfo = {
-    account: "",
-    code: "",
-    newPassword: "",
-    confirmPassword: "",
-    email: ""
-  };
-
-  constructor(
-    fb: FormBuilder,
-    modalSrv: NzModalService,
-    private router: Router,
-    @Optional() @Inject(ReuseTabService)
-    private reuseTabService: ReuseTabService,
-    @Inject(DA_SERVICE_TOKEN)
-    private tokenService: ITokenService,
-    private startupSrv: StartupService,
-    private settingService: SettingsService,
-    private cookieService: CookieService,
-    public http: _HttpClient,
-    public msg: NzMessageService,
-    public i18n: I18NService,
-    public domSanitizer: DomSanitizer,
-    public location: PlatformLocation,
-    private menuService: MenuService,
-    private publicSvr: PublicNetService
-  ) {
-    modalSrv.closeAll();
-
-    this.form = fb.group({
-      userName: [""],
-      pwdInfo: [""],
-      remember: [true]
-    });
-  }
-
-  get userName() {
-    return this.form.controls.userName;
-  }
-
-  get password() {
-    return this.form.controls.pwdInfo;
-  }
-
-  get remember() {
-    return this.form.controls.remember;
-  }
-
-  switch(ret: any) {
-    this.type = ret.index;
-  }
-
-  // =====================================================
-  // SSO LOGIN
-  // =====================================================
-
- submit(userInfo?: string) {
+submit(userInfo?: string): void {
   this.loading = true;
 
   try {
-    if (!userInfo || typeof userInfo !== 'string') {
-      throw new Error('OUAC UserInfo is empty or invalid');
-    }
-
-    console.log('OUAC UserInfo received. Length:', userInfo.length);
-
-const decryptKey = this.publicSvr.security.getDK(
-    'NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk='
-);
-
-    let decryptedUserInfo: string;
-
-    try {
-      decryptedUserInfo = security.decrypt(userInfo, decryptKey);
-    } catch (decryptError) {
-      console.error('OUAC UserInfo decryption failed:', decryptError);
+    if (
+      !userInfo ||
+      typeof userInfo !== "string"
+    ) {
       throw new Error(
-        'UserInfo decryption failed. Verify the OUAC encryption key and AES configuration.'
+        "OUAC UserInfo is empty or invalid."
       );
     }
 
-    if (!decryptedUserInfo) {
-      throw new Error('Decrypted UserInfo is empty');
-    }
-
-    let data: any;
-
-    try {
-      data = JSON.parse(decryptedUserInfo);
-    } catch (parseError) {
-      console.error('UserInfo JSON parsing failed:', parseError);
-      throw new Error('Decrypted UserInfo is not valid JSON');
-    }
-
-    const userInfo2 = security.encrypt(
-      JSON.stringify(data),
-      '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt'
+    console.log(
+      "OUAC UserInfo received. Length:",
+      userInfo.length
     );
+
+    // Check the received value format.
+    console.log(
+      "UserInfo starts with:",
+      userInfo.substring(0, 20)
+    );
+
+    const decryptKey =
+      this.publicSvr.security.getDK(
+        "NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk="
+      );
+
+    if (!decryptKey) {
+      throw new Error(
+        "OUAC decryption key is empty."
+      );
+    }
+
+    console.log(
+      "OUAC decryption key received."
+    );
+
+    // Decrypt only using the verified OUAC configuration.
+    const decryptedUserInfo =
+      security.decrypt(
+        userInfo,
+        decryptKey
+      );
+
+    if (!decryptedUserInfo) {
+      throw new Error(
+        "OUAC decryption returned empty data."
+      );
+    }
+
+    console.log(
+      "OUAC decryption successful."
+    );
+
+    const data = JSON.parse(
+      decryptedUserInfo
+    );
+
+    console.log(
+      "OUAC UserInfo JSON parsed successfully."
+    );
+
+    const userInfo2 =
+      security.encrypt(
+        JSON.stringify(data),
+        "6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt"
+      );
 
     const param = {
       userInfo: userInfo2
     };
 
-    const body = this.publicSvr.security.encryptForWeb(
-      JSON.stringify(param)
-    );
+    const body =
+      this.publicSvr.security.encryptForWeb(
+        JSON.stringify(param)
+      );
 
     this.http.post(
-      '/oneAccountLogin?_allow_anonymous=true',
+      "/oneAccountLogin?_allow_anonymous=true",
       body,
       null,
       {
         headers: {
-          'Content-Type': 'application/json;charset=UTF-8'
+          "Content-Type":
+            "application/json;charset=UTF-8"
         }
       }
     ).subscribe(
       (response: any) => {
         try {
           const decryptedResponse =
-            this.publicSvr.security.decryptForWeb(response);
+            this.publicSvr.security.decryptForWeb(
+              response
+            );
 
-          const res = JSON.parse(decryptedResponse);
+          const res = JSON.parse(
+            decryptedResponse
+          );
 
           if (res.status === 200) {
             const user = {
-              avatar: './assets/tmp/img/avatar.jpg',
+              avatar: "./assets/tmp/img/avatar.jpg",
               eeid: res.data.eeid,
               name: res.data.empName,
               time: new Date().getTime()
@@ -180,711 +117,111 @@ const decryptKey = this.publicSvr.security.getDK(
               res.data.ClientIp
             );
           } else {
-            this.msg.error(res.msg || 'Login failed');
+            this.msg.error(
+              res.msg || "Login failed."
+            );
           }
         } catch (error) {
-          console.error('Login response processing failed:', error);
-          this.msg.error('Unable to process login response');
+          console.error(
+            "Login response processing failed:",
+            error
+          );
+
+          this.msg.error(
+            "Unable to process login response."
+          );
         } finally {
           this.loading = false;
         }
       },
       (error) => {
         this.loading = false;
-        console.error('Login API error:', error);
-        this.msg.error('Login failed. Please try again.');
+
+        console.error(
+          "Login API error:",
+          error
+        );
+
+        this.msg.error(
+          "Login failed. Please try again."
+        );
       }
     );
 
   } catch (error) {
     this.loading = false;
-    console.error('Login processing error:', error);
-    this.msg.error(error.message || 'Unable to process login information');
+
+    console.error(
+      "Login processing error:",
+      error
+    );
+
+    this.msg.error(
+      error && error.message
+        ? error.message
+        : "Unable to process login information."
+    );
   }
 }
 
-  private resetLoginIframe() {
-    const iframe = document.querySelector(".login-iframe");
 
-    if (iframe) {
-      iframe.setAttribute(
-        "src",
-        this.buildIframeUrl(false)
-      );
-    }
+
+
+
+
+
+
+
+
+
+@HostListener("window:message", ["$event"])
+onMessage(event: MessageEvent): void {
+  const info: any = event.data;
+
+  console.log("OUAC callback received:", {
+    msgType: info && info.msgType,
+    hasUserInfo: !!(info && info.UserInfo),
+    userInfoLength:
+      info && typeof info.UserInfo === "string"
+        ? info.UserInfo.length
+        : 0
+  });
+
+  if (!info || info.msgType !== "login") {
+    return;
   }
 
-  private buildIframeUrl(sso: boolean): string {
-    return (
-      `${ouacServiceUrl}` +
-      `&CallBack=/assets/login-callback.html?UserInfo` +
-      `&CssLink=/assets/sso-login.css` +
-      `&State=RxFdv2p7KsDq38CX` +
-      `&SSO=${sso ? 1 : 0}`
-    );
-  }
-
-  // =====================================================
-  // OUAC CALLBACK
-  // =====================================================
-
-  @HostListener("window:message", ["$event"])
-  onMessage(event: MessageEvent) {
-    const info: any = event.data;
-console.log("Oauc",event.data)
-    if (!info || info.msgType !== "login") {
-      return;
-    }
-
-    if (
-      !info.UserInfo ||
-      typeof info.UserInfo !== "string"
-    ) {
-      this.loading = false;
-
-      console.error(
-        "OUAC callback did not contain valid UserInfo."
-      );
-
-      this.msg.error(
-        "Login information was not received."
-      );
-
-      return;
-    }
-
-    this.submit(info.UserInfo);
-  }
-
-  // =====================================================
-  // LOGIN SUCCESS
-  // =====================================================
-
-  async loginSuccess(
-    user: any,
-    token: any,
-    ClientIP: any
+  if (
+    !info.UserInfo ||
+    typeof info.UserInfo !== "string"
   ) {
-    this.settingService.setUser({
-      userInfo: this.publicSvr.security.encryptForWeb(
-        JSON.stringify(user)
-      )
-    });
+    this.loading = false;
 
-    this.cookieService.set(
-      "USER_NO",
-      this.publicSvr.security.encryptForWeb(user.eeid)
+    this.msg.error(
+      "Login information was not received."
     );
 
-    this.cookieService.set(
-      "USER_NAME",
-      this.publicSvr.security.encryptForWeb(user.name)
-    );
-
-    this.cookieService.set("IS_FOREIGN", "");
-    this.cookieService.set("SESSION_ID", "");
-    this.cookieService.set("FIH_TOKEN", "");
-
-    sessionStorage.setItem(
-      "ClientIp",
-      ClientIP || ""
-    );
-
-    try {
-      await this.publicSvr.insertLoginData(
-        user.eeid,
-        ClientIP
-      );
-    } catch (error) {
-      console.error("insertLoginData error:", error);
-    }
-
-    if (this.reuseTabService) {
-      this.reuseTabService.clear();
-    }
-
-    this.tokenService.set({
-      token: token
-    });
-
-    this.startupSrv.load()
-      .then(() => {
-        this.getSystemMenu();
-      })
-      .catch((error) => {
-        console.error("Startup loading failed:", error);
-        this.msg.error(
-          "Unable to load application startup data."
-        );
-      });
+    return;
   }
 
-  // =====================================================
-  // INITIALIZATION
-  // =====================================================
-
-  ngOnInit() {
-    const url = window.location.href;
-
-    if (
-      window.location.protocol !== "https:" &&
-      (
-        url.indexOf("lms.idpbgtn.efoxconn.com") !== -1 ||
-        url.indexOf("lms.idpbgind.efoxconn.com") !== -1
-      )
-    ) {
-      window.location.href =
-        "https://" +
-        window.location.hostname +
-        window.location.pathname +
-        window.location.search +
-        window.location.hash;
-
-      return;
-    }
-
-    if (
-      window.location.hostname ===
-      "lms.idpbgtn.efoxconn.com"
-    ) {
-      window.location.href = url.replace(
-        "lms.idpbgtn.efoxconn.com",
-        "lms.idpbgind.efoxconn.com"
-      );
-
-      return;
-    }
-
-    const currentUrl = this.location.href;
-
-    const fromInfo =
-      currentUrl.indexOf("?from=iportal") > -1;
-
-    this.iframeSafeSrc =
-      this.domSanitizer.bypassSecurityTrustResourceUrl(
-        this.buildIframeUrl(fromInfo)
-      );
-
-    const toPageIndex =
-      currentUrl.indexOf("&toPage=");
-
-    if (toPageIndex > -1) {
-      this.toPage = currentUrl
-        .slice(toPageIndex + 8)
-        .replace(/%2F/g, "/");
-    }
-
-    const menuIndex =
-      currentUrl.indexOf("&menuId=");
-
-    if (menuIndex > -1) {
-      this.menuId = currentUrl.slice(menuIndex + 8);
-    }
-  }
-
-  ngOnDestroy() {
-    if (this.interval$) {
-      clearInterval(this.interval$);
-    }
-  }
-
-  // =====================================================
-  // SYSTEM MENU
-  // =====================================================
-
-  getSystemMenu() {
-    const group: any[] = [
-      {
-        text: "主導航",
-        group: true,
-        children: []
-      }
-    ];
-
-    const userInfo =
-      this.publicSvr.getSettingUserINfo();
-
-    if (!userInfo || !userInfo.eeid) {
-      console.error("User information not found.");
-      this.msg.error("User information not found.");
-      return;
-    }
-
-    const params = {
-      Func: "Permission management-GetUserPermitModuleBySystem",
-      SystemId: 30373,
-      EmpNo: userInfo.eeid
-    };
-
-    const param =
-      this.publicSvr.dealPostParamsEncrypt(params);
-
-    const config = {
-      headers: {
-        apiID: "ffff-1687574205823-1020819373-1797",
-        userKey: this.publicSvr.USER_APPLIATION_WEB
-      }
-    };
-
-    this.http.post(
-      iwxServiceUrl,
-      param,
-      null,
-      config
-    ).subscribe(
-      (response: any) => {
-        try {
-          if (!response || !response.r) {
-            console.error("Invalid menu API response:", response);
-            this.msg.error(
-              "Invalid menu response from server."
-            );
-            return;
-          }
-
-          const decrypted =
-            this.publicSvr.security.decrypt(
-              response.r,
-              this.publicSvr.iwxKInfo
-            );
-
-          const result = JSON.parse(decrypted);
-
-          const hasAccess =
-            result &&
-            result.IsOK == "1" &&
-            Array.isArray(result.List) &&
-            result.List.length > 0;
-
-          if (!hasAccess) {
-            this.msg.error(
-              "No menu access. Please contact the administrator.",
-              { nzDuration: 3000 }
-            );
-
-            this.publicSvr.logout();
-            return;
-          }
-
-          group[0].children =
-            this.arrayToTree(result.List);
-
-          this.menuService.add(group);
-
-          if (this.toPage) {
-            const userMenu = result.List
-              .filter((item: any) => item.webUrl)
-              .map((item: any) => ({
-                id: item.id,
-                webUrl: item.webUrl
-              }));
-
-            this.goToPage(userMenu, this.toPage);
-
-          } else if (this.menuId) {
-            this.getToMenuData(
-              group[0].children,
-              this.menuId
-            );
-
-          } else {
-            this.router.navigateByUrl(
-              "/ism/dashboard"
-            );
-          }
-
-        } catch (error) {
-          console.error("Menu decrypt/parse error:", error);
-
-          this.msg.error(
-            "Unable to process menu response."
-          );
-        }
-      },
-      (error) => {
-        console.error("Menu API error:", error);
-
-        if (error && error.status === 401) {
-          this.msg.error(
-            "Menu API Unauthorized (401). Please contact administrator."
-          );
-        } else {
-          this.msg.error(
-            "Unable to load menu permissions."
-          );
-        }
-      }
-    );
-  }
-
-  // =====================================================
-  // NAVIGATION
-  // =====================================================
-
-  goToPage(userMenu: any[], toPageInfo: string) {
-    const matches = userMenu.filter(
-      (item) => item.webUrl === toPageInfo
-    );
-
-    if (matches.length === 0) {
-      this.publicSvr.logout();
-      return;
-    }
-
-    this.router.navigateByUrl(toPageInfo);
-  }
-
-  getToMenuData(data: any[], menuId: any) {
-    const matches = data.filter(
-      (item) => item.id == menuId
-    );
-
-    if (matches.length === 0) {
-      data.forEach((item) => {
-        if (item.children && item.children.length > 0) {
-          this.getToMenuData(item.children, menuId);
-        }
-      });
-    } else {
-      this.getPage(matches[0]);
-    }
-  }
-
-  getPage(data: any) {
-    if (data.children && data.children.length > 0) {
-      this.getPage(data.children[0]);
-    } else {
-      this.router.navigateByUrl(data.link);
-
-      localStorage.removeItem("fromInfo");
-      localStorage.removeItem("toPageInfo");
-      localStorage.removeItem("userMenu");
-      localStorage.removeItem("userMenuId");
-    }
-  }
-
-  // =====================================================
-  // ARRAY TO TREE
-  // =====================================================
-
-  arrayToTree(
-    list: any[],
-    parentId: any = 0
-  ): any[] {
-    if (!Array.isArray(list)) {
-      return [];
-    }
-
-    return list
-      .filter((item) => item.parentId === parentId)
-      .map((item) => {
-        let icon: MenuIcon = null;
-
-        if (item.icon) {
-          const parts = item.icon.split("|");
-
-          icon = {
-            type: "icon",
-            value: parts[0],
-            theme: parts[1] || "outline"
-          } as MenuIcon;
-        }
-
-        return {
-          text: item.name,
-          icon: icon,
-          link: item.menuType === "15"
-            ? item.webUrl + "/" + item.permissionId
-            : item.webUrl,
-          parentId: item.parentId,
-          children: this.arrayToTree(list, item.id),
-          menuType: item.menuType,
-          id: item.id,
-          permissionId: item.permissionId,
-          show: true,
-          urlKey: item.urlkey
-        };
-      });
-  }
-
-  // =====================================================
-  // FORGOT PASSWORD
-  // =====================================================
-
-  openForgetPasswordModal() {
-    this.isForgetPassword = true;
-  }
-
-  closeForgetPasswordModal() {
-    this.isForgetPassword = false;
-    this.isCode = false;
-
-    this.resetInfo = {
-      account: "",
-      code: "",
-      newPassword: "",
-      confirmPassword: "",
-      email: ""
-    };
-  }
-
-  passwordChange(name: string) {
-    const newPassword = this.resetInfo.newPassword;
-    const confirmPassword = this.resetInfo.confirmPassword;
-
-    const reg =
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]])[A-Za-z\d`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]]{8,}$/;
-
-    if (
-      name === "newPassword" &&
-      newPassword &&
-      !reg.test(newPassword)
-    ) {
-      this.msg.error(
-        "Password must contain at least 8 characters, including letters, numbers and special characters.",
-        { nzDuration: 10000 }
-      );
-
-      this.resetInfo.newPassword = "";
-      return false;
-    }
-
-    if (
-      name === "confirmPassword" &&
-      confirmPassword &&
-      !reg.test(confirmPassword)
-    ) {
-      this.msg.error(
-        "Password must contain at least 8 characters, including letters, numbers and special characters.",
-        { nzDuration: 10000 }
-      );
-
-      this.resetInfo.confirmPassword = "";
-      return false;
-    }
-
-    if (
-      newPassword &&
-      confirmPassword &&
-      newPassword !== confirmPassword
-    ) {
-      this.msg.error(
-        "The entered passwords do not match.",
-        { nzDuration: 10000 }
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  sendVerifivationCode() {
-    if (!this.resetInfo.account) {
-      this.msg.error("Please enter your account");
-      return false;
-    }
-
-    const params = {
-      EmpNo: this.resetInfo.account,
-      CaptchaCode: "",
-      Func: "H5-SendVerificationCode-IWX"
-    };
-
-    this.publicSvr.permitRequest(
-      params,
-      {
-        headers: {
-          apiID: "ffff-1655357911834-16925411121-0153",
-          userKey: this.publicSvr.USER_GQ
-        }
-      },
-      true
-    ).then((result: any) => {
-      if (result && result.IsOK == "1") {
-        this.resetInfo.email = result.Msg;
-      } else {
-        this.msg.error(
-          (result && result.Msg) ||
-          "Unable to send verification code."
-        );
-      }
-    }).catch((error) => {
-      console.error("Send verification code error:", error);
-      this.msg.error("Unable to send verification code.");
-    });
-  }
-
-  nextOption() {
-    if (!this.resetInfo.code) {
-      this.msg.error("Please enter verification code");
-      return false;
-    }
-
-    const params = {
-      EmpNo: this.resetInfo.account,
-      CaptchaCode: this.resetInfo.code,
-      Func: "H5-CheckVerificationCode-IWX"
-    };
-
-    this.publicSvr.permitRequest(
-      params,
-      {
-        headers: {
-          apiID: "ffff-1655375927998-16925411121-0200",
-          userKey: this.publicSvr.USER_GQ
-        }
-      },
-      true
-    ).then((result: any) => {
-      if (result && result.IsOK == "1") {
-        this.isCode = true;
-      } else {
-        this.msg.error(
-          (result && result.Msg) || "Verification failed."
-        );
-      }
-    }).catch((error) => {
-      console.error("Verify code error:", error);
-      this.msg.error("Unable to verify code.");
-    });
-  }
-
-  resetPassword() {
-    if (
-      this.resetInfo.newPassword !==
-      this.resetInfo.confirmPassword
-    ) {
-      this.msg.error("The entered passwords do not match.");
-      return false;
-    }
-
-    if (
-      !this.resetInfo.account ||
-      !this.resetInfo.code ||
-      !this.resetInfo.newPassword ||
-      !this.resetInfo.confirmPassword
-    ) {
-      this.msg.error("All information is required.");
-      return false;
-    }
-
-    const params = {
-      EmpNo: this.resetInfo.account,
-      Password: this.resetInfo.newPassword,
-      CaptchaCode: this.resetInfo.code,
-      Func: "H5-ChangeEmpPasswordV2-IWX"
-    };
-
-    this.publicSvr.permitRequest(
-      params,
-      {
-        headers: {
-          apiID: "ffff-1655376433685-16925411121-0217",
-          userKey: this.publicSvr.USER_GQ
-        }
-      },
-      true
-    ).then((result: any) => {
-      if (result && result.IsOK == "1") {
-        this.msg.success("Password changed successfully");
-        this.closeForgetPasswordModal();
-      } else {
-        this.msg.error(
-          (result && result.Msg) || "Password reset failed."
-        );
-      }
-    }).catch((error) => {
-      console.error("Reset password error:", error);
-      this.msg.error("Unable to reset password.");
-    });
-  }
-
-  handleCancel() {
-    this.isVisible = false;
-  }
+  this.submit(info.UserInfo);
 }
 
 
 
-import * as CryptoJS from 'crypto-js';
-/**
- * AES 加密
- * @param str 要加密的字符串
- * @param keyStr 加秘鑰（可選）默認 'abcdefghijklmnopqrstuvwxyz123456'
- * @param ivStr 偏移量（可選）默認 '0000000000000000'
- */
-export function encrypt(str, keyStr?: any, ivStr?: any) {
-    const key = keyStr ? CryptoJS.enc.Utf8.parse(keyStr) : CryptoJS.enc.Utf8.parse('abcdefghijklmnopqrstuvwxyz123456');
-    const iv = ivStr ? CryptoJS.enc.Hex.parse(ivStr) : CryptoJS.enc.Hex.parse('0000000000000000');
-    const encRes = CryptoJS.AES.encrypt(str, key, {
-        iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-    });
-    return encRes.toString();
-}
-/**
- * AES 解密
- * @param str 要解密的字符串
- * @param keyStr 解密鑰（可選）默認 'abcdefghijklmnopqrstuvwxyz123456'
- * @param ivStr 偏移量（可選）默認 '0000000000000000'
- */
-export function decrypt(str, keyStr?: any, ivStr?: any) {
-    const key = keyStr ? CryptoJS.enc.Utf8.parse(keyStr) : CryptoJS.enc.Utf8.parse('abcdefghijklmnopqrstuvwxyz123456');
-    const iv = ivStr ? CryptoJS.enc.Hex.parse(ivStr) : CryptoJS.enc.Hex.parse('0000000000000000');
-    const encRes = CryptoJS.AES.decrypt(str, key, {
-        iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-    });
-    return encRes.toString(CryptoJS.enc.Utf8);
+
+
+
+
+
+
+decrypt(str, key) {
+  const k = CryptoJS.enc.Utf8.parse(key);
+
+  return CryptoJS.enc.Utf8.stringify(
+    CryptoJS.AES.decrypt(str, k, this.cfg)
+  );
 }
 
-export const security = {
-    cfg: {
-        iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7
-    },
-    encryptForWeb(str) {
-        const k = CryptoJS.enc.Utf8.parse("794fc586a5a5a589c4ac47402f7419c2");
-        return CryptoJS.AES.encrypt(str, k, this.cfg).toString();
-    },
-    decryptForWeb(str) {
-        const k = CryptoJS.enc.Utf8.parse("794fc586a5a5a589c4ac47402f7419c2");
-        return CryptoJS.enc.Utf8.stringify(
-            CryptoJS.AES.decrypt(str, k, this.cfg)
-        );
-    },
-    encrypt(str, key) {
-        const k = CryptoJS.enc.Utf8.parse(key);
-        return CryptoJS.AES.encrypt(str, k, this.cfg).toString();
-    },
-    decrypt(str, key) {
-        const k = CryptoJS.enc.Utf8.parse(key);
-        return CryptoJS.enc.Utf8.stringify(CryptoJS.AES.decrypt(str, k, this.cfg));
-    },
-    md5(str) {
-        return CryptoJS.MD5(str).toString().toUpperCase();
-    },
-    genVldCode(str, key) {
-        return this.encrypt(this.md5(str + key), key)
-    }
-}
 
-// JAVA加密
-export function javaPostApi(param: any) {
-    // console.log('param',param)
-    const body = this.security.encryptForWeb(JSON.stringify(param.data));
 
-    return new Promise((resolve, reject) => {
-        this.http.post(param.url, body, null, {headers:{"Content-Type": "application/json;charset=UTF-8"}}).subscribe(data => {
-          const res = JSON.parse(this.security.decryptForWeb(data));
-          resolve(res);
-        }, err => {// 请求错误
-          reject(err);
-        });
-      }).catch(reason => {
-        console.log(reason)
-      })
-}
