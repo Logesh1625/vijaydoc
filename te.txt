@@ -2,9 +2,9 @@ console.log('UserInfo length:', userInfo?.length);
 
 try {
   console.log(
-    'Key decoded:',
+    'Decoded key:',
     window.atob('FBAE976732CEE3E396066625D133B493')
   );
 } catch (e) {
-  console.error('Invalid Base64 key:', e);
+  console.error('Base64 decoding failed:', e);
 }
