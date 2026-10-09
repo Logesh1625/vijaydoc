@@ -1,144 +1,889 @@
-submit(userInfo?: string) {
-  this.loading = true;
+Item	Group	Site	FxBadge	Name	MealPreference	FirstDateFxbl	LastDateFxbl	AddBy	AddDate	LastEditBy	LastEditDate
+79	System EPM	FXBL	NPIBL0005	Neha Shinde 	Indian Non-Veg	29-09-2026	01-11-2026	HH0011280	09-10-2026 10:23:31		
+137	System EPM	FXBL	BL001650	Hidam Nganthoiba Singh 	Indian Non-Veg	04-10-2026	01-11-2026	HH0011280	09-10-2026 10:23:31		
+11	Wireless-RFHW	FXBL	NPIBL0077	Vishal Sharan 	Indian Veg	29-09-2026	02-11-2026	HH0011280	09-10-2026 10:23:31		
+93	Prod RF Antenna	FXBL	NPIBL0040	Mordhwaj Patel 	Indian Veg	06-10-2026	02-11-2026	HH0011280	09-10-2026 10:23:31		
+99	Wireless-Antenna	FXBL	BL001268	Maruti Tamrakar 	Indian Veg	30-09-2026	04-11-2026	HH0011280	09-10-2026 10:23:31		
+146	HWTE	FXBL	BL001129	Akshay Prudhviraj 	Indian Veg	27-09-2026	04-11-2026	HH0011280	09-10-2026 10:23:31		
+62	Wireless-RFHW	FXBL	NPIBL0084	Prasad Kulkarni 	Indian Veg	29-09-2026	05-11-2026	HH0011280	09-10-2026 10:23:31		
+84	System EPM	FXBL	NPIBL0176	Nataraj Nagaraj 	Indian Veg	30-09-2026	06-11-2026	HH0011280	09-10-2026 10:23:31		
+103	Wireless - EPM	FXBL	BL0509	Manas (EPM) S 	NO MEAL REQUIRED	27-09-2026	06-11-2026	HH0011280	09-10-2026 10:23:31		
+42	Wireless-Antenna	FXBL	BL001644	Santosh Kumar Bairappaka [Santosh Kumar] 	Indian Veg	28-09-2026	08-11-2026	HH0011280	09-10-2026 10:23:31		
+2	System REL	FXBL	BL001381	Sangram Kanade	Indian Veg	07-10-2026	09-10-2026	HH0011280	09-10-2026 13:58:08		
+3	Ops	FXBL	BL0946	Anubhab Ray 	Indian Non-Veg	09-10-2026	09-10-2026	HH0011280	09-10-2026 10:32:23		
+4	GSM	FXBL	BL001675	Ayush Sisodia 	Indian Non-Veg	06-10-2026	09-10-2026	HH0011280	09-10-2026 10:26:54		
+161	HWTE	FXBL	BL001508	Dejan Suletic 	Indian Non-Veg	06-10-2026	09-10-2026	HH0011280	09-10-2026 10:23:30		
+167	System EPM	FXBL	BL0983	Ayo Oni 	Indian Non-Veg	27-09-2026	09-11-2026	HH0011280	09-10-2026 10:23:30		
+57	HWTE	FXBL	BL0936	Praveenkumar S 	Indian Non-Veg	27-09-2026	10-11-2026	HH0011280	09-10-2026 10:23:31		
+140	Diags (OS and EFI) 	FXBL	NPIBL0186	Hemal Gandhi 	Jain	04-10-2026	12-10-2026	HH0011280	09-10-2026 10:23:31		
+136	Acoustics HW	FXBL	BL001674	Hrishikesh Suresh 	Indian Non-Veg	06-10-2026	12-11-2026	HH0011280	09-10-2026 10:23:31		
+162	System EPM	FXBL	BL001437	Clevin Rodrigues 	Indian Non-Veg	30-09-2026	13-11-2026	HH0011280	09-10-2026 10:23:30		
+110	HWTE	FXBL	BL0533	Kiran Jitendra 	Indian Non-Veg	05-10-2026	15-10-2026	HH0011280	09-10-2026 10:23:31		
+31	Wireless - EPM	FXBL	NPIBL0075	Sreejith Venugopal 	Vegan	15-09-2026	15-11-2026	HH0011280	09-10-2026 10:23:31		
+55	Wireless-Antenna	FXBL	NPIBL0038	Pravin Pawale 	Indian Non-Veg	27-09-2026	15-11-2026	HH0011280	09-10-2026 10:23:31		
+71	System EPM	FXBL	BL0890	Param Kataria 	Vegan	15-09-2026	15-11-2026	HH0011280	09-10-2026 10:23:31		
+82	System EPM	FXBL	BL001233	Neelesh Gupta 	Jain	05-10-2026	16-10-2026	HH0011280	09-10-2026 10:23:31		
+122	System EE	FXBL	NPIBL0045	Alvis Xu 	Indian Non-Veg	06-10-2026	16-10-2026	HH0011280	09-10-2026 10:23:31		
+125	SQE	FXBL	BL001378	Kanna Arumugam 	Indian Non-Veg	07-10-2026	16-10-2026	HH0011280	09-10-2026 10:23:31		
+63	NPI OPM	FXBL	NPIBL0001	Pramod Madhusudana 	Indian Non-Veg	07-10-2026	17-10-2026	HH0011280	09-10-2026 10:23:31		
+113	Wireless-RFHW	FXBL	BL001306	Kevin Chiu 	Indian Non-Veg	04-10-2026	17-10-2026	HH0011280	09-10-2026 10:23:31		
+15	System PD	FXBL	BL0846	Vignesh Chandrasekar 	Indian Veg	07-10-2026	18-10-2026	HH0011280	09-10-2026 10:23:31		
+49	TechOps	FXBL	NPIBL0059	Rohan Kalurkar 	Indian Non-Veg	08-10-2026	18-10-2026	HH0011280	09-10-2026 10:23:31		
+81	HWTE	FXBL	BL0321	Anoop Kishan 	Indian Non-Veg	07-10-2026	18-10-2026	HH0011280	09-10-2026 10:23:31		
+114	System EE	FXBL	BL001475	Kevin (iPhone HW) Guo 	Indian Non-Veg	08-10-2026	18-10-2026	HH0011280	09-10-2026 10:23:31		
+134	DFM	FXBL	BL0792	Isaias Daguio 	Indian Non-Veg	05-10-2026	18-10-2026	HH0011280	09-10-2026 10:23:31		
+20	System PD	FXBL	-	Theresa Bracht 	Indian Veg	08-10-2026	19-10-2026	HH0011280	09-10-2026 10:23:31		
+26	System PD	FXBL	BL001581	Sumedh Shahane 	Indian Veg	21-09-2026	19-11-2026	HH0011280	09-10-2026 10:23:31		
+32	System EE	FXBL	NPIBL0044	Sreejith S 	Indian Veg	27-09-2026	19-11-2026	HH0011280	09-10-2026 10:23:31		
+66	Quality	FXBL	BL0444	Pooja Dubey 	Indian Veg	05-10-2026	19-11-2026	HH0011280	09-10-2026 10:23:31		
+80	System EE	FXBL	BL0731	Anup K S 	Indian Non-Veg	27-09-2026	19-11-2026	HH0011280	09-10-2026 10:23:31		
+14	WSCE-RFS	FXBL	NPIBL0097	Vikaschandra Tuluva 	Indian Veg	29-09-2026	22-10-2026	HH0011280	09-10-2026 10:23:31		
+45	HWTE	FXBL	NPIBL0032	Saarthak Singh 	Indian Veg	14-09-2026	22-10-2026	HH0011280	09-10-2026 10:23:31		
+65	HWTE	FXBL	BL001247	Pramod Kumar K M 	Indian Veg	29-09-2026	22-10-2026	HH0011280	09-10-2026 10:23:31		
+116	TechOps	FXBL	NPIBL0164	Karthik Venkataraman 	Indian Veg	04-10-2026	26-11-2026	HH0011280	09-10-2026 10:23:31		
+128	Camera HW-FCAM	FXBL	BL0280	Ali Jahaya 	Indian Non-Veg	07-10-2026	27-10-2026	HH0011280	09-10-2026 10:23:31		
+107	System EPM	FXBL	BL001252	Kunal Shah 	Jain	13-09-2026	27-11-2026	HH0011280	09-10-2026 10:23:31		
+173	System PD	FXBL	BL0445	Abhishek Sathisha 	Indian Veg	05-10-2026	27-11-2026	HH0011280	09-10-2026 10:23:30		
+89	Wireless-WSCE (Coex, Reg, OTA,SAR)	FXBL	NPIBL0094	N V Rao 	Indian Non-Veg	04-10-2026	28-10-2026	HH0011280	09-10-2026 10:23:31		
+166	System EE	FXBL	BL001064	Bharat Patel 	NO MEAL REQUIRED	27-09-2026	28-10-2026	HH0011280	09-10-2026 10:23:30		
+159	System EPM	FXBL	BL001623	Dhamotharan Ramamurthy 	Indian Non-Veg	04-08-2026	29-01-2027	HH0011280	09-10-2026 10:23:30		
+25	System REL	FXBL	BL0243	Sunil Kumar SP 	Indian Non-Veg	05-10-2026	29-10-2026	HH0011280	09-10-2026 10:23:31		
+40	Wireless	FXBL	BL001191	Sasi Tallam 	Indian Veg	29-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:31		
+50	HWTE	FXBL	BL001538	Ravin Gupta 	Indian Veg	29-05-2026	29-10-2026	HH0011280	09-10-2026 10:23:31		
+87	Wireless-RFHW	FXBL	BL0410	Nandakumar CM 	Indian Non-Veg	28-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:31		
+106	System EPM	FXBL	BL0716	lokesh E 	Indian Non-Veg	14-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:31		
+118	EPM Library	FXBL	BL001622	Karthick V 	Indian Non-Veg	30-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:31		
+158	Biz Ops/GSM	FXBL	BL001382	Diptasurya Chowdhury 	Indian Non-Veg	29-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:30		
+164	Acoustics HW	FXBL	NPIBL0021	Bibhas Nayak 	Indian Non-Veg	20-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:30		
+168	Wireless-RFSAC	FXBL	NPIBL0088	Asim Hassan 	Indian Non-Veg	29-09-2026	29-10-2026	HH0011280	09-10-2026 10:23:30		
+1	System PD	FXBL	NPIBL0015	Purushottam Kadoo 	Vegan	30-09-2026	29-11-2026	HH0011280	09-10-2026 14:09:42		
+5	Ops	FXBL	BL0328	Kannan Rajendran LNU 	Indian Non-Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+6	System PD	FXBL	NPIBL0014	Chaitali Dalvi 	NO MEAL REQUIRED	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+7	System PD	FXBL	BL0539	Yogi Channaiah 	Indian Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+9	HWTE	FXBL	BL001246	Vishwanadha Reddy 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+12	HWTE	FXBL	BL001151	Vinoth G 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+21	Wireless-RFSAC	FXBL	BL001438	Tinkesh Vekaria 	Indian Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+22	HWTE	FXBL	BL001667	Tarun Babu 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+23	HWTE	FXBL	BL001214	Thangaraj Murugan 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+24	HWTE	FXBL	NPIBL0034	Swetansh Shrivastava 	NO MEAL REQUIRED	28-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+30	System REL	FXBL	NPIBL0057	Sridhar . 	Vegan	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+37	HWTE	FXBL	BL001276	Shreya Navelkar 	Indian Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+39	HWTE	FXBL	BL001232	Saurabh Kumar Gupta 	Indian Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+41	HWTE	FXBL	BL001290	Sapnil Sasmal 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+44	HWTE	FXBL	BL0732	Sahil Suman 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+47	HWTE	FXBL	BL001654	Rohit Mathew 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+53	HWTE	FXBL	BL001545	Raj Kabadi 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+56	Wireless	FXBL	BL001569	Prathibha Peddireddy 	Indian Non-Veg	24-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+59	HWTE	FXBL	BL0369	Prashant Rajak 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+69	Wireless-RFHW	FXBL	NPIBL0083	Pavan Hanumantharaya 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+70	TechOps	FXBL	BL0439	Parameswaaran R 	Indian Veg	04-10-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+72	System EE	FXBL	BL0916	Padmavathi D 	Indian Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+74	System PD	FXBL	NPIBL0053	Onurabh Mallick 	Indian Non-Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+75	System PD	FXBL	NPIBL0013	Nishant Bhosle 	Indian Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+77	Diags (Burn-In)	FXBL	BL0941	Nitin Narayan Tiwari 	Indian Veg	21-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+85	Wireless-RFSAC	FXBL	NPIBL0093	Naresh Balaji 	Indian Veg	28-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+96	HWTE	FXBL	BL0649	Mohammed Azarudeen 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+98	HWTE	FXBL	NPIBL0183	Meenakshi Ray 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+100	HWTE	FXBL	BL001591	MANU JOSEPH 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+108	Wireless-WSCE-OTA/SAR	FXBL	NPIBL0096	Kunj Haria 	Indian Veg	24-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+109	HWTE	FXBL	BL001046	Anbazhagan Kumar 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+112	HWTE	FXBL	BL001582	Keyansh Vaish 	Indian Non-Veg	28-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+123	Wireless-RFSAC	FXBL	BL001303	Karan Mali 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+126	Wireless-RFHW	FXBL	BL001352	Jophin Joseph 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+129	HWTE	FXBL	BL001601	Jeroen Brianraj 	Indian Non-Veg	28-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+130	HWTE	FXBL	NPIBL0131	Jayanth Sundarraj 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+133	System PD	FXBL	NPIBL0152	Jais Abraham 	Indian Non-Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+138	TechOps	FXBL	BL001255	Hemanth Anand 	Indian Non-Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:31		
+147	HWTE	FXBL	BL001656	Eshita Srivastava 	Indian Non-Veg	27-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+150	HWTE	FXBL	BL0202	Dr. Siva Kumar Mani 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+152	HWTE	FXBL	BL0902	DOMA VIKRAM REDDY 	Indian Non-Veg	28-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+154	TechOps	FXBL	BL0861	Ajay George 	Indian Non-Veg	04-10-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+160	HWTE	FXBL	BL001152	Devika Sasikumar 	Indian Non-Veg	15-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+165	Thermal PD	FXBL	BL001652	Bharath Maloth 	Indian Non-Veg	22-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+169	System PD	FXBL	NPIBL0054	Augustine Francis 	Indian Non-Veg	30-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+170	HWTE	FXBL	BL001613	Ashish Kumar 	Indian Non-Veg	28-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+171	System REL	FXBL	NPIBL0056	Ashish Tarun 	Indian Veg	29-09-2026	29-11-2026	HH0011280	09-10-2026 10:23:30		
+35	EHS	FXBL	BL001408	Siddhartha Dondlavagu 	Indian Veg	27-09-2026	30-01-2027	HH0011280	09-10-2026 10:23:31		
+16	Wireless-EMC	FXBL	BL001664	Vattikulla Sarat Babu 	Indian Veg	24-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+18	Wireless-RFHW	FXBL	NPIBL0078	Vamshi Krishna Aagiru 	Indian Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+19	Wireless-RFSAC	FXBL	NPIBL0087	Uttam Patel 	Indian Veg	21-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+27	HWTE	FXBL	BL001210	Sunil Kumar 	Jain	15-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+28	HWTE	FXBL	BL001304	Subhajit (HWTE) Mondal 	Indian Non-Veg	28-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+29	System REL	FXBL	BL001291	Sudeep Padi 	Indian Non-Veg	30-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+33	Wireless-EMC	FXBL	NPIBL0107	Siva Singamsetty 	Indian Veg	24-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+36	System REL	FXBL	BL001564	Shashank Bhawsar 	Indian Non-Veg	29-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+58	System REL	FXBL	BL001554	Pratik Kekre 	Indian Veg	29-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+60	Wireless-RFHW	FXBL	BL001056	Prasanth Krishnakumar 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+64	Wireless-RFSAC	FXBL	BL001637	Pranav Kotwal 	Indian Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+67	TechOps	FXBL	BL0810	Phani Tangirala 	Indian Veg	06-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+76	HWTE	FXBL	NPIBL0150	Anurudh Palla 	Indian Non-Veg	20-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+83	Wireless-RFSAC	FXBL	BL001588	Neha Rani 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+86	TechOps	FXBL	NPIBL0067	Anirudh Vyas 	Indian Veg	05-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+88	Wireless-EMC	FXBL	BL001095	Namratha Prakash 	Indian Veg	24-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+94	TechOps	FXBL	BL0775	Mohammed Jaheer Sherfudeen 	Indian Non-Veg	04-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+97	Quality	FXBL	BL0638	Minal Sharma 	Indian Veg	03-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+104	TechOps	FXBL	NPIBL0060	Mahmed Yasir 	Indian Veg	06-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+111	TechOps	FXBL	BL0766	Amruta Patil 	Indian Non-Veg	07-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+117	Quality	FXBL	BL1002	Karthik Hulikunte 	Indian Veg	08-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+119	System EE	FXBL	BL0830	Aman Singh 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+121	System REL	FXBL	BL001160	Karthick Govindarajan 	Indian Veg	28-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+124	Wireless-EMC	FXBL	BL001632	Karaka Alekhya 	Indian Veg	24-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+131	HWTE	FXBL	BL0387	Isha Kashyap 	Indian Veg	04-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+132	HWTE	FXBL	BL001253	Jawahar Prasanth R 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+135	System REL	FXBL	BL001589	Hrishikesh M V 	Indian Non-Veg	28-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+142	DFM	FXBL	BL0380	Hari S 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+143	Wireless-EMC	FXBL	BL001509	Greeshmaja Govind 	Indian Non-Veg	24-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+145	System REL	FXBL	BL001490	Gourav Zutshi 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:31		
+149	Wireless-EMC	FXBL	BL0241	Akash Vinayagam Manjula 	Indian Non-Veg	24-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:30		
+153	HWTE	FXBL	BL0645	Disha Mehrotra 	Indian Veg	28-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:30		
+156	HWTE	FXBL	BL001159	Abhishek VR 	Indian Non-Veg	29-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:30		
+157	TechOps	FXBL	BL001287	Dhanush K 	Indian Veg	06-10-2026	30-10-2026	HH0011280	09-10-2026 10:23:30		
+163	Ops TE	FXBL	BL001244	Chethan BN 	Indian Non-Veg	27-09-2026	30-10-2026	HH0011280	09-10-2026 10:23:30		
+8	Inductive Power	FXBL	NPIBL0099	Yugal Gupta 	Indian Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+10	HWTE	FXBL	BL0349	Wasim Tabrej 	Indian Veg	20-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+13	System EE	FXBL	BL001568	Vinayak Tulsyan 	Indian Non-Veg	06-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+17	HWTE	FXBL	BL001245	Vara Bolloju 	Indian Non-Veg	04-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+34	Display HW	FXBL	NPIBL0027	Shrujan Kalkura 	Indian Veg	30-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+38	System REL	FXBL	BL001587	SHIJAS KAIPAKIL 	Indian Non-Veg	30-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+43	Wireless	FXBL	BL001592	Sandhyashree A 	Indian Veg	20-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+46	System REL	FXBL	BL001188	Rohit Puranik 	Indian Veg	04-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+48	System EE	FXBL	NPIBL0047	Rohit Kashyap 	Vegan	28-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+51	HWTE	FXBL	BL001376	Rithesh Ravikumar 	Indian Veg	31-08-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+52	System REL	FXBL	BL001078	Ram Bainsla 	Indian Veg	16-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+54	HWTE	FXBL	BL001489	Priyanka Chavan 	Indian Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+61	System REL	FXBL	NPIBL0016	Prapulla Ramesh Kumar 	Indian Non-Veg	16-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+68	System EE	FXBL	NPIBL0046	Pervaze Humayun 	Indian Non-Veg	04-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+73	System REL	FXBL	BL001259	Arpit Srivastava 	Indian Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+78	System REL	FXBL	NPIBL0058	Nikita Madia 	Indian Veg	16-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+90	HWTE	FXBL	BL001237	Aniruddha Mane 	Indian Non-Veg	04-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+91	HWTE	FXBL	BL001586	MUHAMMED ANAS M 	Indian Non-Veg	28-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+92	System REL	FXBL	BL001593	Moumita Maity 	Indian Veg	27-08-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+95	HWTE	FXBL	NPIBL0033	Mohit R. Kulkarni 	NO MEAL REQUIRED	31-08-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+101	HWTE	FXBL	BL001280	Mani Varma 	Indian Veg	31-08-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+102	Display HW	FXBL	BL001641	Manmayur Patil 	Indian Veg	04-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+105	Wireless-RFHW	FXBL	NPIBL0122	Mahabrata Mukherjee 	Indian Non-Veg	27-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+115	Sensor HW-Prox	FXBL	BL001572	Keertana Vinod Ram 	Indian Veg	30-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+120	HWTE	FXBL	BL001557	Amrut Panigrahi 	Indian Non-Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+127	HWTE	FXBL	BL0782	Kalyan R 	Indian Veg	28-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+139	System REL	FXBL	BL0996	Hemanth Moger 	Indian Non-Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+141	HWTE	FXBL	BL0935	Guru Chandra 	Indian Non-Veg	28-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+144	System REL	FXBL	BL001097	Govindaraj V 	Indian Veg	06-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:31		
+148	System EE	FXBL	BL001439	Drishyada M S 	Jain	05-10-2026	30-12-2026	HH0011280	09-10-2026 10:23:30		
+151	HWTE	FXBL	BL001567	Ajitkumar T 	Indian Non-Veg	23-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:30		
+155	System REL	FXBL	BL001563	Akash Singh (Rel) 	Indian Non-Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:30		
+172	System REL	FXBL	NPIBL0024	Arun Joy 	Indian Non-Veg	29-09-2026	30-12-2026	HH0011280	09-10-2026 10:23:30		
+import { Component, OnInit } from '@angular/core';
+import * as XLSX from "xlsx";
+import * as FileSaver from "file-saver";
+import XlsxPopulate from "xlsx-populate/browser/xlsx-populate";
 
-  try {
-    if (!userInfo || typeof userInfo !== 'string') {
-      throw new Error('OUAC UserInfo is empty or invalid');
+import { SharedModule } from "@shared";
+import { PublicNetService } from "src/app/routes/a_Public_net/Public_net.service";
+import {
+  NzMessageService,
+  UploadFile,
+  NzDrawerRef
+} from "ng-zorro-antd";
+
+@Component({
+  selector: 'app-F1-Details-import',
+  templateUrl: './F1-Details-import.html',
+})
+export class F1ManageImportComponent implements OnInit {
+
+  fileList: UploadFile[] = [];
+
+  addLoading: boolean = false;
+  isSpinning: boolean = false;
+
+  sussessUpLoad = {
+    total: 0,
+    suc: 0,
+    fail: 0,
+  };
+
+  allData: any[] = [];
+  subData: any[] = [];
+  excelData: any[] = [];
+
+  fileForm = {
+    fileListStr: "",
+  };
+
+  siteOptions = [];
+
+  mealPreferenceList: any[] = [];
+
+  // Header names must match the downloaded template exactly
+  templateData = {
+    "Groups": '',
+    "Meal Preference": '',
+    "FX Badge": '',
+    "Name": '',
+    "First Day at Factory": '',
+    "Last Day at Factory": ''
+  };
+
+  constructor(
+    private apiSvr: PublicNetService,
+    private shareSvr: SharedModule,
+    private msgSvr: NzMessageService,
+    private ref: NzDrawerRef
+  ) { }
+
+
+  // ==========================================
+  // INIT
+  // ==========================================
+
+  ngOnInit() {
+    this.loadMealPreferences();
+  }
+
+
+  // ==========================================
+  // LOAD MEAL PREFERENCE
+  // ==========================================
+
+  loadMealPreferences() {
+    this.apiSvr
+      .getGuardPassCode("GuardPass-Meal Preference")
+      .subscribe(
+        (res: any) => {
+          this.mealPreferenceList = res || [];
+          console.log(
+            "IMPORT - MEAL PREFERENCE LIST:",
+            JSON.stringify(this.mealPreferenceList)
+          );
+        },
+        (error: any) => {
+          console.error("Failed to load Meal Preference:", error);
+          this.msgSvr.error("Unable to load Meal Preference master data.");
+        }
+      );
+  }
+
+
+  // ==========================================
+  // FILE BEFORE UPLOAD
+  // ==========================================
+
+  beforeUpload = (file: UploadFile): boolean => {
+
+    this.fileForm.fileListStr = file.name;
+    this.fileList = [file];
+
+    const fileType = file.name
+      .substring(file.name.lastIndexOf("."), file.name.length)
+      .toLocaleUpperCase();
+
+    if (fileType !== ".XLS" && fileType !== ".XLSX") {
+
+      this.shareSvr.modalSvr.confirm({
+        nzCancelText: null,
+        nzContent: "Attachment format must be excel!",
+        nzOnOk: () => {
+          this.fileForm.fileListStr = "";
+          this.fileList = [];
+        },
+      });
+
+    } else {
+      this.addLoading = false;
     }
 
-    console.log('OUAC UserInfo length:', userInfo.length);
+    return false;
+  };
 
-    // Step 1: Get the OUAC decryption key
-    const encodedKey =
-      'NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk=';
 
-    const decryptKey =
-      this.publicSvr.security.getDK(encodedKey);
+  // ==========================================
+  // DOWNLOAD EXCEL TEMPLATE
+  // ==========================================
 
-    // Step 2: Validate the key length
-    if (![16, 24, 32].includes(decryptKey.length)) {
-      throw new Error(
-        'Invalid AES key length. Verify the OUAC key.'
-      );
+  DownloadExcelfile() {
+
+    // 1. CHECK MEAL PREFERENCE MASTER DATA
+    const mealValues = (this.mealPreferenceList || [])
+      .map((item: any) => item.label)
+      .filter((value: any) =>
+        value !== null && value !== undefined && value !== ""
+      )
+      .map((value: any) => String(value).trim());
+
+    if (mealValues.length === 0) {
+      this.msgSvr.warning("Meal Preference data is not loaded. Please try again.");
+      this.loadMealPreferences();
+      return;
     }
 
-    // Step 3: Decrypt OUAC UserInfo
-    let decryptedUserInfo: string;
+    console.log("Meal Preference values:", mealValues);
 
-    try {
-      decryptedUserInfo = security.decrypt(
-        userInfo,
-        decryptKey
-      );
-    } catch (error) {
-      console.error('OUAC decryption failed:', error);
+    // 2. CREATE WORKBOOK
+    XlsxPopulate.fromBlankAsync()
+      .then((workbook: any) => {
 
-      throw new Error(
-        'OUAC decryption failed. Verify the encryption key, IV, mode and padding.'
-      );
-    }
+        const worksheet = workbook.sheet(0);
+        worksheet.name("Template");
 
-    // Step 4: Validate the decrypted data
-    if (!decryptedUserInfo) {
-      throw new Error(
-        'Decrypted UserInfo is empty. Check the OUAC encryption configuration.'
-      );
-    }
+        // 3. HEADER
+        worksheet.range("A1:F1").value([[
+          "Groups",
+          "Meal Preference",
+          "FX Badge",
+          "Name",
+          "First Day at Factory",
+          "Last Day at Factory"
+        ]]);
 
-    // Step 5: Parse JSON
-    let data: any;
+        // 4. HEADER STYLE
+        worksheet.range("A1:F1").style({
+          bold: true,
+          fontSize: 11,
+          horizontalAlignment: "center",
+          verticalAlignment: "center",
+          wrapText: true
+        });
 
-    try {
-      data = JSON.parse(decryptedUserInfo);
-    } catch (error) {
-      console.error('Invalid decrypted JSON:', error);
+        worksheet.row(1).height(25);
 
-      throw new Error(
-        'Decrypted UserInfo is not valid JSON.'
-      );
-    }
+        // 5. COLUMN WIDTH
+        worksheet.column("A").width(20);
+        worksheet.column("B").width(25);
+        worksheet.column("C").width(25);
+        worksheet.column("D").width(20);
+        worksheet.column("E").width(22);
+        worksheet.column("F").width(22);
 
-    // Step 6: Encrypt UserInfo for the login API
-    const userInfo2 = security.encrypt(
-      JSON.stringify(data),
-      '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt'
-    );
+        // 6. DATE COLUMNS AS TEXT
+        // Text format keeps exactly what the user types (DD-MM-YYYY).
+        // Note: pasted data can replace this format with real Excel dates;
+        // formatDateValue() below handles both text and real dates.
+        worksheet
+          .range("E2:F500")
+          .style("numberFormat", "@");
 
-    const param = {
-      userInfo: userInfo2
+        // 6b. SAMPLE ROW (shows the expected date format)
+        worksheet.cell("E2").value("DD-MM-YYYY");
+        worksheet.cell("F2").value("DD-MM-YYYY");
+
+        // 7. MEAL PREFERENCE DROPDOWN SOURCE (hidden sheet)
+        const masterSheet = workbook.addSheet("MealMaster");
+
+        masterSheet.cell("A1").value("Meal Preference");
+
+        for (let i = 0; i < mealValues.length; i++) {
+          masterSheet.cell(`A${i + 2}`).value(mealValues[i]);
+        }
+
+        masterSheet.hidden(true);
+
+        const lastMealRow = mealValues.length + 1;
+
+        // 8. MEAL DROPDOWN B2:B500
+        worksheet
+          .range("B2:B500")
+          .dataValidation({
+            type: "list",
+            allowBlank: true,
+            showErrorMessage: true,
+            errorTitle: "Invalid Meal Preference",
+            error: "Please select Meal Preference from the dropdown.",
+            formula1: `'MealMaster'!$A$2:$A$${lastMealRow}`
+          });
+
+        // 9. No validation on date columns: the user types DD-MM-YYYY
+        //    and formatDateValue() handles parsing on import.
+
+        // 10. FREEZE HEADER
+        worksheet.freezePanes(0, 1);
+
+        // 11. OUTPUT
+        return workbook.outputAsync();
+      })
+      .then((buffer: any) => {
+
+        const blob = new Blob(
+          [buffer],
+          {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          }
+        );
+
+        FileSaver.saveAs(blob, "F1Meal-info Template.xlsx");
+
+        console.log("F1 Meal Excel Template downloaded successfully.");
+        this.msgSvr.success("Excel template downloaded successfully.");
+      })
+      .catch((error: any) => {
+
+        console.error("====================================");
+        console.error("Excel generation error:", error);
+        console.error("Error message:", error && error.message);
+        console.error("Error stack:", error && error.stack);
+        console.error("====================================");
+
+        this.msgSvr.error("Unable to generate Excel template.");
+      });
+  }
+
+
+  // ==========================================
+  // ADD FILE
+  // ==========================================
+
+  addFile() {
+
+    this.addLoading = true;
+    this.isSpinning = true;
+
+    this.sussessUpLoad = {
+      total: 0,
+      suc: 0,
+      fail: 0
     };
 
-    // Step 7: Encrypt the request body
-    const body =
-      this.publicSvr.security.encryptForWeb(
-        JSON.stringify(param)
-      );
+    this.allData = [];
+    this.subData = [];
 
-    // Step 8: Call the login API
-    this.http.post(
-      '/oneAccountLogin?_allow_anonymous=true',
-      body,
-      null,
+    this.fileList.forEach((file) => {
+
+      this.getFileData(file, (data) => {
+
+        // NOTE: do NOT use cellDates:true here.
+        // SheetJS builds JS Dates with a timezone error (in India a date
+        // becomes 23:59:50 of the PREVIOUS day, so every date moved back
+        // by one day). Date cells are read as Excel serial numbers and
+        // converted safely in formatDateValue().
+        const wb: XLSX.WorkBook = XLSX.read(
+          data,
+          {
+            type: "binary"
+          }
+        );
+
+        const wsname: string = wb.SheetNames[0];
+        const ws: XLSX.WorkSheet = wb.Sheets[wsname];
+        const json = XLSX.utils.sheet_to_json(ws);
+
+        this.batchAdd(json);
+      });
+    });
+  }
+
+
+  // ==========================================
+  // READ FILE
+  // ==========================================
+
+  getFileData(file, callback: (fle: string) => void): void {
+
+    const reader = new FileReader();
+
+    reader.readAsBinaryString(file);
+
+    reader.addEventListener("load", () => {
+      callback(reader.result!.toString());
+    });
+  }
+
+
+  // ==========================================
+  // BATCH ADD
+  // ==========================================
+
+  batchAdd(data: any[]) {
+
+    // Ignore the sample row from the template (dates still say "DD-MM-YYYY")
+    const isSampleRow = (row: any): boolean => {
+      const first = String(row["First Day at Factory"] || "").trim().toUpperCase();
+      const last = String(row["Last Day at Factory"] || "").trim().toUpperCase();
+      return first === "DD-MM-YYYY" && last === "DD-MM-YYYY";
+    };
+
+    this.excelData = (data || []).filter((row: any) => !isSampleRow(row));
+
+    this.sussessUpLoad.total = this.excelData.length;
+
+    if (this.excelData.length > 0) {
+
+      this.excelData.forEach((item) => {
+        this.validateAndProcessRow(item);
+      });
+
+      this.isSpinning = false;
+
+    } else {
+
+      this.fileForm.fileListStr = "";
+      this.fileList = [];
+      this.isSpinning = false;
+
+      this.msgSvr.error("Excel data does not exist");
+    }
+  }
+
+
+  // ==========================================
+  // VALIDATE ROW
+  // ==========================================
+
+  validateAndProcessRow(item: any) {
+
+    const requiredKeys = [
+      "Groups",
+      "Meal Preference",
+      "FX Badge",
+      "Name",
+      "First Day at Factory",
+      "Last Day at Factory"
+    ];
+
+    const hasAllProps = requiredKeys.every(
+      (key) => item.hasOwnProperty(key)
+    );
+
+    const rowRecord = {
+      ...this.templateData,
+      ...item
+    };
+
+    if (!hasAllProps) {
+
+      this.sussessUpLoad.fail++;
+
+      rowRecord["Wrong Reason"] = "All of template content is required.";
+
+      this.allData.push(rowRecord);
+
+      return;
+    }
+
+    // MEAL PREFERENCE VALIDATION
+    const mealName = item["Meal Preference"]
+      ? item["Meal Preference"].toString().trim()
+      : "";
+
+    const selectedMeal = this.getMealPreferenceByName(mealName);
+
+    if (!selectedMeal) {
+
+      this.sussessUpLoad.fail++;
+
+      rowRecord["Wrong Reason"] =
+        "Invalid Meal Preference. Please select a value from the Excel dropdown.";
+
+      this.allData.push(rowRecord);
+
+      return;
+    }
+
+    // DATE VALIDATION (DD-MM-YYYY, real calendar date, first <= last)
+    const firstDate = this.formatDateValue(item["First Day at Factory"]);
+    const lastDate = this.formatDateValue(item["Last Day at Factory"]);
+
+    if (!this.isValidDmy(firstDate) || !this.isValidDmy(lastDate)) {
+
+      this.sussessUpLoad.fail++;
+
+      rowRecord["Wrong Reason"] =
+        "Invalid date. Use DD-MM-YYYY for First Day / Last Day at Factory.";
+
+      this.allData.push(rowRecord);
+
+      return;
+    }
+
+    if (this.dmyToTime(firstDate) > this.dmyToTime(lastDate)) {
+
+      this.sussessUpLoad.fail++;
+
+      rowRecord["Wrong Reason"] =
+        "First Day at Factory cannot be after Last Day at Factory.";
+
+      this.allData.push(rowRecord);
+
+      return;
+    }
+
+    // SUCCESS
+    this.sussessUpLoad.suc++;
+
+    this.allData.push(rowRecord);
+    this.subData.push(rowRecord);
+  }
+
+
+  // ==========================================
+  // FIND MEAL PREFERENCE BY NAME
+  // ==========================================
+
+  getMealPreferenceByName(mealName: string): any {
+
+    if (!mealName) {
+      return null;
+    }
+
+    return this.mealPreferenceList.find(
+      (item: any) =>
+        String(item.label).trim().toUpperCase() ===
+        String(mealName).trim().toUpperCase()
+    );
+  }
+
+
+  // ==========================================
+  // EXPORT FAILED EXCEL
+  // ==========================================
+
+  exportFailedExcel() {
+
+    if (this.allData.length > 0) {
+      this.apiSvr.exportHandle(this.allData, 68);
+    } else {
+      this.msgSvr.error("No Data.");
+    }
+  }
+
+
+  // ==========================================
+  // SUBMIT
+  // ==========================================
+
+  submit() {
+
+    if (this.subData.length === 0) {
+      this.msgSvr.error("No valid data to submit. Please check your file.");
+      return;
+    }
+
+    this.isSpinning = true;
+
+    let completedCount = 0;
+    let successCount = 0;
+    let failCount = 0;
+
+    const validSubData = [...this.subData];
+
+    this.subData = [];
+    this.allData = [];
+
+    validSubData.forEach((item) => {
+
+      this.submitData(item, (isSuccess) => {
+
+        completedCount++;
+
+        if (isSuccess) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+
+        if (completedCount === validSubData.length) {
+
+          this.isSpinning = false;
+
+          this.sussessUpLoad.suc = successCount;
+          this.sussessUpLoad.fail = failCount;
+
+          if (failCount === 0) {
+
+            this.msgSvr.success("Success.");
+            this.ref.close("refresh");
+
+          } else {
+
+            this.msgSvr.error(
+              `${failCount} records failed to import. Check error report.`
+            );
+          }
+        }
+      });
+    });
+  }
+
+
+  // ==========================================
+  // DATE HELPERS
+  // ==========================================
+
+  /**
+   * Converts any Excel cell value to "DD-MM-YYYY".
+   * - Excel date cell  -> serial number -> UTC getters (no timezone shift)
+   * - Text cell        -> trimmed; "D/M/YYYY" and "D.M.YYYY" are normalised (day first)
+   * - JS Date          -> +12h so a 23:59:50 value still lands on the right day
+   */
+  formatDateValue(value: any): string {
+
+    if (value === null || value === undefined || value === "") {
+      return "";
+    }
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    // EXCEL SERIAL NUMBER (real date cells)
+    if (typeof value === 'number') {
+      const d = new Date(Math.round((Math.floor(value) - 25569) * 86400 * 1000));
+      return `${pad(d.getUTCDate())}-${pad(d.getUTCMonth() + 1)}-${d.getUTCFullYear()}`;
+    }
+
+    // JS DATE (only if cellDates is ever turned on again)
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      const d = new Date(value.getTime() + 12 * 60 * 60 * 1000);
+      return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+    }
+
+    // TEXT (typed as DD-MM-YYYY, also accepts D/M/YYYY and D.M.YYYY)
+    if (typeof value === 'string') {
+      const text = value.trim();
+      const m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(text);
+      if (m) {
+        return `${pad(+m[1])}-${pad(+m[2])}-${m[3]}`;
+      }
+      return text;
+    }
+
+    return "";
+  }
+
+  /** True only for a real calendar date written as DD-MM-YYYY. */
+  private isValidDmy(value: string): boolean {
+
+    const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value || "");
+
+    if (!m) {
+      return false;
+    }
+
+    const day = +m[1];
+    const month = +m[2];
+    const year = +m[3];
+
+    const dt = new Date(Date.UTC(year, month - 1, day));
+
+    return (
+      dt.getUTCFullYear() === year &&
+      dt.getUTCMonth() === month - 1 &&
+      dt.getUTCDate() === day
+    );
+  }
+
+  /** "DD-MM-YYYY" -> UTC timestamp (call only after isValidDmy). */
+  private dmyToTime(value: string): number {
+
+    const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
+
+    return Date.UTC(+m[3], +m[2] - 1, +m[1]);
+  }
+
+
+  // ==========================================
+  // SUBMIT SINGLE DATA
+  // ==========================================
+
+  submitData(item: any, callback: (success: boolean) => void) {
+
+    // GET MEAL NAME
+    const mealName = item["Meal Preference"]
+      ? item["Meal Preference"].toString().trim()
+      : "";
+
+    // FIND MASTER ID
+    const selectedMeal = this.getMealPreferenceByName(mealName);
+
+    if (!selectedMeal) {
+
+      item["Wrong Reason"] = "Invalid Meal Preference.";
+
+      this.allData.push({
+        ...this.templateData,
+        ...item
+      });
+
+      callback(false);
+
+      return;
+    }
+
+    // NAME -> ID
+    const mealPreferenceId = selectedMeal.value;
+
+    console.log("IMPORT MEAL:", mealName, "-> ID:", mealPreferenceId);
+
+    // API PARAMS (API field names unchanged)
+    const params = {
+
+      Groups: item["Groups"] ? item["Groups"].toString() : "",
+
+      MealPreference: mealPreferenceId,
+
+      FxBadge: item["FX Badge"] ? item["FX Badge"].toString() : "",
+
+      Name: item["Name"] ? item["Name"].toString() : "",
+
+      FirstDateFxbl: this.formatDateValue(item["First Day at Factory"]),
+
+      LastDateFxbl: this.formatDateValue(item["Last Day at Factory"]),
+
+      AddBy:
+        (
+          this.apiSvr.getSettingUserInfo() &&
+          this.apiSvr.getSettingUserInfo().eeid
+        ) || "",
+
+      Func: "CMS-BulkF1Menu"
+    };
+
+    console.log("BULK IMPORT PARAMS:", JSON.stringify(params));
+
+    // API CALL
+    this.apiSvr.iwxPostF1(
+      params,
       {
         headers: {
-          'Content-Type': 'application/json;charset=UTF-8'
-        }
-      }
-    ).subscribe(
-      (response: any) => {
-        try {
-          const decryptedResponse =
-            this.publicSvr.security.decryptForWeb(response);
-
-          const res = JSON.parse(decryptedResponse);
-
-          if (res.status === 200 && res.data) {
-            const user = {
-              avatar: './assets/tmp/img/avatar.jpg',
-              eeid: res.data.eeid,
-              name: res.data.empName,
-              time: new Date().getTime()
-            };
-
-            this.loginSuccess(
-              user,
-              res.data.JsessionId,
-              res.data.ClientIp
-            );
-          } else {
-            this.msg.error(res.msg || 'Login failed');
-          }
-        } catch (error) {
-          console.error(
-            'Login response processing failed:',
-            error
-          );
-
-          this.msg.error(
-            'Unable to process login response.'
-          );
-        } finally {
-          this.loading = false;
+          apiID: "ffff-1789627520107-10208193125-1282",
+          userKey: "E9785F13CCEAFB251A6AB147AFD24336"
         }
       },
-      (error) => {
-        this.loading = false;
+      true
+    )
+      .then((res: any) => {
 
-        console.error('Login API error:', error);
+        if (res && res.IsOK === '1') {
 
-        this.msg.error(
-          'Login failed. Please try again.'
-        );
-      }
-    );
+          item["Import Result"] = "Success.";
 
-  } catch (error) {
-    this.loading = false;
+          this.allData.push({
+            ...this.templateData,
+            ...item
+          });
 
-    console.error('Login processing error:', error);
+          callback(true);
 
-    this.msg.error(
-      error.message || 'Unable to process login information.'
-    );
+        } else {
+
+          item["Wrong Reason"] = (res && res.Msg) ? res.Msg : "API Error";
+
+          this.allData.push({
+            ...this.templateData,
+            ...item
+          });
+
+          callback(false);
+        }
+      })
+      .catch((err) => {
+
+        console.error("Import API error:", err);
+
+        item["Wrong Reason"] = "Network or Server Error";
+
+        this.allData.push({
+          ...this.templateData,
+          ...item
+        });
+
+        callback(false);
+      });
   }
 }
