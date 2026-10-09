@@ -1,104 +1,330 @@
-submit(userInfo?: string) {
-  this.loading = true;
+export let ouacServiceUrl: string;
+export let serviceUrl: string;
 
-  try {
-    if (!userInfo || typeof userInfo !== 'string') {
-      throw new Error('OUAC UserInfo is empty or invalid');
-    }
+export let iwxServiceUrl: string;
+export let iwxServiceUrl2: string;
+export let iwxServiceUrllog: string;
+export let iwxServiceUrlNew: string;
 
-    console.log('OUAC UserInfo received. Length:', userInfo.length);
+export let toolsServiceUrl: string = "";
+export let toolsServiceUrlNew: string = "";
 
-    const decryptKey = this.publicSvr.security.getDK(
-      'NzQxRTMzNzlBODA0MjM3OEY4NEE4MDc4NzNCMUJCNDk='
+export let uploadFileServiceUrl: string = "";
+export let uploadFileServiceUrlNew: string = "";
+
+export let iwxServiceUrlNew1: string;
+
+
+/**
+ * Initialize URL configuration
+ */
+((doc) => {
+  urlManage();
+})(document);
+
+
+/**
+ * URL Management
+ */
+function urlManage() {
+
+  // =====================================================
+  // DEFAULT VALUES
+  // =====================================================
+
+  iwxServiceUrlNew1 =
+    "https://microservice.abgind.foxconn.com/india/gateway";
+
+  iwxServiceUrllog =
+    "http://10.208.193.125:8086/gateway/manager";
+
+  iwxServiceUrl =
+    "https://microservice.abgind.foxconn.com/india/gateway";
+
+  iwxServiceUrl2 =
+    "https://microservice.abgind.foxconn.com/india/gateway";
+
+  serviceUrl =
+    "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";
+
+  ouacServiceUrl =
+    "https://ouac.idpbgind.efoxconn.com?SysCode=ISMS_INDIA&NewVersion=V401";
+
+  toolsServiceUrl =
+    "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
+
+  uploadFileServiceUrl =
+    "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
+
+
+  // =====================================================
+  // CURRENT HOST
+  // =====================================================
+
+  const host =
+    window.location.host.toLowerCase();
+
+  console.log("====================================");
+  console.log("Current Host:", host);
+  console.log(
+    "Current Protocol:",
+    window.location.protocol
+  );
+
+
+  // =====================================================
+  // INDIA / LIVE CONFIGURATION
+  // =====================================================
+
+  if (
+    host === "isms.idpbgind.efoxconn.com" ||
+
+    host === "10.208.193.124:8000" ||
+
+    host === "10.208.192.44:9001" ||
+
+    host === "10.209.110.101:4207" ||
+
+    host === "10.209.110.94:4207" ||
+
+    host === "10.209.122.166:4209" ||
+
+    host === "10.209.110.208:4207" ||
+
+    host === "10.209.110.187:4207" ||
+
+    // Local development
+    host === "localhost:4207" ||
+
+    // IIS server
+    host === "10.209.122.132" ||
+
+    host === "10.209.122.132:80" ||
+
+    host === "localhost" ||
+
+    host === "localhost:80"
+  ) {
+
+    console.log(
+      "Environment: INDIA / LIVE CONFIGURATION"
     );
 
-    let decryptedUserInfo: string;
 
-    try {
-      decryptedUserInfo = security.decrypt(userInfo, decryptKey);
-    } catch (decryptError) {
-      console.error('OUAC UserInfo decryption failed:', decryptError);
-      throw new Error(
-        'UserInfo decryption failed. Verify the OUAC encryption key and AES configuration.'
-      );
-    }
+    // ---------------------------------------------------
+    // Gateway
+    // ---------------------------------------------------
 
-    if (!decryptedUserInfo) {
-      throw new Error('Decrypted UserInfo is empty');
-    }
+    iwxServiceUrllog =
+      "http://10.208.193.125:8086/gateway/manager";
 
-    let data: any;
+    iwxServiceUrlNew =
+      "https://microservice.abgind.foxconn.com/india/gateway";
 
-    try {
-      data = JSON.parse(decryptedUserInfo);
-    } catch (parseError) {
-      console.error('UserInfo JSON parsing failed:', parseError);
-      throw new Error('Decrypted UserInfo is not valid JSON');
-    }
+    iwxServiceUrl =
+      "https://microservice.abgind.foxconn.com/india/gateway";
 
-    const userInfo2 = security.encrypt(
-      JSON.stringify(data),
-      '6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt'
-    );
+    iwxServiceUrl2 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
 
-    const param = {
-      userInfo: userInfo2
-    };
+    iwxServiceUrlNew1 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
 
-    const body = this.publicSvr.security.encryptForWeb(
-      JSON.stringify(param)
-    );
 
-    this.http.post(
-      '/oneAccountLogin?_allow_anonymous=true',
-      body,
-      null,
-      {
-        headers: {
-          'Content-Type': 'application/json;charset=UTF-8'
-        }
-      }
-    ).subscribe(
-      (response: any) => {
-        try {
-          const decryptedResponse =
-            this.publicSvr.security.decryptForWeb(response);
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
 
-          const res = JSON.parse(decryptedResponse);
+    toolsServiceUrlNew =
+      "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";
 
-          if (res.status === 200) {
-            const user = {
-              avatar: './assets/tmp/img/avatar.jpg',
-              eeid: res.data.eeid,
-              name: res.data.empName,
-              time: new Date().getTime()
-            };
 
-            this.loginSuccess(
-              user,
-              res.data.JsessionId,
-              res.data.ClientIp
-            );
-          } else {
-            this.msg.error(res.msg || 'Login failed');
-          }
-        } catch (error) {
-          console.error('Login response processing failed:', error);
-          this.msg.error('Unable to process login response');
-        } finally {
-          this.loading = false;
-        }
-      },
-      (error) => {
-        this.loading = false;
-        console.error('Login API error:', error);
-        this.msg.error('Login failed. Please try again.');
-      }
-    );
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
 
-  } catch (error) {
-    this.loading = false;
-    console.error('Login processing error:', error);
-    this.msg.error(error.message || 'Unable to process login information');
+    uploadFileServiceUrlNew =
+      "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";
   }
+
+
+  // =====================================================
+  // TN CONFIGURATION
+  // =====================================================
+
+  else if (
+    host === "lms.idpbgtn.efoxconn.com" ||
+    host === "isms.idpbgtn.efoxconn.com"
+  ) {
+
+    console.log(
+      "Environment: TN CONFIGURATION"
+    );
+
+
+    // ---------------------------------------------------
+    // Service URL
+    // ---------------------------------------------------
+
+    serviceUrl =
+      "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";
+
+
+    // ---------------------------------------------------
+    // OUAC
+    // ---------------------------------------------------
+
+    ouacServiceUrl =
+      "https://ouac.idpbgtn.efoxconn.com?SysCode=ISMS_INDIA";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrl =
+      "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrl =
+      "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
+
+
+    // ---------------------------------------------------
+    // Gateway
+    // ---------------------------------------------------
+
+    iwxServiceUrllog =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrl =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrl2 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+    iwxServiceUrlNew1 =
+      "https://microservice.abgind.foxconn.com/india/gateway";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrlNew =
+      "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrlNew =
+      "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";
+  }
+
+
+  // =====================================================
+  // TEST / OTHER ENVIRONMENT
+  // =====================================================
+
+  else {
+
+    console.log(
+      "Environment: TEST / OTHER CONFIGURATION"
+    );
+
+
+    // ---------------------------------------------------
+    // Gateway
+    // ---------------------------------------------------
+
+    iwxServiceUrllog =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrl =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrl2 =
+      "http://10.208.193.125:8086/gateway/manager";
+
+    iwxServiceUrlNew1 =
+      "http://10.208.193.125:8086/gateway/manager";
+
+
+    // ---------------------------------------------------
+    // Tools
+    // ---------------------------------------------------
+
+    toolsServiceUrlNew =
+      "http://10.208.193.152/APIFurnace/api2/N";
+
+
+    // ---------------------------------------------------
+    // File Upload
+    // ---------------------------------------------------
+
+    uploadFileServiceUrlNew =
+      "http://10.208.193.124:5689/FileWebService.asmx";
+
+
+    // ---------------------------------------------------
+    // OUAC
+    // ---------------------------------------------------
+
+    if (
+      window.location.protocol === "http:"
+    ) {
+
+      ouacServiceUrl =
+        "http://ouac.idpbgind.efoxconn.com:8080/?SysCode=ISMS_INDIA&NewVersion=V401";
+
+    } else {
+
+      ouacServiceUrl =
+        "https://ouac.idpbgind.efoxconn.com/?SysCode=ISMS_INDIA&NewVersion=V401";
+    }
+  }
+
+
+  // =====================================================
+  // FINAL DEBUG
+  // =====================================================
+
+  console.log(
+    "iwxServiceUrl:",
+    iwxServiceUrl
+  );
+
+  console.log(
+    "iwxServiceUrlNew:",
+    iwxServiceUrlNew
+  );
+
+  console.log(
+    "iwxServiceUrllog:",
+    iwxServiceUrllog
+  );
+
+  console.log(
+    "serviceUrl:",
+    serviceUrl
+  );
+
+  console.log(
+    "ouacServiceUrl:",
+    ouacServiceUrl
+  );
+
+  console.log("====================================");
 }
