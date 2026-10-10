@@ -1,737 +1,136 @@
-import { SettingsService, _HttpClient } from "@delon/theme";
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  Inject,
-  Optional,
-  HostListener
-} from "@angular/core";
-import { Router } from "@angular/router";
-import { FormGroup, FormBuilder } from "@angular/forms";
-import { NzMessageService, NzModalService } from "ng-zorro-antd";
-import {
-  ITokenService,
-  DA_SERVICE_TOKEN
-} from "@delon/auth";
-import { ReuseTabService } from "@delon/abc";
-import { StartupService, I18NService } from "@core";
-import { CookieService } from "ngx-cookie-service";
-import { DomSanitizer } from "@angular/platform-browser";
-import { PlatformLocation } from "@angular/common";
-import { MenuService, MenuIcon } from "@delon/theme";
-
-import { PublicNetService } from "../../a_Public_net/Public_net.service";
-import { ouacServiceUrl } from "../../a_Public_net/Url";
-import { security } from "@shared";
-
-@Component({
-  selector: "passport-login",
-  templateUrl: "./login.component.html",
-  styleUrls: ["./login.component.less"]
-})
-export class UserLoginComponent implements OnInit, OnDestroy {
-  loading = false;
-  iframeSrc = "";
-  iframeSafeSrc: any;
-
-  form: FormGroup;
-  error = "2";
-  type = 0;
-
-  count = 0;
-  interval$: any;
-
-  isVisible = false;
-  isForgetPassword = false;
-  isCode = false;
-
-  toPage: any;
-  menuId: any;
-
-  resetInfo = {
-    account: "",
-    code: "",
-    newPassword: "",
-    confirmPassword: "",
-    email: ""
-  };
-
-  constructor(
-    fb: FormBuilder,
-    modalSrv: NzModalService,
-    private router: Router,
-    @Optional()
-    @Inject(ReuseTabService)
-    private reuseTabService: ReuseTabService,
-    @Inject(DA_SERVICE_TOKEN)
-    private tokenService: ITokenService,
-    private startupSrv: StartupService,
-    private settingService: SettingsService,
-    private cookieService: CookieService,
-    public http: _HttpClient,
-    public msg: NzMessageService,
-    public i18n: I18NService,
-    public domSanitizer: DomSanitizer,
-    public location: PlatformLocation,
-    private menuService: MenuService,
-    private publicSvr: PublicNetService
-  ) {
-    modalSrv.closeAll();
-  }
-
-  switch(ret: any) {
-    this.type = ret.index;
-  }
-
-  get userName() {
-    return this.form.controls.userName;
-  }
-
-  get password() {
-    return this.form.controls.pwdInfo;
-  }
-
-  get remember() {
-    return this.form.controls.remember;
-  }
-
-  // SSO login callback
-  @HostListener("window:message", ["$event"])
-  onMessage(e: MessageEvent) {
-    // Accept messages only from the expected SSO origin.
-    // Replace this with the exact trusted SSO origin.
-    if (!e || !e.data || typeof e.data !== "object") {
-      return;
-    }
-
-    const info = e.data;
-
-    if (info.msgType === "login" && info.UserInfo) {
-      this.submit(info.UserInfo);
-    }
-  }
-
-  submit(userInfo?: string) {
-    if (this.loading) {
-      return;
-    }
-
-    this.loading = true;
-
-    let data: any;
-
-    try {
-      if (!userInfo) {
-        throw new Error("SSO user information is missing.");
-      }
-
-      data = JSON.parse(
-        security.decrypt(
-          userInfo,
-          this.publicSvr.security.getDK(
-            "MzQzMTU2NjYzM0UyNzdFQkZBOTYzQ0VFOTA2MkQzQjk="
-          )
-        )
-      );
-    } catch (error) {
-      this.loading = false;
-      console.error("SSO decryption failed:", error);
-      this.msg.error("Unable to verify SSO login information.");
-      return;
-    }
-
-    const userInfo2 = security.encrypt(
-      JSON.stringify(data),
-      "6jxaHMIhvefCOokm5XbDdW4qzl30U7Kt"
-    );
-
-    const param = {
-      userInfo: userInfo2
-    };
-
-    const body = security.encryptForWeb(
-      JSON.stringify(param)
-    );
-
-    this.http.post(
-      "/oneAccountLogin?_allow_anonymous=true",
-      body,
-      null,
-      {
-        headers: {
-          "Content-Type": "application/json;charset=UTF-8"
-        }
-      }
-    ).subscribe(
-      (response: any) => {
-        try {
-          const res = JSON.parse(
-            security.decryptForWeb(response)
-          );
-
-          this.loading = false;
-
-          if (res.status === 200 && res.data) {
-            const user = {
-              avatar: "./assets/tmp/img/avatar.jpg",
-              eeid: res.data.eeid,
-              name: res.data.empName,
-              time: new Date().getTime()
-            };
-
-            this.loginSuccess(
-              user,
-              res.data.JsessionId,
-              res.data.ClientIp
-            );
-          } else {
-            this.msg.error(
-              res.msg || "Login verification failed."
-            );
-
-            this.showLoginIframe();
-          }
-        } catch (error) {
-          this.loading = false;
-          console.error("Login response processing failed:", error);
-          this.msg.error("Unable to verify login response.");
-        }
-      },
-      error => {
-        this.loading = false;
-        console.error("Login API failed:", error);
-        this.msg.error("Login verification failed.");
-      }
-    );
-  }
-
-  private showLoginIframe() {
-    const iframeSrc =
-      `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo` +
-      `&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=0`;
-
-    const iframe = document.querySelector(".login-iframe");
-
-    if (iframe) {
-      iframe.setAttribute("src", iframeSrc);
-    }
-  }
-
-  async loginSuccess(user: any, token: string, ClientIP: string) {
-    try {
-      this.settingService.setUser({
-        userInfo: this.publicSvr.security.encryptForWeb(
-          JSON.stringify(user)
-        )
-      });
-
-      this.cookieService.set(
-        "USER_NO",
-        this.publicSvr.security.encryptForWeb(user.eeid)
-      );
-
-      this.cookieService.set(
-        "USER_NAME",
-        this.publicSvr.security.encryptForWeb(user.name)
-      );
-
-      this.cookieService.set("IS_FOREIGN", "");
-      this.cookieService.set("SESSION_ID", "");
-      this.cookieService.set("FIH_TOKEN", "");
-
-      sessionStorage.setItem("ClientIp", ClientIP || "");
-
-      await this.publicSvr.insertLoginData(
-        user.eeid,
-        ClientIP
-      );
-
-      this.reuseTabService.clear();
-
-      this.tokenService.set({
-        token: token
-      });
-
-      await this.startupSrv.load();
-
-      // Always validate menu permissions after login.
-      this.getSystemMenu();
-    } catch (error) {
-      console.error("Login initialization failed:", error);
-      this.router.navigateByUrl("/exception/403");
-    }
-  }
-
-  ngOnInit() {
-    const url = window.location.href;
-
-    if (
-      window.location.protocol !== "https:" &&
-      (
-        url.indexOf("lms.idpbgtn.efoxconn.com") !== -1 ||
-        url.indexOf("lms.idpbgind.efoxconn.com") !== -1
-      )
-    ) {
-      window.location.href =
-        "https://" +
-        window.location.hostname +
-        window.location.pathname +
-        window.location.search +
-        window.location.hash;
-
-      return;
-    }
-
-    if (window.location.hostname === "lms.idpbgtn.efoxconn.com") {
-      window.location.href = url.replace(
-        "lms.idpbgtn.efoxconn.com",
-        "lms.idpbgind.efoxconn.com"
-      );
-
-      return;
-    }
-
-    const fromInfo =
-      this.location.href.indexOf("?from=iportal");
-
-    if (fromInfo > -1) {
-      const toPageIndex =
-        this.location.href.indexOf("&toPage=");
-
-      if (toPageIndex > -1) {
-        this.toPage = this.location.href
-          .slice(toPageIndex + 8)
-          .split("&")[0]
-          .replace(/%2F/gi, "/");
-      }
-
-      const menuIndex =
-        this.location.href.indexOf("&menuId=");
-
-      if (menuIndex > -1) {
-        this.menuId = this.location.href
-          .slice(menuIndex + 8)
-          .split("&")[0];
-      }
-
-      const iframeSrc =
-        `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo` +
-        `&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=1`;
-
-      this.iframeSafeSrc =
-        this.domSanitizer.bypassSecurityTrustResourceUrl(
-          iframeSrc
-        );
-    } else {
-      const iframeSrc =
-        `${ouacServiceUrl}&CallBack=/assets/login-callback.html?UserInfo` +
-        `&CssLink=/assets/sso-login.css&State=RxFdv2p7KsDq38CX&SSO=0`;
-
-      this.iframeSafeSrc =
-        this.domSanitizer.bypassSecurityTrustResourceUrl(
-          iframeSrc
-        );
-    }
-  }
-
-  ngOnDestroy() {
-    if (this.interval$) {
-      clearInterval(this.interval$);
-    }
-  }
-
-  // Menu permission validation
-  getSystemMenu() {
-    const group = [
-      {
-        text: "主導航",
-        group: true,
-        children: []
-      }
-    ];
-
-    const currentUser =
-      this.publicSvr.getSettingUserINfo();
-
-    if (!currentUser || !currentUser.eeid) {
-      console.error("User information missing.");
-      this.router.navigateByUrl("/exception/403");
-      return;
-    }
-
-    const params = {
-      Func: "Permission management-GetUserPermitModuleBySystem",
-      SystemId: 30373,
-      EmpNo: currentUser.eeid
-    };
-
-    const param =
-      this.publicSvr.dealPostParamsEncrypt(params);
-
-    this.http.post(
-      "https://microservice.abgind.foxconn.com/india/gateway",
-      param,
-      null,
-      {
-        headers: {
-          apiID: "ffff-1687574205823-1020819373-1797",
-          userKey: this.publicSvr.USER_APPLIATION_WEB
-        }
-      }
-    ).subscribe(
-      (data: any) => {
-        try {
-          if (!data || !data.r) {
-            throw new Error("Invalid menu API response.");
-          }
-
-          const res = JSON.parse(
-            this.publicSvr.security.decrypt(
-              data.r,
-              this.publicSvr.iwxKInfo
-            )
-          );
-
-          console.log("Menu Permission Response:", res);
-
-          if (
-            !res ||
-            res.IsOK !== "1" ||
-            !Array.isArray(res.List) ||
-            res.List.length === 0
-          ) {
-            this.msg.error(
-              "You do not have menu access. Please contact your administrator."
-            );
-
-            this.router.navigateByUrl("/exception/403");
-            return;
-          }
-
-          group[0].children = this.arrayToTree(res.List);
-          this.menuService.add(group);
-
-          if (this.toPage) {
-            const userMenu = res.List
-              .filter(item => item.webUrl)
-              .map(item => ({
-                id: item.id,
-                webUrl: item.webUrl
-              }));
-
-            this.goToPage(userMenu, this.toPage);
-            return;
-          }
-
-          if (this.menuId) {
-            const menuExists = res.List.some(
-              item =>
-                String(item.id) === String(this.menuId)
-            );
-
-            if (!menuExists) {
-              this.router.navigateByUrl("/exception/403");
-              return;
-            }
-
-            const found = this.getToMenuData(
-              group[0].children,
-              this.menuId
-            );
-
-            if (!found) {
-              this.router.navigateByUrl("/exception/403");
-            }
-
-            return;
-          }
-
-          this.router.navigateByUrl("/dashboard");
-        } catch (error) {
-          console.error("Menu response processing failed:", error);
-          this.router.navigateByUrl("/exception/403");
-        }
-      },
-      error => {
-        console.error("Menu API failed:", error);
-        this.router.navigateByUrl("/exception/403");
-      }
-    );
-  }
-
-  goToPage(userMenu: any[], toPageInfo: string) {
-    const normalizeUrl = (url: string) =>
-      String(url || "")
-        .split("?")[0]
-        .replace(/\/+$/, "");
-
-    const targetUrl = normalizeUrl(toPageInfo);
-
-    const hasPermission = userMenu.some(
-      item => normalizeUrl(item.webUrl) === targetUrl
-    );
-
-    if (!hasPermission) {
-      this.msg.error(
-        "You do not have permission to access this page."
-      );
-
-      this.router.navigateByUrl("/exception/403");
-      return;
-    }
-
-    this.router.navigateByUrl(toPageInfo);
-  }
-
-  getToMenuData(data: any[], menuId: any): boolean {
-    if (!Array.isArray(data)) {
-      return false;
-    }
-
-    for (const item of data) {
-      if (String(item.id) === String(menuId)) {
-        this.getPage(item);
-        return true;
-      }
-
-      if (item.children && item.children.length > 0) {
-        if (this.getToMenuData(item.children, menuId)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  getPage(data: any) {
-    if (!data) {
-      this.router.navigateByUrl("/exception/403");
-      return;
-    }
-
-    if (data.children && data.children.length > 0) {
-      this.getPage(data.children[0]);
-      return;
-    }
-
-    if (!data.link) {
-      this.router.navigateByUrl("/exception/403");
-      return;
-    }
-
-    this.router.navigateByUrl(data.link);
-
-    localStorage.removeItem("fromInfo");
-    localStorage.removeItem("toPageInfo");
-    localStorage.removeItem("userMenu");
-    localStorage.removeItem("userMenuId");
-  }
-
-  arrayToTree(list: any[], parentId: any = 0) {
-    return list
-      .filter(item => item.parentId === parentId)
-      .map(item => {
-        const icon = item.icon
-          ? {
-              type: "icon",
-              value: item.icon.split("|")[0],
-              theme: item.icon.split("|")[1] || "outline"
-            } as MenuIcon
-          : null;
-
-        return {
-          text: item.name,
-          icon: icon,
-          link:
-            item.menuType === "15"
-              ? item.webUrl + "/" + item.permissionId
-              : item.webUrl,
-          parentId: item.parentId,
-          children: this.arrayToTree(list, item.id),
-          menuType: item.menuType,
-          id: item.id,
-          permissionId: item.permissionId,
-          show: true,
-          urlKey: item.urlkey
-        };
-      });
-  }
-
-  openForgetPasswordModal() {
-    this.isForgetPassword = true;
-  }
-
-  closeForgetPasswordModal() {
-    this.isForgetPassword = false;
-    this.isCode = false;
-
-    this.resetInfo = {
-      account: "",
-      code: "",
-      newPassword: "",
-      confirmPassword: "",
-      email: ""
-    };
-  }
-
-  passwordChange(name: string) {
-    const newPassword = this.resetInfo.newPassword;
-    const confirmPassword = this.resetInfo.confirmPassword;
-
-    if (!newPassword && !confirmPassword) {
-      return;
-    }
-
-    const reg =
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]])[A-Za-z\d`~!@#$%^&*()_+<>?:"{},.\/\\;'[\]]{8,}$/;
-
-    if (name === "newPassword" && !reg.test(newPassword)) {
-      this.msg.error(
-        "Password must contain at least 8 characters, including letters, numbers and special characters."
-      );
-
-      this.resetInfo.newPassword = "";
-      return;
-    }
-
-    if (
-      name === "confirmPassword" &&
-      !reg.test(confirmPassword)
-    ) {
-      this.msg.error(
-        "Password must contain at least 8 characters, including letters, numbers and special characters."
-      );
-
-      this.resetInfo.confirmPassword = "";
-      return;
-    }
-
-    if (
-      newPassword &&
-      confirmPassword &&
-      newPassword !== confirmPassword
-    ) {
-      this.msg.error("The passwords do not match.");
-    }
-  }
-
-  sendVerifivationCode() {
-    if (!this.resetInfo.account) {
-      this.msg.error("Please enter your account.");
-      return;
-    }
-
-    const params = {
-      EmpNo: this.resetInfo.account,
-      CaptchaCode: "",
-      Func: "H5-SendVerificationCode-IWX"
-    };
-
-    this.publicSvr.permitRequest(
-      params,
-      {
-        headers: {
-          apiID: "ffff-1655357911834-16925411121-0153",
-          userKey: this.publicSvr.USER_GQ
-        }
-      },
-      true
-    ).then((res: any) => {
-      if (res.IsOK === "1") {
-        this.resetInfo.email = res.Msg;
-      } else {
-        this.msg.error(res.Msg);
-      }
-    }).catch(error => {
-      console.error("Verification code request failed:", error);
-      this.msg.error("Unable to send verification code.");
-    });
-  }
-
-  nextOption() {
-    if (!this.resetInfo.code) {
-      this.msg.error("Please enter verification code.");
-      return;
-    }
-
-    const params = {
-      EmpNo: this.resetInfo.account,
-      CaptchaCode: this.resetInfo.code,
-      Func: "H5-CheckVerificationCode-IWX"
-    };
-
-    this.publicSvr.permitRequest(
-      params,
-      {
-        headers: {
-          apiID: "ffff-1655375927998-16925411121-0200",
-          userKey: this.publicSvr.USER_GQ
-        }
-      },
-      true
-    ).then((res: any) => {
-      if (res.IsOK === "1") {
-        this.isCode = true;
-      } else {
-        this.msg.error(res.Msg);
-      }
-    }).catch(error => {
-      console.error("Verification check failed:", error);
-      this.msg.error("Unable to verify the code.");
-    });
-  }
-
-  resetPassword() {
-    if (
-      this.resetInfo.newPassword &&
-      this.resetInfo.confirmPassword &&
-      this.resetInfo.newPassword !== this.resetInfo.confirmPassword
-    ) {
-      return;
-    }
-
-    if (
-      !this.resetInfo.account ||
-      !this.resetInfo.code ||
-      !this.resetInfo.newPassword ||
-      !this.resetInfo.confirmPassword
-    ) {
-      this.msg.error("All information is required.");
-      return;
-    }
-
-    const params = {
-      EmpNo: this.resetInfo.account,
-      Password: this.resetInfo.newPassword,
-      CaptchaCode: this.resetInfo.code,
-      Func: "H5-ChangeEmpPasswordV2-IWX"
-    };
-
-    this.publicSvr.permitRequest(
-      params,
-      {
-        headers: {
-          apiID: "ffff-1655376433685-16925411121-0217",
-          userKey: this.publicSvr.USER_GQ
-        }
-      },
-      true
-    ).then((res: any) => {
-      if (res.IsOK === "1") {
-        this.msg.success("Password changed successfully.");
-        this.closeForgetPasswordModal();
-      } else {
-        this.msg.error(res.Msg);
-      }
-    }).catch(error => {
-      console.error("Password reset failed:", error);
-      this.msg.error("Unable to reset password.");
-    });
-  }
-
-  handleCancel() {
-    this.isVisible = false;
+{
+  "name": "image-viewer-filezilla",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "basic-ftp": "^6.2.1",
+    "dotenv": "^18.0.2",
+    "express": "^5.2.1"
   }
 }
+
+
+
+
+
+
+
+
+
+const express = require("express");
+const ftp = require("basic-ftp");
+const dotenv = require("dotenv");
+const path = require("path");
+
+dotenv.config();
+
+const app = express();
+const PORT = 3000;
+
+app.use(express.static(path.join(__dirname, "public")));
+
+// Get image from FTP
+app.get("/api/image/:id", async (req, res) => {
+    const id = req.params.id.trim();
+
+    // Only allow numbers
+    /*if (!/^\d+$/.test(id)) {
+        return res.status(400).json({
+            error: "Image ID must contain numbers only."
+        });
+    }*/
+
+    const possibleFiles = [
+        `${id}.png`,
+        `${id}.jpeg`,
+        `${id}.jpg`
+    ];
+
+    const client = new ftp.Client();
+
+    try {
+        await client.access({
+            host: process.env.FTP_HOST,
+            port: Number(process.env.FTP_PORT || 21),
+            user: process.env.FTP_USER,
+            password: process.env.FTP_PASSWORD,
+            secure: process.env.FTP_SECURE === "true"
+        });
+
+        await client.cd("/photos");
+
+        let foundFile = null;
+
+        // Check which file exists
+        for (const filename of possibleFiles) {
+            const files = await client.list();
+
+            const exists = files.some(
+                file => file.name.toLowerCase() === filename.toLowerCase()
+            );
+
+            if (exists) {
+                foundFile = filename;
+                break;
+            }
+        }
+
+        if (!foundFile) {
+            return res.status(404).json({
+                error: `No image found for ${id}`
+            });
+        }
+
+        // Download the image into memory
+        const chunks = [];
+
+        const writable = new (require("stream").Writable)({
+            write(chunk, encoding, callback) {
+                chunks.push(chunk);
+                callback();
+            }
+        });
+
+        await client.downloadTo(writable, foundFile);
+
+        const imageBuffer = Buffer.concat(chunks);
+
+        // Determine content type
+        const extension = path.extname(foundFile).toLowerCase();
+
+        let contentType = "application/octet-stream";
+
+        if (extension === ".png") {
+            contentType = "image/png";
+        } else if (extension === ".jpg" || extension === ".jpeg") {
+            contentType = "image/jpeg";
+        }
+
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Cache-Control", "no-cache");
+
+        res.send(imageBuffer);
+
+    } catch (error) {
+        console.error("FTP error:", error);
+
+        res.status(500).json({
+            error: "Unable to retrieve image from FTP server."
+        });
+
+    } finally {
+        client.close();
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Image viewer running at http://localhost:${PORT}`);
+});
