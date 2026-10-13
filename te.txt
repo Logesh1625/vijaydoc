@@ -1,91 +1,130 @@
-CREATE OR REPLACE PACKAGE BODY CMS.BASE_TYPE_PK
-AS
--- Package body
-PROCEDURE INSERT_BASE_TYPE(
-V_TYPE_CODE IN VARCHAR2,
-V_TYPE_NAME IN VARCHAR2,
-V_REMARK IN VARCHAR2,
-V_CREATE_BY IN VARCHAR2,
-V_VALID_FLAG IN VARCHAR2,
-V_RES OUT VARCHAR2,
-V_RESULT OUT VARCHAR2
-) IS 
-l_count NUMBER;
-BEGIN 
-	SELECT COUNT(1) INTO l_count FROM CMS.C_BASE_TYPE_T WHERE TYPE_NAME = V_TYPE_NAME;
+getGuardPassCode(
+  params?: any,
+  site?: any,
+  isShowLabel?: any
+): Observable<any> {
 
-	IF l_count > 0 THEN
-	   V_RES := '0';
-	   V_result := 'Data Already Exist !!';
-	  RETURN;
-	  
-	ELSE
-	
-	INSERT INTO CMS.C_BASE_TYPE_T (
-	ID,
-	TYPE_CODE,
-	TYPE_NAME,
-	REMARK,
-	CREATE_BY,
-	CREATE_DATE,
-	VALID_FLAG 
-	) VALUES (
-	C_BASE_TYPE_T_SEQ.NEXTVAL,
-	V_TYPE_CODE,
-	V_TYPE_NAME,
-	V_REMARK,
-	V_CREATE_BY,
-	SYSDATE,
-	V_VALID_FLAG
-	);
-COMMIT;
- END IF;
-V_RES := '1';
-V_RESULT := 'Success';
-	END;
+  // Get Base Type Name
+  if (!params || typeof params !== "string" || params.length < 10) {
+    console.error("Invalid getGuardPassCode params:", params);
+    return of([]);
+  }
 
-PROCEDURE GET_BASE_TYPE(
-V_INPUT IN VARCHAR2,
-V_TYPE_NAME IN VARCHAR2,
-V_SITE IN VARCHAR2,
-P_CURSOR OUT SYS_REFCURSOR,
-V_RES OUT VARCHAR2,
-V_RESULT OUT VARCHAR2
-) IS 
-BEGIN
-		IF V_INPUT = 'Type_Name' THEN
-			OPEN P_CURSOR FOR
-				SELECT ID,TYPE_NAME FROM CMS.C_BASE_TYPE_T;
-		ELSIF V_TYPE_NAME IS NOT NULL THEN
-			OPEN P_CURSOR FOR
-				SELECT B.ID AS BASE_TYPE_ID,B.TYPE_NAME,A.ID AS BASE_CODE_ID,A.NAME 
-					FROM C_BASE_CODE_T A INNER JOIN C_BASE_TYPE_T B 
-					ON B.ID = A.TYPE_ID WHERE B.TYPE_NAME =V_TYPE_NAME AND A.DEL_FLAG ='0' AND A.VALID_FLAG = 'Y';
-		ELSIF V_SITE IS NOT NULL THEN
-		OPEN P_CURSOR FOR
-			SELECT B.NAME AS NAME,B.ID AS BASE_CODE_ID,F.ID AS NAME FROM CMS.C_CANTEEN_OPERATION_MANAGE_T C 
-			JOIN CMS.C_BASE_CODE_T B ON B.ID = C.NAME 
-			JOIN CMS.C_BASE_CODE_T F ON F.ID = C.FOOD_VENDOR 
-			WHERE C.DEL_FLAG = '0' AND B.DEL_FLAG = '0' AND C.SITE = V_SITE;
-		END IF;
-	V_RES := '1';
-	V_RESULT := 'Success';
-	END;
+  const code = params.slice(10);
 
-PROCEDURE DELETE_BASE_TYPE(
-L_IDS IN VARCHAR2,
-V_RES OUT VARCHAR2,
-V_RESULT OUT VARCHAR2
-) IS
-BEGIN
-	UPDATE CMS.C_BASE_TYPE_T SET DEL_FLAG = 1
-	WHERE INSTR(',' || L_IDS, ',' || ID || ',') > 0;
+  const _param = {
+    TypeName: code,
+    Func: "CMS-GetBaseTypeInfo",
+    Site: site
+  };
 
-	UPDATE CMS.C_BASE_CODE_T SET DEL_FLAG = 1
-	WHERE INSTR(',' || L_IDS, ',' || TYPE_ID || ',') > 0;
-COMMIT;
-V_RES := '1';
-V_RESULT := 'Success';
-	END;
+  const config = {
+    headers: {
+      apiID: "ffff-1710991146185-10208193125-0170",
+      userKey: this.USER_TN
+    }
+  };
 
-END BASE_TYPE_PK;
+  const param = this.dealPostParamsEncrypt(_param);
+
+  return this.http
+    .post(iwxServiceUrl, param, null, config)
+    .pipe(
+      map((resp: any) => {
+        try {
+          // Validate response
+          if (!resp || !resp.r) {
+            console.error(
+              "getGuardPassCode: Empty API response",
+              resp
+            );
+            return [];
+          }
+
+          // Decrypt API response
+          const res = JSON.parse(
+            this.security.decrypt(resp.r, this.iwxKInfo)
+          );
+
+          console.log(
+            "Base Type API response:",
+            res
+          );
+
+          // Validate API status
+          if (
+            !res ||
+            String(res.IsOK) !== "1" ||
+            !Array.isArray(res.List)
+          ) {
+            console.error(
+              "getGuardPassCode API failed:",
+              res
+            );
+            return [];
+          }
+
+          // Convert API data to dropdown options
+          const _data: any[] = [];
+
+          res.List.forEach((element: any) => {
+            if (!element) {
+              return;
+            }
+
+            const name =
+              element.Name !== undefined &&
+              element.Name !== null
+                ? String(element.Name).trim()
+                : "";
+
+            const baseCodeId =
+              element.BaseCodeId !== undefined &&
+              element.BaseCodeId !== null
+                ? element.BaseCodeId
+                : element.ID !== undefined &&
+                  element.ID !== null
+                  ? element.ID
+                  : element.Id;
+
+            if (!name || baseCodeId === undefined || baseCodeId === null) {
+              console.warn(
+                "Invalid base code item:",
+                element
+              );
+              return;
+            }
+
+            // When isShowLabel is true, use the name as the value.
+            // Otherwise, use the numeric database ID.
+            const item = isShowLabel
+              ? {
+                  label: name,
+                  value: name
+                }
+              : {
+                  label: name,
+                  value: Number(baseCodeId)
+                };
+
+            _data.push(item);
+          });
+
+          console.log(
+            "MEAL PREFERENCE LIST:",
+            _data
+          );
+
+          return _data;
+
+        } catch (error) {
+          console.error(
+            "Error loading base type dropdown:",
+            error
+          );
+
+          return [];
+        }
+      })
+    );
+}
