@@ -1391,3 +1391,61 @@ getSitebasedUser(): Observable<any[]> {
 
 
 
+export let ouacServiceUrl: string;//一賬通url
+export let serviceUrl: string;//服務器url--一直調用正式url
+export let iwxServiceUrl: string;//愛萬象url,一直調用正式url
+export let iwxServiceUrlF1: string;//愛萬象url,一直調用正式url
+
+export let iwxServiceUrlNew: string;//愛萬象url,區分正式和測試url
+export let toolsServiceUrl: string = "";//工具箱url,一直調用正式url
+export let toolsServiceUrlNew: string = "";//工具箱url,區分正式和測試url
+export let uploadFileServiceUrl: string = "";//上傳附件url,區分正式和測試url
+export let uploadFileServiceUrlNew: string = "";//上傳附件url,區分正式和測試url
+((doc) => {
+    urlManage();
+})(document)
+
+function urlManage() {
+        iwxServiceUrlF1 = "https://microservice.abgind.foxconn.com/india/gateway";//F1 Live 
+    iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";//正式
+    serviceUrl = "https://ipocket.idpbgind.efoxconn.com:4443/springboot-indiaEisp-pg";//正式
+    ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com?SysCode=FMS_INDIA&NewVersion=V401";//正式
+    toolsServiceUrl = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";//正式
+    uploadFileServiceUrl = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";//正式
+
+    if (window.location.host == "fms.idpbgind.efoxconn.com" || window.location.host == "10.208.193.124:8000" ||
+        window.location.host == "localhost:4205"
+        ||
+        window.location.host == "10.209.110.101:4205" || window.location.host == "10.209.110.187:4205" || window.location.host == "10.209.110.94:4205" ||
+        window.location.host == "10.208.192.44:9090" ||  window.location.host == "10.209.110.208:4205") {
+        // TEST DB 
+        iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";//測試
+                iwxServiceUrlF1 = "https://microservice.abgind.foxconn.com/india/gateway";//F1
+        iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";//測試
+        toolsServiceUrlNew = "https://mshr.idpbgind.efoxconn.com/APIO/api2/N";//正式
+        uploadFileServiceUrlNew = "https://service.idpbgind.efoxconn.com:4443/FileWebService.asmx";//正式
+    } else if (window.location.host == "fms.idpbgtn.efoxconn.com") {
+        serviceUrl = "https://ipocket.idpbgtn.efoxconn.com:4443/springboot-indiaEisp-pg";//正式
+        ouacServiceUrl = "https://ouac.idpbgtn.efoxconn.com?SysCode=FMS_INDIA";//正式
+        toolsServiceUrl = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";//正式
+        uploadFileServiceUrl = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";//正式
+        iwxServiceUrlF1 = "https://microservice.abgind.foxconn.com/india/gateway";//F1
+
+        iwxServiceUrlNew = "https://microservice.abgind.foxconn.com/india/gateway";//正式
+        iwxServiceUrl = "https://microservice.abgind.foxconn.com/india/gateway";//正式
+        toolsServiceUrlNew = "https://mshr.idpbgtn.efoxconn.com/APIO/api2/N";//正式
+        uploadFileServiceUrlNew = "https://service.idpbgtn.efoxconn.com:4443/FileWebService.asmx";//正式
+    } else {
+        iwxServiceUrlNew = "http://10.208.193.125:8086/gateway/manager";  //測試
+                iwxServiceUrlF1 = "https://microservice.abgind.foxconn.com/india/gateway";//F1
+        iwxServiceUrl = "http://10.208.193.125:8086/gateway/manager";//測試
+        toolsServiceUrlNew = "http://10.208.193.152/APIFurnace/api2/N";//測試
+        uploadFileServiceUrlNew = "http://10.208.193.124:5689/FileWebService.asmx";//測試
+
+        if (window.location.protocol == "http:") {
+            ouacServiceUrl = "http://ouac.idpbgind.efoxconn.com:8080/?SysCode=FMS_INDIA&NewVersion=V401";//一賬通多因子認證測試網址
+        } else {
+            ouacServiceUrl = "https://ouac.idpbgind.efoxconn.com/?SysCode=FMS_INDIA&NewVersion=V401";//一賬通多因子認證正式網址 
+        }
+    }
+}
