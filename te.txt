@@ -1,976 +1,1393 @@
-CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
-AS
+import { Injectable, Inject } from "@angular/core";
+import { Observable,of } from "rxjs";
+import { map,switchMap } from "rxjs/operators";
+import { I18NService } from "@core";
+import { _HttpClient, DrawerHelper } from "@delon/theme";
+import { deepMerge } from "@delon/util";
+import { Router } from "@angular/router";
+import { Base64 } from "js-base64";
+import { isString } from "util";
+import * as CryptoJS from "crypto-js";
+import { iwxServiceUrl, iwxServiceUrlF1,iwxServiceUrlNew,toolsServiceUrl } from "../a_Public_net/Url";
+import { CookieService } from "ngx-cookie-service"; 
+import { ReuseTabService } from "@delon/abc";
+import { SettingsService } from "@delon/theme";
+import { NzMessageService } from "ng-zorro-antd";
+import * as FileSaver from "file-saver";
+import * as XLSX from "xlsx";
+import { ITokenService, DA_SERVICE_TOKEN } from "@delon/auth";
+import { StartupService } from "@core";
+// import {XLSXLS} from "xlsx-style"
 
-    /* ============================================================
-       PRIVATE: active CMS user check
-       ============================================================ */
-    FUNCTION IS_ACTIVE_CMS_USER(P_EMP_ID IN VARCHAR2) RETURN NUMBER IS
-        L_COUNT NUMBER;
-    BEGIN
-        SELECT COUNT(1) INTO L_COUNT
-        FROM CMS.C_USER_MANAGE_T U
-        WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(P_EMP_ID))
-          AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-          AND NVL(U.DEL_FLAG, 0) = 0;
+import { BrandService } from "../../../app/layout/pro/pro.service";
 
-        RETURN CASE WHEN L_COUNT > 0 THEN 1 ELSE 0 END;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN 0;
-    END IS_ACTIVE_CMS_USER;
+@Injectable()
+export class PublicNetService {
+  constructor(
+    public http: _HttpClient,
+    private i18n: I18NService,
+    public router: Router,
+    public drawerHelper: DrawerHelper,
+    private settingService: SettingsService,
+    private cookieService: CookieService,
+    private reuseTabService: ReuseTabService,
+    @Inject(DA_SERVICE_TOKEN) private tokenService: ITokenService,
+    private startupSrv: StartupService,
+    private msgSvr: NzMessageService,
+    public pro: BrandService,
+  ) { }
 
-
-    /* ============================================================
-       PRIVATE: does employee have access to a given site?
-       ============================================================ */
-    FUNCTION HAS_SITE_ACCESS(P_EMP_ID IN VARCHAR2, P_SITE IN VARCHAR2) RETURN NUMBER IS
-        L_COUNT NUMBER;
-    BEGIN
-        SELECT COUNT(1) INTO L_COUNT
-        FROM CMS.C_USER_MANAGE_T U
-        WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(P_EMP_ID))
-          AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-          AND NVL(U.DEL_FLAG, 0) = 0
-          AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(P_SITE));
-
-        RETURN CASE WHEN L_COUNT > 0 THEN 1 ELSE 0 END;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN 0;
-    END HAS_SITE_ACCESS;
-
-
-    /* ============================================================
-       PRIVATE: get an active user's site (MIN if more than one)
-       ============================================================ */
-    FUNCTION GET_USER_SITE(P_EMP_ID IN VARCHAR2)
-        RETURN CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE IS
-        L_SITE CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-    BEGIN
-        SELECT MIN(U.SITE) INTO L_SITE
-        FROM CMS.C_USER_MANAGE_T U
-        WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(P_EMP_ID))
-          AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-          AND NVL(U.DEL_FLAG, 0) = 0;
-
-        RETURN L_SITE;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN NULL;
-    END GET_USER_SITE;
+  iwxKStr="azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=";//愛萬象加密
+  javaKStr="Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM=";//java加密
+  USER_GQ = "C44F773FD87E7E41174D6A58B162B049";
+  USER_TN_test ="E9785F13CCEAFB251A6AB147AFD24336";
+  USER_TN =   iwxServiceUrl ==='http://10.208.193.125:8086/gateway/manager'  ? "C44F773FD87E7E41174D6A58B162B049" :   "10A33A67A312E649D907BBC927995B8A";
 
 
-    /* ============================================================
-       PRIVATE: site code -> site name
-       ============================================================ */
-    FUNCTION GET_SITE_NAME(P_SITE IN VARCHAR2) RETURN VARCHAR2 IS
-    BEGIN
-        RETURN CASE TRIM(P_SITE)
-                   WHEN '95326' THEN 'FXBL'
-                   WHEN '69941' THEN 'FXCN'
-                   ELSE P_SITE
-               END;
-    END GET_SITE_NAME;
+  // 工具箱接口
+  private param_o: string = 'CV6njbvQ7XRV1f4pS6rBPmUYvpe/arGPV1Gkd9dMZdHaj1F1Z4aMp7AsISpgKkNe';
+  security = {
+    
+    cfg: {
+      iv: CryptoJS.enc.Hex.parse("0000000000000000"),
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    },
+    encryptForWeb(str) {
+      const iwxKStr=this.getDK("azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=");
+      const k = CryptoJS.enc.Utf8.parse(iwxKStr);
+      return CryptoJS.AES.encrypt(str, k, this.cfg).toString();
+    },
+    decryptForWeb(str) {
+      const iwxKStr=this.getDK("azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=");
+      const k = CryptoJS.enc.Utf8.parse(iwxKStr);
+      return CryptoJS.enc.Utf8.stringify(
+        CryptoJS.AES.decrypt(str, k, this.cfg)
+      );
+    },
+    // 後端java加解密
+    encryptForWebJava(str) {
+      const javaKStr=this.getDK("Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM=");
+      const k = CryptoJS.enc.Utf8.parse(javaKStr);
+      return CryptoJS.AES.encrypt(str, k, this.cfg).toString();
+    },
+    decryptForWebJava(str) {
+      const javaKStr=this.getDK("Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM=");
+      const k = CryptoJS.enc.Utf8.parse(javaKStr);
+      return CryptoJS.enc.Utf8.stringify(
+        CryptoJS.AES.decrypt(str, k, this.cfg)
+      );
+    },
+    encrypt(str, key) {
+      const k = CryptoJS.enc.Utf8.parse(key);
+      return CryptoJS.AES.encrypt(str, k, this.cfg).toString();
+    },
+    decrypt(str, key) {
+      const k = CryptoJS.enc.Utf8.parse(key);
+      return CryptoJS.enc.Utf8.stringify(
+        CryptoJS.AES.decrypt(str, k, this.cfg)
+      );
+    },
+    md5(str) {
+      return CryptoJS.MD5(str)
+        .toString()
+        .toUpperCase();
+    },
+    genVldCode(str, key) {
+      return this.encrypt(this.md5(str + key), key);
+    },
+    genVldCode2(str, key) {
+      return this.md5(key + str + key);
+    },
+    getDK(key) {   //传入编码后的密钥(newStr)以获取真实的秘钥信息
+      const str = window.atob(key);
+      const middle = Math.floor(str.length / 2);
+      let left = middle - 1;
+      let right = str.length % 2 === 0 ? middle : middle + 1;
+      let result = '';
+      while (left >= 0 && right < str.length) {
+       result += str[right];
+       result += str[left];
+       left--;
+       right++;
+      }
+      return result + str.slice(right) + str.slice(0, left + 1);
+    }
+  }; 
+  iwxKInfo=this.security.getDK(this.iwxKStr);
+  // 解密存儲在settingService中的user信息
+  getSettingUserInfo() {
+    const userData = {
+      avatar: "",
+      eeid: "",
+      name: "",
+      time: ""
+    }
+    const userInfo = this.settingService.user.userInfo ? JSON.parse(this.security.decryptForWeb(this.settingService.user.userInfo)) : userData;
+
+    return userInfo
+  }
 
 
 
-    /* ============================================================
-       INSERT F1 MENU
-       ============================================================ */
-    PROCEDURE INSERT_F1_MENU(
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_ADD_BY            IN VARCHAR2,
-        V_RES               OUT VARCHAR2, 
-        V_RESULT            OUT VARCHAR2
-    ) IS
-        V_SITE_VAL   CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-        V_FIRST_DATE DATE;
-        V_LAST_DATE  DATE;
-    BEGIN
+  getsitebaseuserdforRSM(){
+    const params = {
+      Repairtype :'',
+      EmpId :this.getSettingUserInfo().eeid,
+      Site : '',
+      StartPage :1,
+      PageSize :999999999999,////pagesize = 0的時候是查詢的全部的數據,可以用作導出
+      Func: "RSM-Get_user_data_control"
+    }
+   // console.log(params)
+ 
+  const     config = {
+     headers :{
+        apiID: "ffff-1746866126111-10208193125-1387",
+        userKey: '10A33A67A312E649D907BBC927995B8A'
+      }
+    }
+      const param = this.dealPostParamsEncrypt(params);
+    //  console.log(param)
+      return this.http
+        .post("https://microservice.abgind.foxconn.com/india/gateway", param, null, config)
+        .pipe(
+          map((resp: any) => {
+            const res = JSON.parse(this.security.decrypt(resp.r, this.iwxKInfo));
+    //     console.log(res)
+            if (res.IsOK === "1") {
+    //    console.log(res)
+              
+              // const _data = [];
+              // res.List.forEach((element) => {
+              //   if (!element) return;
+              //   let _item: any = {};
+              //   _item = {
+              //     label: element.BasicCode,
+              //     value: element.Id,
+              //   };
+              //   _data.push(_item);
+              // });
+               return res.List;
+            }
+          })
+        );
+  }
+  getselectSiteData(params: any): Observable<any> {
+    const TypeCode = params.slice(9);
+    let _param = {
+      Func: "RSM-GET_BASE_TYPE",
+      TypeName : TypeCode,
+     // Input :''
+    };
+    const config = {
+      headers: {
+        apiID: "ffff-1718623666272-10208193125-0334",
+        userKey: this.USER_TN,
+      },
+    };
 
-        IF IS_ACTIVE_CMS_USER(V_ADD_BY) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_ADD_BY;
-            RETURN;
-        END IF;
+    const param = this.dealPostParamsEncrypt(_param);
+    return this.http
+    //  .post(iwxServiceUrl, param, null, config)
+    .post(iwxServiceUrl, param, null, config)
+      .pipe(
+        switchMap((resp: any) => {
+          const result = JSON.parse(this.security.decrypt(resp.r, this.iwxKInfo));
+      //    console.log(result)
+      
+          if (result.IsOK === "1") {
+            return this.getsitebaseuserdforRSM().pipe(
+              map((res: any) => {
+              
+                const res1 = res;
+       //     console.log(res1)
+            const seenCodes = new Set(); // move outside
+            const _data = [];            // move outside
+      
+            res1.forEach((element) => {
+              const matchedItem = result.List.find(
+                (listItem) => listItem.BasicCodeId === element.SiteId
+              );
+      
+              if (matchedItem && !seenCodes.has(matchedItem.BasicCode)) {
+                seenCodes.add(matchedItem.BasicCode);
+                _data.push({
+                  label: matchedItem.BasicCode,
+                  value: matchedItem.BasicCodeId
+                });
+              }
+            });
+            
+                return _data;
+              })
+            );
+          }
+        })
+      );
+  }
 
-        V_SITE_VAL := GET_USER_SITE(V_ADD_BY);
 
-        IF V_SITE_VAL IS NULL THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user/site not found for employee: ' || V_ADD_BY;
-            RETURN;
-        END IF;
 
-        BEGIN
-            V_FIRST_DATE := TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY');
-            V_LAST_DATE  := TO_DATE(V_LAST_DATE_FXBL,  'DD-MM-YYYY');
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                RETURN;
-        END;
 
-        IF V_FIRST_DATE > V_LAST_DATE THEN
-            V_RES := '0';
-            V_RESULT := 'First date cannot be greater than last date';
-            RETURN;
-        END IF;
 
-        INSERT INTO CMS.C_F1_MEAL_INFO (
-            ID, GROUPS, PROPERTY_01, MEAL_PREFERENCE, FX_BADGE, NAME,
-            FIRST_DATE_FXBL, LAST_DATE_FXBL, ADD_BY, ADD_DATE, DEL_FLAG
-        ) VALUES (
-            CMS.SEQ_C_F1_MEAL_INFO.NEXTVAL, V_GROUPS, V_SITE_VAL, V_MEAL_PREFERENCE,
-            V_FX_BADGE, V_NAME, V_FIRST_DATE, V_LAST_DATE, V_ADD_BY, SYSDATE, 0
+
+
+
+
+
+
+  getSiteDataforUserManage(params: any): Observable<any> {
+    const TypeCode = params.slice(9);
+    let _param = {
+      Func: "BaseCode-GetBasicCodeDDL",
+      TypeCode: TypeCode,
+    };
+    const config = {
+      headers: {
+        apiID: "ffff-1651569988595-16925411121-1120",
+        userKey: this.USER_GQ,
+      },
+    };
+  
+    const param = this.dealPostParamsEncrypt(_param);
+    return this.http
+      .post(iwxServiceUrl, param, null, config)
+      .pipe(
+        switchMap((resp: any) => {
+          const result = JSON.parse(this.security.decrypt(resp.r, this.iwxKInfo));
+  
+          if (result.IsOK === "1") {
+            return this.getSitebasedUser().pipe(
+              map((res: any) => {
+              
+                const res1 = res;
+            
+                const _data = [];
+                res1.forEach((element) => {
+                  const matchedItem = result.List.find(
+                    (listItem) => listItem.Id.toString() === element.Site
+                  );
+               
+                  if (matchedItem) {
+                    _data.push({
+                      label: matchedItem.BasicCode,
+                      value: matchedItem.Id
+                   
+                    });
+               
+                  }
+                });
+            
+                return _data;
+              })
+            );
+          } else {
+            return of([]); // or handle the case where IsOK is not "1"
+          }
+        })
+      );
+  }
+  
+
+
+  // 下拉选数据
+  getselectDatas(params: any): Observable<any> {
+    // const code = params.slice(10);
+    let _param = {
+      Func: params.fun,
+    };
+    let _p = {
+      Id: params.id,
+    };
+    const _params = deepMerge(params.id ? _p : {}, _param);
+    const config = {
+      headers: { 
+        apiID: params.apiID,
+        userKey: this.USER_GQ,
+      },
+    };
+
+    const param = this.dealPostParamsEncrypt(_params);
+    return this.http
+      .post(iwxServiceUrl, param, null, config)
+      .pipe(
+        map((resp: any) => {
+          const res = JSON.parse(this.security.decrypt(resp.r, this.iwxKInfo));
+          // console.log(res)
+          if (res.IsOK === "1") {
+            let data = res.List;
+            data.map((item) => {
+              item.children = [];
+              item.title = item.Menuname;
+              item.key = item.Id;
+              item.parentId = item.Parentid;
+              item.isLeaf = false;
+              let _param = {
+                Func: params.fun,
+                Id: item.Id,
+              };
+              const config = {
+                headers: {
+                  apiID: params.apiID,
+                  userKey: this.USER_GQ,
+                },
+              };
+
+              const param = this.dealPostParamsEncrypt(_params);
+              return this.http
+                .post(iwxServiceUrl, param, null, config)
+                .pipe(
+                  map((resp: any) => {
+                    const res = JSON.parse(
+                      this.security.decrypt(resp.r, this.iwxKInfo)
+                    );
+                    //
+                    res.List.map((items) => {
+                      items.title = items.Menuname;
+                      items.key = items.Id;
+                      items.parentId = items.Parentid;
+                      items.isLeaf = true;
+                    });
+                    item.children = res.List;
+                  })
+                );
+            });
+            // console.log(data)
+            return data;
+          }
+        })
+      );
+  }
+
+  /**
+   * {key: "", name: "", type: "", required: "0||1", readOnly: "0||1", description: "描述", default: "默認值" ui: {} }
+   * key:鍵名(對應接口字段名), name：前端展示的名稱,required:YesNo必填項, readOnly：YesNo可編輯,
+   * type: "text|默認，textarea|多行文本框，select|下拉框，date|日期，radio|單選，checkbox|多選，number|數字，custom|自定義"
+   *
+   * select|checkbox|radio 同步{enum:[
+   *  {label: "", value: ""}
+   * ], width: 230|默認 }
+   * 異步 {
+   *  ui: {
+   *      async: {url: "請求地址", data: "參數", label: "對應字段默認label", value: "對應字段默認value"}
+   *  }
+   * }
+   * select {multiple: "0|單選默認，1|多選"}
+   * date {format："時間格式默認：YYYY/MM/DD"}
+   * 方法可依據需求拓展，文檔參考鏈接 https://ng-alain.com/form/getting-started/zh
+   * @param data 自定義Form數組
+   * @param res 初始化數據
+   */
+  // 表單初始化
+  jointSchema(data, res?: any) {
+    const _res = res ? res : {};
+    const sfSchema = {
+      properties: {},
+      required: [],
+    };
+    data.forEach((element) => {
+      const key = {};
+      let _default =
+        _res[element.key] || _res[element.key] === 0
+          ? _res[element.key]
+          : element.default || element.default === 0
+            ? element.default
+            : null;
+      if (_default && element.multiple && element.multiple === "1") {
+        _default = _default.split(",");
+      }
+      let selectWidth = element.width ? element.width : 230;
+      if (typeof selectWidth === "string") {
+        if (selectWidth.indexOf("%") === -1) {
+          selectWidth = selectWidth + "px";
+        }
+      }
+      // 必填項
+      if (element.require && element.require === "1") {
+        sfSchema.required.push(element.key);
+      }
+
+      let allowClear = element.allowClear ? element.allowClear : true; //默認允許刪除
+
+      switch (element.type) {
+        case "textarea":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              widget: "textarea",
+              autosize: {
+                minRows: element.minRows ? element.minRows : 3,
+                maxRows: element.maxRows ? element.maxRows : 6,
+              },
+            },
+            default: _default,
+          };
+          if (element.maxLength) {
+            key[element.key].maxLength = element.maxLength;
+          }
+          break;
+        case "select":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              widget: "select",
+              allowClear: allowClear,
+              width: selectWidth,
+              placeholder: "Please select",
+              mode:
+                element.multiple && element.multiple === "1"
+                  ? "tags"
+                  : "default",
+              dropdownStyle: {
+                maxHeight: "300px",
+              },
+            },
+            default: _default,
+          };
+          if (element.async) {
+
+          }
+          break;
+
+        case "tree-select":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              widget: "tree-select",
+              width: selectWidth,
+              multiple: element.selectModule === "1",
+              asyncData: () => { },
+              change: (value) => {
+          //      console.log(value);
+              },
+
+              allowClear: true,
+              dropdownMatchSelectWidth: false,
+              dropdownStyle: {
+                maxHeight: "300px",
+              },
+            },
+            default: _default,
+          };
+          sfSchema.properties = { ...sfSchema.properties, ...key };
+          break;
+        case "date":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            format: element.format ? element.format : "YYYY/MM/DD",
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              widget: "date",
+              displayFormat: element.format ? element.format : "YYYY/MM/DD",
+              format: element.format ? element.format : "YYYY/MM/DD",
+              allowClear: allowClear,
+            },
+            default: _default,
+          };
+          break;
+          case "year":
+            key[element.key] = {
+              type: "string",
+              title: element.name,
+              format: element.format ? element.format : "YYYY",
+              ui: {
+                i18n: element.i18n ? element.i18n : "",
+                widget: "date",
+                mode: 'year' ,
+                displayFormat: element.format ? element.format : "YYYY",
+                format: element.format ? element.format : "YYYY",
+                allowClear: allowClear,
+              },
+              default: _default,
+            };
+            break;
+        case "dateMonth":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            format: "month",
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              displayFormat: element.format ? element.format : "MM",
+              format: element.format ? element.format : "MM",
+            },
+            default: _default,
+          };
+          break;
+        case "dateTime":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            format: "date-time",
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              displayFormat: element.format
+                ? element.format
+                : "YYYY-MM-DD HH:mm:ss",
+              format: element.format ? element.format : "YYYY-MM-DD HH:mm:ss",
+            },
+            default: _default,
+          };
+          break;
+        case "dateRange":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            format: element.format ? element.format : "YYYY/MM/DD",
+            ui: {
+              widget: "date",
+              mode: "range",
+              i18n: element.i18n ? element.i18n : "",
+              displayFormat: element.format ? element.format : "YYYY-MM-DD",
+              format: element.format ? element.format : "YYYY-MM-DD",
+            },
+            default: _default,
+          };
+          break;
+        case "time":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            format: element.format ? element.format : "HH:mm",
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              widget: 'time',
+              displayFormat: element.format ? element.format : "HH:mm",
+              format: element.format ? element.format : "HH:mm"
+            },
+            default: _default
+          };
+          break;
+        case "radio":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            ui: {
+              widget: "radio",
+              i18n: element.i18n ? element.i18n : "",
+            },
+            default: _default,
+          };
+          break;
+        case "checkbox":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            ui: {
+              widget: "checkbox",
+              i18n: element.i18n ? element.i18n : "",
+            },
+            default: _default,
+          };
+          break;
+        case "number": // 默認最小為 1
+          key[element.key] = {
+            type: "number",
+            title: element.name,
+            default: _default,
+            minimum: element.minimum ? element.minimum : 0,
+            ui: {
+              formatter: (value) => (value ? Number(value).toFixed(0) : 0),
+              i18n: element.i18n ? element.i18n : "",
+            },
+          };
+          if (element.maximum) {
+            key[element.key].maximum = element.maximum;
+          }
+          if (element.multipleOf) {
+            key[element.key].multipleOf = element.multipleOf;
+          }
+          break;
+        case "custom":
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              widget: "custom",
+            
+            },
+
+            default: _default,
+          };
+          break;
+        case "button":
+          break;
+        default:
+          key[element.key] = {
+            type: "string",
+            title: element.name,
+            default: _default,
+            ui: {
+              i18n: element.i18n ? element.i18n : "",
+              placeholder: element.placeholder
+                ? element.placeholder
+                : "Please enter",
+              autocomplete: "off"
+            },
+          };
+          if (element.maxLength) {
+            key[element.key].maxLength = element.maxLength;
+          }
+          if (element.pattern) {
+            key[element.key].pattern = element.pattern;
+          }
+          break;
+      }
+      if (element.description) {
+        key[element.key].description = element.description;
+      }
+      if (element.readOnly && element.readOnly === "1") {
+        key[element.key].readOnly = true;
+      }
+      if (element.ui) {
+        key[element.key].ui = key[element.key].ui
+          ? deepMerge(key[element.key].ui, element.ui)
+          : element.ui;
+      }
+      sfSchema.properties = { ...sfSchema.properties, ...key };
+    });
+    return sfSchema;
+  }
+
+  // 日期格式化
+  dateFormat(value, fmt) {
+    const date = new Date(value);
+    let ret: any;
+    const opt = {
+      "Y+": date.getFullYear().toString(), // 年
+      "M+": (date.getMonth() + 1).toString(), // 月
+      "D+": date.getDate().toString(), // 日
+      "h+": date.getHours().toString(), // 时
+      "m+": date.getMinutes().toString(), // 分
+      "s+": date.getSeconds().toString(), // 秒
+      // 有其他格式化字符需求可以继续添加，必须转化成字符串
+    };
+    for (const k in opt) {
+      if (opt.hasOwnProperty(k)) {
+        ret = new RegExp("(" + k + ")").exec(fmt);
+        if (ret) {
+          fmt = fmt.replace(
+            ret[1],
+            ret[1].length === 1 ? opt[k] : opt[k].padStart(ret[1].length, "0")
+          );
+        }
+      }
+    }
+    return fmt;
+  }
+
+
+  // 參數特殊符號處理
+  urlSafeCode(e) {
+    return e = (e = (e = (e = (e = (e = (e = (e = (e = (e = (e = e.replace(/\%/g, "%25")).replace(/\#/g, "%23")).replace(/\&/g, "%26")).replace(/\+/g, "%2B")).replace(/\ /g, "%20")).replace(/\./g, "%2E")).replace(/\:/g, "%3A")).replace(/\//g, "%2F")).replace(/\\/g, "%5C")).replace(/\= /g, "%3D")).replace(/\?/g, "%3F")
+  }
+
+  // 數據解密-特殊符號處理
+  dUrlSafeCode(e) {
+    return e = (e = (e = (e = (e = (e = (e = (e = (e = (e = (e = e.replace(/\%25/g, "%")).replace(/\%23/g, "#")).replace(/\%26/g, "&")).replace(/\%2B/g, "+")).replace(/\%20/g, " ")).replace(/\%2 E/g, ".")).replace(/\%3A/g, ":")).replace(/\%2F/g, "/")).replace(/\%5C/g, "\\")).replace(/\ %3D/g, "=")).replace(/\%3F/g, "?")
+  }
+
+
+  // 爱万象post参数处理
+  dealPostParams(data = {}) {
+    let params = "";
+    let res = null;
+    for (const key in data) {
+      data[key] = data[key].replace("=", "%3D");
+      data[key] = data[key].replace("&", "%26");
+      params += `${key}=${data[key]}&`;
+    }
+    params = params.substring(0, params.length - 1);
+    res = {
+      inputString: params,
+    };
+    return res;
+  }
+  // 爱万象post参数处理 - 加密
+  dealPostParamsEncrypt(data = {}) {
+    let res = null;
+    const o = this.security.encrypt(
+      JSON.stringify({ Os: "", DeviceId: "Utility", AppVer: "0" }),
+      this.iwxKInfo
+    );
+    
+    let s = "";
+    s = this.security.encrypt(JSON.stringify(data), this.iwxKInfo);
+    res = {
+      s: s,
+      o: o,
+    };
+   
+    return res;
+  }
+
+
+
+  // 爱万象post参数处理
+  dealPostParams2(data = {}) {
+    let params = "";
+    let res = null;
+    for (const key in data) {
+      data[key] = data[key] ? this.urlSafeCode(data[key]) : data[key];
+      params += `${key}=${data[key]}&`;
+    }
+    params = params.substring(0, params.length - 1);
+    res = {
+      inputString: params,
+    };
+    return res;
+  }
+
+  // 爱万象post参数处理 - 加密
+  dealPostParamsEncrypt2(data = {}) {
+    let res = null;
+    const o = this.security.encrypt(
+      JSON.stringify({ Os: "", DeviceId: "Utility", AppVer: "0" }),
+      this.iwxKInfo
+    );
+    let s = "";
+
+    for (const key in data) {
+      // 對特殊符號進行處理
+      data[key] = data[key] ? this.urlSafeCode(data[key]) : data[key];
+    }
+
+    s = this.security.encrypt(JSON.stringify(data), this.iwxKInfo);
+
+    res = {
+      s: s,
+      o: o,
+    };
+    return res;
+  }
+
+  /**
+   * @description 爱万象post请求
+   * @param params 参数
+   * @param config 请求头信息
+   * @param isEncrypt 参数是否加密
+   */
+  iwxPost(params = {}, config = {}, isEncrypt: boolean) {
+    const param = isEncrypt
+      ? this.dealPostParamsEncrypt(params)
+      : this.dealPostParams(params);
+    // const param = params
+    return new Promise((resolve, reject) => {
+      this.http
+        .post(iwxServiceUrl, param, null, config)
+        .subscribe(
+          (data) => {
+            let res = isEncrypt
+              ? JSON.parse(this.security.decrypt(data.r, this.iwxKInfo))
+              : data;
+            resolve(res);
+          },
+          (err) => {
+            // 请求错误
+            reject(err);
+          }
+        );
+    }).catch((reason) => {
+    });
+  }
+
+
+
+  iwxPostF1(params = {}, config = {}, isEncrypt: boolean) {
+    const param = isEncrypt
+      ? this.dealPostParamsEncrypt(params)
+      : this.dealPostParams(params);
+    // const param = params
+    return new Promise((resolve, reject) => {
+      this.http
+        .post(iwxServiceUrlF1, param, null, config)
+        .subscribe(
+          (data) => {
+            let res = isEncrypt
+              ? JSON.parse(this.security.decrypt(data.r, this.iwxKInfo))
+              : data;
+            resolve(res);
+          },
+          (err) => {
+            // 请求错误
+            reject(err);
+          }
+        );
+    }).catch((reason) => {
+    });
+  }
+
+
+
+  iwxPost2(config = {}) {
+    return new Promise((resolve, reject) => {
+      this.http.post(iwxServiceUrl, {}, null, config).subscribe(
+        (data) => {
+          resolve(data);
+        },
+        (err) => {
+          // 请求错误
+          reject(err);
+        }
+      );
+    }).catch((reason) => {
+   //    console.log(reason)
+    });
+  }
+
+  iwxPostNew(params = {}, config = {}, isEncrypt: boolean) {
+    // console.log(params);
+    // console.log(config)
+    const param = isEncrypt
+      ? this.dealPostParamsEncrypt(params)
+      : this.dealPostParams(params);
+      // console.log(this.dealPostParamsEncrypt(params))
+    return new Promise((resolve, reject) => {
+      this.http
+        .post(iwxServiceUrlNew, param, null, config).subscribe((data) => {
+            // console.log(data)
+            let res = isEncrypt
+              ? JSON.parse(this.security.decrypt(data.r, this.iwxKInfo))
+              : data;
+            resolve(res);
+            // console.log(res)
+          },
+        
+          
+          (err) => {
+          console.log(err)
+            reject(err);
+          }
+        );
+    }).catch((reason) => {
+    });
+  }
+ iwxPostNew3 (params = {}, config = {}, isEncrypt: boolean) {
+    // console.log(params);
+    // console.log(config)
+    const param = isEncrypt
+      ? this.dealPostParamsEncrypt(params)
+      : this.dealPostParams(params);
+      // console.log(this.dealPostParamsEncrypt(params))
+    return new Promise((resolve, reject) => {
+      this.http
+        .post('http://10.208.193.125:8086/gateway/manager', param, null, config).subscribe((data) => {
+            let res = isEncrypt
+              ? JSON.parse(this.security.decrypt(data.r, this.iwxKInfo))
+              : data;
+            resolve(res);
+      //       console.log(res)
+          },
+        
+          
+          (err) => {
+          console.log(err)
+            reject(err);
+          }
+        );
+    }).catch((reason) => {
+    });
+  }
+  
+  iwxPost4(params: any,config = {},isEncrypt){
+    let body =isEncrypt? this.dealPostParamsEncrypt4(params):params;
+  
+    return new Promise((resolve,reject) => {
+      this.http.post(iwxServiceUrlNew, body,null,config).subscribe(data => {
+       
+        resolve(data);
+      },err => {
+        reject(err);
+      });
+  }).catch(reason =>{
+ //   console.log(reason);
+  })
+}
+
+dealPostParamsEncrypt4(data) {iwxServiceUrlNew
+
+  let res = null;
+  const params=this.security.encryptForWeb(JSON.stringify(data));
+  res = {
+      "inputString": params,
+    };
+  return res;
+}
+
+  permitRequest(params = {}, config = {}, isEncrypt: boolean) {
+    const param = isEncrypt
+      ? this.dealPostParamsEncrypt(params)
+      : this.dealPostParams(params);
+    return new Promise((resolve, reject) => {
+      const url = iwxServiceUrl+"?_allow_anonymous=true";//正式
+      this.http
+        .post(url, param, null, config)
+        .subscribe(
+          (data) => {
+            let res = isEncrypt
+              ? JSON.parse(this.security.decrypt(data.r, this.iwxKInfo))
+              : data;
+            resolve(res);
+          },
+          (err) => {
+            // 请求错误
+            reject(err);
+          }
+        );
+    }).catch((reason) => {
+    });
+  }
+
+    // 工具箱接口
+    commonAkdPostApi2(param: any) {
+      let key = this.iwxKInfo;
+      let param_o = this.param_o;
+      const _param = {
+        s: this.security.encrypt(JSON.stringify(param), key),
+        o: param_o,
+        d: null
+      };
+      return new Promise((resolve, reject) => {
+        this.http.post(toolsServiceUrl, _param).subscribe(data => {
+          let res = JSON.parse(this.security.decrypt(data.r, key));
+          resolve(res);
+        }, err => {//请求错误
+          reject(err);
+        });
+      }).catch(reason => {
+        return Promise.reject(reason);
+      });
+    }
+
+
+
+
+  // 導出數據接口----data為需要導出的數據內容,num為導出數據有多少列，然後設置每列的寬度
+  exportHandle(data, num?: any, fileName?: any) {
+    // 設置excel表的單元格寬度
+    let long = {
+      "001": [
+        { wch: 20 },
+
+      ],
+    };
+
+    let cols = Object.keys(data[0]).length
+    for (let i = 0; i <= cols; i++) {
+      long["001"].push({ wch: 20 })
+    }
+    // let cols=data.length
+    // let wsrows=[{hpx:20}]
+    // for(let i=0;i<=total;i++){
+    //   wsrows.push({hpx:120})
+    // }
+    long["001"] = long["001"].slice(0, num);
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+    worksheet["!cols"] = num ? long["001"] : null; //設置excel表的單元格寬度和表頭高度
+    // worksheet["!rows"]=wsrows //設置excel表第一行的高度
+    // for (let key in worksheet){
+    //   if (new RegExp('^[A-Za-z0-9]+$').exec(key)) {
+    //     let cell = key.toString();
+    //     worksheet[cell].s = {
+    //       alignment: {
+    //         horizontal: "center", // 水平对齐-居中
+    //         vertical: "center", // 垂直对齐-居中
+    //         wrap_text: true
+    //       }
+    //     }
+    //   }
+    // }
+ // Format "PurchaseYear" column as "MM-YYYY"
+   
+
+// console.log(data)
+    const workbook: XLSX.WorkBook = {
+      Sheets: { data: worksheet },
+      SheetNames: ["data"],
+    };
+    const excelBuffer: any = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    this.saveAsExcelFile(excelBuffer, fileName);
+  }
+  saveAsExcelFile(buffer: any, fileName?: any) {
+    const data: Blob = new Blob([buffer], {
+      type:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+    FileSaver.saveAs(
+      data,
+      fileName ? fileName : "Data_" + new Date().getTime() + ".xlsx"
+    );
+  }
+
+  getUserBaseInfo(empId) {
+    const params = {
+      EmployeeCode: empId,
+      Func: "FIHManage-GetEMPBaseInfo"
+    }
+    const param = this.dealPostParamsEncrypt(params);
+    const config = {
+      headers: {
+        apiID: "ffff-1669620301290-16925411121-5665",
+        userKey: this.USER_GQ
+      }
+    }
+    return new Promise((resolve, reject) => {
+      this.http
+        .post('https://microservice.abgind.foxconn.com/india/gateway', param, null, config)
+        .subscribe(
+          (data) => {
+            let res = JSON.parse(this.security.decrypt(data.r, this.iwxKInfo));
+            resolve(res);
+          },
+          (err) => {
+            // 请求错误
+            reject(err);
+          }
+        );
+    }).catch((reason) => {
+    });
+  }
+
+getSitebasedUser(): Observable<any[]> {
+  const userInfo = this.getSettingUserInfo();
+
+  const params = {
+    SystemName: '',
+    EmpId: userInfo.eeid,
+    StartPage: 1,
+    PageSize: 999999999999,
+    Func: 'CMS-Get_user_manage'
+  };
+
+  const config = {
+    headers: {
+      apiID: 'ffff-1716443006196-10208193125-0995',
+      userKey: this.USER_TN
+    }
+  };
+
+  console.log(
+    'CMS-Get_user_manage params:',
+    params
+  );
+
+  const param = this.dealPostParamsEncrypt(params);
+
+  return this.http
+    .post(
+      'http://10.208.193.125:8086/gateway/manager',
+      param,
+      null,
+      config
+    )
+    .pipe(
+      map((resp: any) => {
+        console.log(
+          'CMS-Get_user_manage raw response:',
+          resp
         );
 
-        COMMIT;
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END INSERT_F1_MENU;
-
-
-
-    /* ============================================================
-       BULK F1 MENU
-       ============================================================ */
-    PROCEDURE BULK_F1_MENU(
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_ADD_BY            IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    ) IS
-    BEGIN
-        INSERT_F1_MENU(
-            V_GROUPS          => V_GROUPS,
-            V_MEAL_PREFERENCE => V_MEAL_PREFERENCE,
-            V_FX_BADGE        => V_FX_BADGE,
-            V_NAME            => V_NAME,
-            V_FIRST_DATE_FXBL => V_FIRST_DATE_FXBL,
-            V_LAST_DATE_FXBL  => V_LAST_DATE_FXBL,
-            V_ADD_BY          => V_ADD_BY,
-            V_RES             => V_RES,
-            V_RESULT          => V_RESULT
-        );
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END BULK_F1_MENU;
-
-
-
-    /* ============================================================
-       GET F1 MENU MANAGEMENT
-       ============================================================ */
-    PROCEDURE GET_F1_MENU_MANAGE(
-        V_EMP_ID IN VARCHAR2,
-        V_GROUPS IN VARCHAR2,
-        V_SITE IN VARCHAR2,
-        V_FX_BADGE IN VARCHAR2,
-        V_ADD_BY IN VARCHAR2,
-        L_START_PAGE IN VARCHAR2,
-        L_PAGE_SIZE IN VARCHAR2,
-        V_RES OUT VARCHAR2,
-        V_RESULT OUT VARCHAR2,
-        P_CURSOR OUT SYS_REFCURSOR
-    ) IS
-        L_START_PAGE_NUM NUMBER;
-        L_PAGE_SIZE_NUM NUMBER;
-    BEGIN
-
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            RETURN;
-        END IF;
-
-        BEGIN
-            L_START_PAGE_NUM := TO_NUMBER(NVL(NULLIF(TRIM(L_START_PAGE), ''), '1'));
-            L_PAGE_SIZE_NUM  := TO_NUMBER(NVL(NULLIF(TRIM(L_PAGE_SIZE), ''), '10'));
-            IF L_START_PAGE_NUM < 1 THEN L_START_PAGE_NUM := 1; END IF;
-            IF L_PAGE_SIZE_NUM  < 1 THEN L_PAGE_SIZE_NUM  := 10; END IF;
-        EXCEPTION
-            WHEN VALUE_ERROR THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid pagination values';
-                RETURN;
-        END;
-
-        OPEN P_CURSOR FOR
-        SELECT
-            RN, ROWSCOUNT, ID, GROUPS, SITE, SITE_NAME, MEAL_PREFERENCE,
-            FX_BADGE, NAME, FIRST_DATE_FXBL, LAST_DATE_FXBL,
-            ADD_BY, ADD_DATE, EDIT_BY, EDIT_DATE
-        FROM
-        (
-            SELECT
-                ROW_NUMBER() OVER (ORDER BY V.ADD_DATE DESC, V.ID DESC) AS RN,
-                COUNT(1) OVER () AS ROWSCOUNT,
-                V.ID,
-                V.GROUPS,
-                V.PROPERTY_01 AS SITE,
-                GET_SITE_NAME(V.PROPERTY_01) AS SITE_NAME,
-                BC.NAME AS MEAL_PREFERENCE,
-                V.FX_BADGE,
-                V.NAME,
-                TO_CHAR(V.FIRST_DATE_FXBL, 'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-                TO_CHAR(V.LAST_DATE_FXBL,  'DD-MM-YYYY') AS LAST_DATE_FXBL,
-                V.ADD_BY,
-                TO_CHAR(V.ADD_DATE, 'DD-MM-YYYY HH24:MI:SS') AS ADD_DATE,
-                V.EDIT_BY,
-                TO_CHAR(V.EDIT_DATE, 'DD-MM-YYYY HH24:MI:SS') AS EDIT_DATE
-            FROM CMS.C_F1_MEAL_INFO V
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 1001
-            WHERE NVL(V.DEL_FLAG, 0) = 0
-              AND ( V_GROUPS IS NULL OR TRIM(V_GROUPS) IS NULL
-                    OR UPPER(V.GROUPS) LIKE '%' || UPPER(TRIM(V_GROUPS)) || '%' )
-              AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL
-                    OR UPPER(TRIM(V.PROPERTY_01)) = UPPER(TRIM(V_SITE)) )
-              AND ( V_FX_BADGE IS NULL OR TRIM(V_FX_BADGE) IS NULL
-                    OR UPPER(V.FX_BADGE) LIKE '%' || UPPER(TRIM(V_FX_BADGE)) || '%' )
-              AND ( V_ADD_BY IS NULL OR TRIM(V_ADD_BY) IS NULL
-                    OR UPPER(TRIM(V.ADD_BY)) = UPPER(TRIM(V_ADD_BY)) )
-              /* Only the logged-in employee's own assigned active site(s) */
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(V.PROPERTY_01))
-                  )
-        )
-        WHERE RN >  (L_START_PAGE_NUM - 1) * L_PAGE_SIZE_NUM
-          AND RN <= L_START_PAGE_NUM * L_PAGE_SIZE_NUM;
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_F1_MENU_MANAGE;
-
-
-
-    /* ============================================================
-       UPDATE F1 MENU MANAGEMENT
-       ============================================================ */
-    PROCEDURE UPDATE_F1_MENU_MANAGE(
-        V_ID IN NUMBER,
-        V_GROUPS IN VARCHAR2,
-        V_MEAL_PREFERENCE IN VARCHAR2,
-        V_FX_BADGE IN VARCHAR2,
-        V_NAME IN VARCHAR2,
-        V_FIRST_DATE_FXBL IN VARCHAR2,
-        V_LAST_DATE_FXBL IN VARCHAR2,
-        V_EDIT_BY IN VARCHAR2,
-        V_RES OUT VARCHAR2,
-        V_RESULT OUT VARCHAR2
-    ) IS
-        V_FIRST_DATE DATE;
-        V_LAST_DATE DATE;
-    BEGIN
-
-        BEGIN
-            V_FIRST_DATE := TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY');
-            V_LAST_DATE  := TO_DATE(V_LAST_DATE_FXBL,  'DD-MM-YYYY');
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                RETURN;
-        END;
-
-        IF V_FIRST_DATE > V_LAST_DATE THEN
-            V_RES := '0';
-            V_RESULT := 'First date cannot be greater than last date';
-            RETURN;
-        END IF;
-
-        UPDATE CMS.C_F1_MEAL_INFO V
-        SET V.GROUPS = V_GROUPS,
-            V.MEAL_PREFERENCE = V_MEAL_PREFERENCE,
-            V.FX_BADGE = V_FX_BADGE,
-            V.NAME = V_NAME,
-            V.FIRST_DATE_FXBL = V_FIRST_DATE,
-            V.LAST_DATE_FXBL = V_LAST_DATE,
-            V.EDIT_BY = V_EDIT_BY,
-            V.EDIT_DATE = SYSDATE
-        WHERE V.ID = V_ID
-          AND NVL(V.DEL_FLAG, 0) = 0
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EDIT_BY))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(V.PROPERTY_01))
-              );
-
-        IF SQL%ROWCOUNT = 0 THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'No authorized active record found with ID = ' || V_ID;
-            RETURN;
-        END IF;
-
-        COMMIT;
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END UPDATE_F1_MENU_MANAGE;
-
-
-
-    /* ============================================================
-       DELETE F1 MENU MANAGEMENT
-       ============================================================ */
-    PROCEDURE DELETE_F1_MENU_MANAGE(
-        L_IDS IN VARCHAR2,
-        V_EDIT_BY IN VARCHAR2,
-        V_RES OUT VARCHAR2,
-        V_RESULT OUT VARCHAR2
-    ) IS
-    BEGIN
-
-        IF L_IDS IS NULL OR TRIM(L_IDS) IS NULL THEN
-            V_RES := '0';
-            V_RESULT := 'No ID selected for delete';
-            RETURN;
-        END IF;
-
-        UPDATE CMS.C_F1_MEAL_INFO V
-        SET V.DEL_FLAG = 1,
-            V.EDIT_DATE = SYSDATE,
-            V.EDIT_BY = V_EDIT_BY
-        WHERE INSTR(',' || REPLACE(L_IDS, ' ', '') || ',', ',' || TO_CHAR(V.ID) || ',') > 0
-          AND NVL(V.DEL_FLAG, 0) = 0
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EDIT_BY))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(V.PROPERTY_01))
-              );
-
-        IF SQL%ROWCOUNT = 0 THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'No authorized active record found for selected ID(s)';
-            RETURN;
-        END IF;
-
-        COMMIT;
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END DELETE_F1_MENU_MANAGE;
-
-
-
-    /* ============================================================
-       GET F1 MENU BY FX BADGE
-       Restricted to the logged-in employee's own site(s).
-       ============================================================ */
-    PROCEDURE GET_F1_MENU_BY_FXBADGE(
-        V_EMP_ID    IN VARCHAR2,
-        V_SITE      IN VARCHAR2,
-        V_FX_BADGE  IN VARCHAR2,
-        V_RES       OUT VARCHAR2,
-        V_RESULT    OUT VARCHAR2,
-        P_CURSOR    OUT SYS_REFCURSOR
-    ) IS
-        V_COUNT NUMBER;
-        V_ALREADY NUMBER;
-        V_RECORD_SITE CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-    BEGIN
-
-        /* Logged-in employee must be an active CMS user */
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
-
-        /* If a specific site was selected, employee must be assigned to it */
-        IF V_SITE IS NOT NULL AND TRIM(V_SITE) IS NOT NULL THEN
-            IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE) = 0 THEN
-                V_RES := '0';
-                V_RESULT := 'You are not authorized for the selected site.';
-                OPEN P_CURSOR FOR
-                    SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-                RETURN;
-            END IF;
-        END IF;
-
-        SELECT COUNT(1) INTO V_COUNT
-        FROM CMS.C_F1_MEAL_INFO
-        WHERE UPPER(TRIM(FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-          AND NVL(DEL_FLAG, 0) = 0;
-
-        IF V_COUNT = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'No record found for this FX Badge.';
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
-
-        /* Site of the badge's latest record */
-        SELECT PROPERTY_01 INTO V_RECORD_SITE
-        FROM (
-            SELECT M.*, ROW_NUMBER() OVER (ORDER BY M.ADD_DATE DESC, M.ID DESC) AS RN
-            FROM CMS.C_F1_MEAL_INFO M
-            WHERE UPPER(TRIM(M.FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-              AND NVL(M.DEL_FLAG, 0) = 0
-        )
-        WHERE RN = 1;
-
-        /* Employee must be assigned to the badge's own site */
-        IF HAS_SITE_ACCESS(V_EMP_ID, V_RECORD_SITE) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'This FX Badge does not belong to your assigned site.';
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
-
-        SELECT COUNT(1) INTO V_ALREADY
-        FROM CMS.C_F1_SCAN_LOG
-        WHERE UPPER(TRIM(FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-          AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-          AND NVL(DEL_FLAG, 0) = 0
-          AND COLLECTED_DATA = 'SUCCESS';
-
-        OPEN P_CURSOR FOR
-        SELECT
-            V.GROUPS,
-            V.SUB_GROUP,
-            V.PROPERTY_01 AS SITE,
-            GET_SITE_NAME(V.PROPERTY_01) AS SITE_NAME,
-            BC.NAME AS MEAL_PREFERENCE,
-            V.FX_BADGE,
-            V.NAME,
-            TO_CHAR(V.FIRST_DATE_FXBL, 'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-            TO_CHAR(V.LAST_DATE_FXBL,  'DD-MM-YYYY') AS LAST_DATE_FXBL,
-            CASE
-                WHEN UPPER(TRIM(BC.NAME)) = 'NO MEAL REQUIRED' THEN 'NOT_ENTITLED'
-                WHEN V.FIRST_DATE_FXBL IS NULL OR V.LAST_DATE_FXBL IS NULL THEN 'NOT_UPDATED'
-                WHEN TRUNC(SYSDATE) NOT BETWEEN TRUNC(V.FIRST_DATE_FXBL) AND TRUNC(V.LAST_DATE_FXBL) THEN 'LAST DATE EXPIRED'
-                WHEN V_ALREADY > 0 THEN 'ALREADY_SCANNED'
-                ELSE 'ENTITLED'
-            END AS ENTITLEMENT_STATUS
-        FROM
-        (
-            SELECT M.*, ROW_NUMBER() OVER (ORDER BY M.ADD_DATE DESC, M.ID DESC) AS RN
-            FROM CMS.C_F1_MEAL_INFO M
-            WHERE UPPER(TRIM(M.FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-              AND NVL(M.DEL_FLAG, 0) = 0
-        ) V
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 1001
-        WHERE V.RN = 1;
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_F1_MENU_BY_FXBADGE;
-
-
-
-    /* ============================================================
-       INSERT MEAL SCAN LOG
-       Restricted to the logged-in employee's own site(s).
-       ============================================================ */
-    PROCEDURE INSERT_MEAL_SCAN_LOG(
-        V_EMP_ID    IN VARCHAR2,
-        V_SITE      IN VARCHAR2,
-        V_FX_BADGE  IN VARCHAR2,
-        V_RES       OUT VARCHAR2,
-        V_RESULT    OUT VARCHAR2,
-        P_CURSOR    OUT SYS_REFCURSOR
-    ) IS
-        V_COUNT NUMBER;
-        V_ALREADY_COUNT NUMBER;
-
-        V_GROUPS         CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
-        V_SITE_VAL       CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-        V_NAME           CMS.C_F1_MEAL_INFO.NAME%TYPE;
-        V_MEAL_PREF      CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
-        V_MEAL_PREF_NAME CMS.C_BASE_CODE_T.NAME%TYPE;
-        V_FIRST_DATE     CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
-        V_LAST_DATE      CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
-
-        V_STATUS  VARCHAR2(50);
-        V_MESSAGE VARCHAR2(200);
-    BEGIN
-
-        /* Logged-in employee must be an active CMS user */
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            RETURN;
-        END IF;
-
-        /* If a specific site was selected, employee must be assigned to it */
-        IF V_SITE IS NOT NULL AND TRIM(V_SITE) IS NOT NULL THEN
-            IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE) = 0 THEN
-                V_RES := '0';
-                V_RESULT := 'You are not authorized for the selected site.';
-                RETURN;
-            END IF;
-        END IF;
-
-        BEGIN
-            SELECT GROUPS, PROPERTY_01, NAME, MEAL_PREFERENCE, FIRST_DATE_FXBL, LAST_DATE_FXBL
-            INTO   V_GROUPS, V_SITE_VAL, V_NAME, V_MEAL_PREF, V_FIRST_DATE, V_LAST_DATE
-            FROM (
-                SELECT M.*, ROW_NUMBER() OVER (ORDER BY M.ADD_DATE DESC, M.ID DESC) AS RN
-                FROM CMS.C_F1_MEAL_INFO M
-                WHERE UPPER(TRIM(M.FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-                  AND NVL(M.DEL_FLAG, 0) = 0
-            )
-            WHERE RN = 1;
-
-            V_COUNT := 1;
-        EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                V_COUNT := 0;
-        END;
-
-        IF V_COUNT = 0 THEN
-
-            V_STATUS := 'INVALID';
-            V_MESSAGE := 'FX Badge not found';
-
-            V_GROUPS := NULL; V_SITE_VAL := NULL; V_NAME := NULL;
-            V_MEAL_PREF := NULL; V_MEAL_PREF_NAME := NULL;
-            V_FIRST_DATE := NULL; V_LAST_DATE := NULL;
-
-        ELSE
-
-            /* The badge's own site must be one the employee is authorized for */
-            IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE_VAL) = 0 THEN
-                V_RES := '0';
-                V_RESULT := 'This FX Badge does not belong to your assigned site.';
-                RETURN;
-            END IF;
-
-            SELECT NVL(MAX(BC.NAME), TO_CHAR(V_MEAL_PREF))
-            INTO V_MEAL_PREF_NAME
-            FROM CMS.C_BASE_CODE_T BC
-            WHERE BC.TYPE_ID = 1001
-              AND TO_CHAR(BC.ID) = TO_CHAR(V_MEAL_PREF);
-
-            IF UPPER(TRIM(V_MEAL_PREF_NAME)) = 'NO MEAL REQUIRED' THEN
-
-                V_STATUS := 'INVALID';
-                V_MESSAGE := 'NO MEAL REQUIRED BUT COME TO COLLECT';
-
-            ELSIF V_FIRST_DATE IS NULL OR V_LAST_DATE IS NULL THEN
-
-                V_STATUS := 'INVALID';
-                V_MESSAGE := 'Dates not updated';
-
-            ELSIF TRUNC(SYSDATE) NOT BETWEEN TRUNC(V_FIRST_DATE) AND TRUNC(V_LAST_DATE) THEN
-
-                V_STATUS := 'INVALID';
-                V_MESSAGE := 'LAST DATE EXPIRED';
-
-            ELSE
-
-                V_STATUS := 'SUCCESS';
-                V_MESSAGE := 'Eligible for meal';
-
-            END IF;
-
-            IF V_STATUS = 'SUCCESS' THEN
-
-                SELECT COUNT(1) INTO V_ALREADY_COUNT
-                FROM CMS.C_F1_SCAN_LOG
-                WHERE UPPER(TRIM(FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-                  AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-                  AND NVL(DEL_FLAG, 0) = 0
-                  AND COLLECTED_DATA = 'SUCCESS';
-
-                IF V_ALREADY_COUNT > 0 THEN
-                    V_STATUS := 'ALREADY_SCANNED';
-                    V_MESSAGE := 'Meal already collected today';
-                END IF;
-
-            END IF;
-
-        END IF;
-
-        INSERT INTO CMS.C_F1_SCAN_LOG (
-            ID, GROUPS, PROPERTY_01, MEAL_PREFERENCE, FX_BADGE, NAME,
-            FIRST_DATE_FXBL, LAST_DATE_FXBL, COLLECTED_DATA, STATUS_MESSAGE,
-            MEAL_DATE, FIRST_SCANTIME, LAST_SCANTIME, DEL_FLAG
-        ) VALUES (
-            CMS.SEQ_C_F1_SCAN_LOG.NEXTVAL, V_GROUPS, V_SITE_VAL, V_MEAL_PREF,
-            V_FX_BADGE, V_NAME, V_FIRST_DATE, V_LAST_DATE, V_STATUS, V_MESSAGE,
-            SYSDATE, SYSDATE, SYSDATE, 0
+        if (!resp || !resp.r) {
+          return [];
+        }
+
+        const result = JSON.parse(
+          this.security.decrypt(
+            resp.r,
+            this.iwxKInfo
+          )
         );
 
-        COMMIT;
+        console.log(
+          'CMS-Get_user_manage decrypted response:',
+          result
+        );
 
-        OPEN P_CURSOR FOR
-        SELECT
-            V_FX_BADGE AS FX_BADGE,
-            V_NAME AS NAME,
-            V_SITE_VAL AS SITE,
-            GET_SITE_NAME(V_SITE_VAL) AS SITE_NAME,
-            V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
-            TO_CHAR(SYSDATE, 'DD-MM-YYYY HH24:MI:SS') AS SCAN_TIME,
-            V_STATUS AS STATUS,
-            V_MESSAGE AS STATUS_MESSAGE
-        FROM DUAL;
+        if (
+          !result ||
+          String(result.IsOK) !== '1'
+        ) {
+          return [];
+        }
 
-        V_RES := '1';
-        V_RESULT := 'Success';
+        return Array.isArray(result.List)
+          ? result.List
+          : [];
+      })
+    );
+}
+  // 獲取結薪月日期範圍
+  getPayrollMonthDate() {
+    // 設置默認日期：
+    //  當月20號之前顯示：上月21號至當月20號；
+    // 當月20號之後顯示：當月21號至下月20號；
+    let date: any = new Date();
+    let currentYear = date.getFullYear();
+    let currentMonth = date.getMonth();//月份從0開始，0-->1月
+    // console.log('currentYear', currentYear);
+    // console.log('currentMonth', currentMonth);
 
-    EXCEPTION
-        WHEN DUP_VAL_ON_INDEX THEN
+    let day = date.getDate();
+    let startDate = new Date();
+    let endDate = new Date();
+    if (currentMonth == 0) {//當前月份為1月
+      let lastYear = startDate.getFullYear() - 1;
+      if (day > 20) {
+        let nextMonth = currentMonth + 1;
+        startDate.setFullYear(currentYear, currentMonth, 21)
+        endDate.setFullYear(currentYear, nextMonth, 20);
 
-            ROLLBACK;
-            V_RES := '1';
-            V_RESULT := 'Already scanned today';
+      } else {
+        startDate.setFullYear(lastYear, 11, 21);
+        endDate.setFullYear(currentYear, currentMonth, 20);
+      }
 
-            OPEN P_CURSOR FOR
-            SELECT
-                V_FX_BADGE AS FX_BADGE,
-                V_NAME AS NAME,
-                V_SITE_VAL AS SITE,
-                GET_SITE_NAME(V_SITE_VAL) AS SITE_NAME,
-                V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
-                TO_CHAR(SYSDATE, 'DD-MM-YYYY HH24:MI:SS') AS SCAN_TIME,
-                'ALREADY_SCANNED' AS STATUS,
-                'Meal already collected today' AS STATUS_MESSAGE
-            FROM DUAL;
+    } else if (currentMonth == 11) {//當前月份是12月
+      let nextYear = currentYear + 1;
+      if (day > 20) {
+        startDate.setFullYear(currentYear, currentMonth, 21)
+        endDate.setFullYear(nextYear, 0, 20);
+      } else {
+        let lastMonth = currentMonth - 1;
+        startDate.setFullYear(currentYear, lastMonth, 21)
+        endDate.setFullYear(currentYear, currentMonth, 20);
+      }
+    } else {
+      if (day > 20) {
+        let nextMonth = currentMonth + 1;
+        startDate.setFullYear(currentYear, currentMonth, 21)
+        endDate.setFullYear(currentYear, nextMonth, 20);
+      } else {
+        let lastMonth = currentMonth - 1;
+        startDate.setFullYear(currentYear, lastMonth, 21)
+        endDate.setFullYear(currentYear, currentMonth, 20);
+      }
 
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
+    }
+    let dateRange: any = [];
+    dateRange[0] = startDate;
+    dateRange[1] = endDate;
+    return dateRange;
+  }
 
-    END INSERT_MEAL_SCAN_LOG;
+  //日期格式
+  getFormatDate_XLSX(value, Symbol) {
+    let reg = new RegExp(/^[0-9]+$/)
+    let result = reg.test(value)
+    if (result) {
+      let serial = parseInt(value)
+      var utc_days = Math.floor(serial - 25569);   //1970-01-01
+      var utc_value = utc_days * 86400;
+      var date_info = new Date(utc_value * 1000);
+      var fractional_day = serial - Math.floor(parseInt(value)) + 0.0000001;
+      var total_seconds = Math.floor(86400 * fractional_day);
+      var seconds = total_seconds % 60;
+      total_seconds -= seconds;
+      var hours = Math.floor(total_seconds / (60 * 60));
+      var minutes = Math.floor(total_seconds / 60) % 60;
+      var d = new Date(date_info.getFullYear(), date_info.getMonth(), date_info.getDate(), hours, minutes, seconds);
+      let year = d.getFullYear() + ''
+      let month = d.getMonth() + 1 + ''
+      let date1 = d.getDate() + ''
+      month = month.length === 1 ? month.padStart(2, '0') : month //補0
+      date1 = date1.length === 1 ? date1.padStart(2, "0") : date1; //補0
+      // return year + '/' + month + '/' + date1
+      return date1 + Symbol + month + Symbol + year
+    } else {
+      return value;
+    }
+  }
 
+  // 獲取兩個日期之前的天數
+  getDays(startDate, endDate) {
+    const sDate = Date.parse(startDate);
+    const eDate = Date.parse(endDate);
+    const days = (Math.abs(eDate - sDate) / (1 * 24 * 60 * 60 * 1000));
+    return days;
+  }
 
+  // 檢驗費用代碼
+  checkCostCode(value) {
+    const reg = /^[A-Za-z][0-9][A-Za-z][0-9]{3}$/;
+    const reg1 = /^[A-Za-z][0-9][A-Za-z][0-9][A-Za-z][0-9]$/;
+    const res = reg.test(value);
+    const res1 = reg1.test(value);
+    let result = res || res1;
+    return result;
+  }
 
-    /* ============================================================
-       GET MEAL SCAN LOG
-       Restricted to the logged-in employee's own site(s).
-       ============================================================ */
-    PROCEDURE GET_MEAL_SCAN_LOG(
-        V_EMP_ID IN VARCHAR2,
-        V_SEARCH_TEXT IN VARCHAR2,
-        V_STATUS_FILTER IN VARCHAR2,
-        V_SITE IN VARCHAR2,
-        V_RES OUT VARCHAR2,
-        V_RESULT OUT VARCHAR2,
-        P_CURSOR OUT SYS_REFCURSOR,
-        P_SUMMARY_CURSOR OUT SYS_REFCURSOR
-    ) IS
-    BEGIN
+  // 座機校驗
+  checkExtNumber(value) {
+    // The ext number format is XXX-XXXXX
+    const reg = /^[0-9]{3}-[0-9]{5}$/;
+    const res = reg.test(value);
+    return res;
+  }
 
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-            OPEN P_SUMMARY_CURSOR FOR
-                SELECT 0 AS TOTAL_SCANS, 0 AS SUCCESS_COUNT,
-                       0 AS ALREADY_SCANNED_COUNT, 0 AS INVALID_COUNT FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
+  // 手機號校驗 10位數
+  checkTelephoneNumber(value) {
+    const reg = /^[0-9]{10}$/;
+    const res = reg.test(value);
+    return res;
+  }
 
-        IF V_SITE IS NOT NULL AND TRIM(V_SITE) IS NOT NULL
-           AND UPPER(TRIM(V_SITE)) <> 'ALL' THEN
-            IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE) = 0 THEN
-                V_RES := '0';
-                V_RESULT := 'You are not authorized for the selected site.';
-                OPEN P_CURSOR FOR
-                    SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-                OPEN P_SUMMARY_CURSOR FOR
-                    SELECT 0 AS TOTAL_SCANS, 0 AS SUCCESS_COUNT,
-                           0 AS ALREADY_SCANNED_COUNT, 0 AS INVALID_COUNT FROM DUAL WHERE 1 = 0;
-                RETURN;
-            END IF;
-        END IF;
-
-        OPEN P_CURSOR FOR
-        SELECT
-            S.FX_BADGE,
-            S.NAME,
-            S.GROUPS,
-            S.PROPERTY_01 AS SITE,
-            GET_SITE_NAME(S.PROPERTY_01) AS SITE_NAME,
-            BC.NAME AS MEAL_PREFERENCE,
-            TO_CHAR(S.FIRST_DATE_FXBL, 'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-            TO_CHAR(S.LAST_DATE_FXBL,  'DD-MM-YYYY') AS LAST_DATE_FXBL,
-            TO_CHAR(NVL(S.LAST_SCANTIME, S.FIRST_SCANTIME), 'DD-MM-YYYY HH24:MI:SS') AS SCAN_TIME,
-            S.COLLECTED_DATA AS STATUS,
-            S.STATUS_MESSAGE
-        FROM CMS.C_F1_SCAN_LOG S
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 1001
-        WHERE NVL(S.DEL_FLAG, 0) = 0
-          AND ( V_SEARCH_TEXT IS NULL OR TRIM(V_SEARCH_TEXT) IS NULL
-                OR UPPER(S.FX_BADGE) LIKE '%' || UPPER(TRIM(V_SEARCH_TEXT)) || '%'
-                OR UPPER(S.NAME) LIKE '%' || UPPER(TRIM(V_SEARCH_TEXT)) || '%' )
-          AND ( V_STATUS_FILTER IS NULL OR TRIM(V_STATUS_FILTER) IS NULL
-                OR UPPER(TRIM(V_STATUS_FILTER)) = 'ALL'
-                OR S.COLLECTED_DATA = V_STATUS_FILTER )
-          AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE)) )
-          /* Only the logged-in employee's own assigned active site(s) */
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-              )
-        ORDER BY S.MEAL_DATE DESC, S.ID DESC;
-
-        OPEN P_SUMMARY_CURSOR FOR
-        SELECT
-            COUNT(1) AS TOTAL_SCANS,
-            NVL(SUM(CASE WHEN S.COLLECTED_DATA = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS SUCCESS_COUNT,
-            NVL(SUM(CASE WHEN S.COLLECTED_DATA = 'ALREADY_SCANNED' THEN 1 ELSE 0 END), 0) AS ALREADY_SCANNED_COUNT,
-            NVL(SUM(CASE WHEN S.COLLECTED_DATA = 'INVALID' THEN 1 ELSE 0 END), 0) AS INVALID_COUNT
-        FROM CMS.C_F1_SCAN_LOG S
-        WHERE NVL(S.DEL_FLAG, 0) = 0
-          AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE)) )
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-              );
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_MEAL_SCAN_LOG;
+  // 校驗Email
+  checkEmail(value) {
+    const reg = /^[.a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(.[a-zA-Z0-9_-]+)+$/;
+    let result = reg.test(value)
+    return result;
+  }
 
 
 
-    /* ============================================================
-       GET MEAL DASHBOARD
-       ============================================================ */
-    PROCEDURE GET_MEAL_DASHBOARD(
-        V_EMP_ID IN VARCHAR2,
-        V_DATE IN VARCHAR2,
-        V_SITE IN VARCHAR2,
-        V_RES OUT VARCHAR2,
-        V_RESULT OUT VARCHAR2,
-        P_CURSOR OUT SYS_REFCURSOR,
-        P_SUMMARY_CURSOR OUT SYS_REFCURSOR
-    ) IS
-        V_DAY DATE;
-        V_TOTAL NUMBER := 0;
-        V_NO_MEAL NUMBER := 0;
-        V_COLLECTED NUMBER := 0;
-        V_NOT_REQ_CAME NUMBER := 0;
-        V_NOT_COLLECTED NUMBER := 0;
-    BEGIN
-
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            RETURN;
-        END IF;
-
-        BEGIN
-            V_DAY := TO_DATE(V_DATE, 'DD-MM-YYYY');
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                RETURN;
-        END;
-
-        WITH EMP AS
-        (
-            SELECT
-                M.FX_BADGE, M.MEAL_PREFERENCE,
-                BC.NAME AS MEAL_PREFERENCE_NAME,
-                M.PROPERTY_01 AS SITE
-            FROM CMS.C_F1_MEAL_INFO M
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(M.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 1001
-            WHERE NVL(M.DEL_FLAG, 0) = 0
-              AND M.FIRST_DATE_FXBL IS NOT NULL
-              AND M.LAST_DATE_FXBL IS NOT NULL
-              AND V_DAY BETWEEN TRUNC(M.FIRST_DATE_FXBL) AND TRUNC(M.LAST_DATE_FXBL)
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(M.PROPERTY_01))
-                      AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                            OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                  )
-        ),
-        COLLECTED AS
-        (
-            SELECT DISTINCT S.FX_BADGE
-            FROM CMS.C_F1_SCAN_LOG S
-            WHERE NVL(S.DEL_FLAG, 0) = 0
-              AND TRUNC(S.MEAL_DATE) = V_DAY
-              AND S.COLLECTED_DATA = 'SUCCESS'
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-                      AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                            OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                  )
-        )
-        SELECT
-            ( SELECT COUNT(DISTINCT FX_BADGE) FROM EMP ),
-            ( SELECT COUNT(DISTINCT FX_BADGE) FROM EMP
-              WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME)) = 'NO MEAL REQUIRED' ),
-            ( SELECT COUNT(*) FROM COLLECTED ),
-            ( SELECT COUNT(DISTINCT S.FX_BADGE)
-              FROM CMS.C_F1_SCAN_LOG S
-              LEFT JOIN CMS.C_BASE_CODE_T BC
-                  ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-                 AND BC.TYPE_ID = 1001
-              WHERE NVL(S.DEL_FLAG, 0) = 0
-                AND TRUNC(S.MEAL_DATE) = V_DAY
-                AND UPPER(TRIM(BC.NAME)) = 'NO MEAL REQUIRED'
-                AND EXISTS (
-                      SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                      WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                        AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                        AND NVL(U.DEL_FLAG, 0) = 0
-                        AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-                        AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                              OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                    ) ),
-            ( SELECT COUNT(DISTINCT E.FX_BADGE) FROM EMP E
-              WHERE UPPER(NVL(TRIM(E.MEAL_PREFERENCE_NAME), 'X')) <> 'NO MEAL REQUIRED'
-                AND NOT EXISTS ( SELECT 1 FROM COLLECTED C WHERE C.FX_BADGE = E.FX_BADGE ) )
-        INTO
-            V_TOTAL, V_NO_MEAL, V_COLLECTED, V_NOT_REQ_CAME, V_NOT_COLLECTED
-        FROM DUAL;
-
-        OPEN P_CURSOR FOR
-        SELECT
-            V_TOTAL AS TOTAL_EMPLOYEES,
-            V_COLLECTED AS MEALS_COLLECTED,
-            V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
-            V_NO_MEAL AS NO_MEAL_REQUIRED,
-            V_NOT_REQ_CAME AS NOT_REQUIRED_CAME
-        FROM DUAL;
-
-        OPEN P_SUMMARY_CURSOR FOR
-        WITH CATS AS
-        (
-            SELECT 1 AS SORT_NO, 'Indian Veg' AS CATEGORY FROM DUAL
-            UNION ALL SELECT 2, 'Indian Non-Veg' FROM DUAL
-            UNION ALL SELECT 3, 'Western Veg' FROM DUAL
-            UNION ALL SELECT 4, 'Western Non-Veg' FROM DUAL
-            UNION ALL SELECT 5, 'Chinese Non-Veg' FROM DUAL
-            UNION ALL SELECT 6, 'Chinese Veg' FROM DUAL
-            UNION ALL SELECT 7, 'Jain' FROM DUAL
-            UNION ALL SELECT 8, 'Vegan' FROM DUAL
-        ),
-        CNT AS
-        (
-            SELECT UPPER(TRIM(BC.NAME)) AS PREF, COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
-            FROM CMS.C_F1_SCAN_LOG S
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 1001
-            WHERE NVL(S.DEL_FLAG, 0) = 0
-              AND TRUNC(S.MEAL_DATE) = V_DAY
-              AND S.COLLECTED_DATA = 'SUCCESS'
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-                      AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                            OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                  )
-            GROUP BY UPPER(TRIM(BC.NAME))
-        )
-        SELECT
-            C.CATEGORY,
-            NVL(N.TOTAL_COUNT, 0) AS COLLECTED_COUNT,
-            CASE WHEN V_COLLECTED = 0 THEN 0
-                 ELSE ROUND(NVL(N.TOTAL_COUNT, 0) * 100 / V_COLLECTED) END AS PERCENTAGE
-        FROM CATS C
-        LEFT JOIN CNT N ON N.PREF = UPPER(TRIM(C.CATEGORY))
-        ORDER BY C.SORT_NO;
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_MEAL_DASHBOARD;
+  getGuardPassCode(params?: any,site?: any, isShowLabel?:any): Observable<any> {
+    const code = params.slice(10);
+    // console.log("test",code)
+    const _param = {
+      TypeName:code,
+      Func: "CMS-GetBaseTypeInfo",
+      Site: site, 
+    };
+    
+    const config = {
+      headers: {
+        apiID: "ffff-1710991146185-10208193125-0170",
+        userKey: this.USER_TN,
+      },
+    };
+    const param = this.dealPostParamsEncrypt(_param);
+    return this.http
+      .post(iwxServiceUrl, param, null, config)
+      .pipe(
+        map((resp: any) => {
+          const res = JSON.parse(this.security.decrypt(resp.r, this.iwxKInfo));
+          // console.log("基本代碼",res)
+          if (res.IsOK === "1") {
+            const _data = [];
+            res.List.forEach((element) => {
+              if (!element) return;
+              let _item:any;
+              if(isShowLabel){//綁定文字
+                 _item = {
+                  label: element.Name,
+                  value: element.Name,
+                };
+              }else{
+                 _item = {
+                label: element.Name,
+                value: element.BaseCodeId,
+              };
+              }
+              
+              _data.push(_item);
+            });
+            return _data;
+          }
+        })
+      );
+  }
 
 
-END F1_MEAL_MANAGEMENT;
+  // 退出登錄
+  logout() {
+    this.http.post("/logout", {}).subscribe(res => { });
+    localStorage.removeItem("fromInfo");
+    localStorage.removeItem("toPageInfo");
+    localStorage.removeItem("userMenu");
+    localStorage.removeItem("userMenuId");
+    localStorage.removeItem("isActivate");
+    sessionStorage.removeItem('ClientIp')
+    this.tokenService.clear();
+    this.settingService.setUser({});
+    document.cookie = "eeid=";
+    document.cookie = "name=";
+    this.router.navigateByUrl(this.tokenService.login_url);
+  }
+
+  downloadFile(params: any): Observable<any> {
+    let resultPar =
+      "strConnName=" +
+      params.connName +
+      "&strFilePath=" +
+      params.filePath +
+      "&strFileName=" +
+      params.fileName;
+    let res = {
+      inputString: resultPar,
+    };
+    return this.http.post(
+      iwxServiceUrl,
+      res,
+      {},
+      {
+        headers: {
+          apiID: "ffff-1618561198104-10772443-0772",
+          userKey: "011E223B8F4E945052E3E4D3EE9730E0",
+        },
+      }
+    );
+  }
+
+
+  
+  saveAsFile(buffer: any, fileName) {
+    var raw = window.atob(buffer); //atob() 方法用于解码使用 base-64 编码的字符串
+    var uInt8Array = new Uint8Array(raw.length); //數組長度
+    for (var i = 0; i < raw.length; i++) {
+      uInt8Array[i] = raw.charCodeAt(i); //charCodeAt() 方法返回字符串中规定索引（下标）处字符的 Unicode
+    }
+    const link = document.createElement("a");
+    const blob = new Blob([uInt8Array]);
+    link.style.display = "none";
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+  // saveAsFileasImage(buffer: any, fileName) {
+  //   var raw = window.atob(buffer); //atob() 方法用于解码使用 base-64 编码的字符串
+  //   var uInt8Array = new Uint8Array(raw.length); //數組長度
+  //   for (var i = 0; i < raw.length; i++) {
+  //     uInt8Array[i] = raw.charCodeAt(i); //charCodeAt() 方法返回字符串中规定索引（下标）处字符的 Unicode
+  //   }
+  //   const link = document.createElement("a");
+  //   const blob = new Blob([uInt8Array],{ type: "image/jpeg" });
+  //   link.style.display = "none";
+  //   link.href = URL.createObjectURL(blob);
+  //   link.setAttribute("download", fileName);
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // }
+   saveAsFileasImage(buffer, fileName) {
+    var raw = window.atob(buffer); // Decode the base-64 encoded string
+    var uInt8Array = new Uint8Array(raw.length); // Create a Uint8Array with the same length as the decoded string
+    for (var i = 0; i < raw.length; i++) {
+      uInt8Array[i] = raw.charCodeAt(i); // Assign the Unicode of each character to the Uint8Array
+    }
+    
+    const blob = new Blob([uInt8Array], { type: "image/jpeg" }); // Create a Blob with the Uint8Array and set the MIME type to 'image/jpeg'
+    const blobUrl = URL.createObjectURL(blob); // Create a URL for the Blob
+  console.log(blobUrl)
+    // Open the Blob URL in a new tab
+    window.open(blobUrl, '_blank');
+  }
+  
+
+}
+
+
+
