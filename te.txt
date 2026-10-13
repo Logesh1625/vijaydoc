@@ -275,3 +275,274 @@ export class AddDetailsDrawComponent implements OnInit {
   }
 
 }
+
+
+
+
+<form
+  nz-form
+  #f="ngForm"
+  nz-row
+>
+
+  <!-- ========================================= -->
+  <!-- GROUPS -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Groups
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <input
+        nz-input
+        [(ngModel)]="groups"
+        name="groups"
+        required
+        autocomplete="off"
+      />
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- MEAL PREFERENCE -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Meal Preference
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <nz-select
+        [(ngModel)]="mealPreference"
+        name="mealPreference"
+        required
+        nzPlaceHolder="Please select"
+        style="width: 100%;"
+      >
+
+        <nz-option
+          *ngFor="let item of mealPreferenceList"
+          [nzValue]="item.value"
+          [nzLabel]="item.label"
+        >
+        </nz-option>
+
+      </nz-select>
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- FX BADGE -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      FX Badge
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <input
+        nz-input
+        [(ngModel)]="fxBadge"
+        name="fxBadge"
+        required
+        autocomplete="off"
+      />
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- NAME -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Name
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <input
+        nz-input
+        [(ngModel)]="name"
+        name="name"
+        required
+        autocomplete="off"
+      />
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- FIRST DATE -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      First Date At Factory
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <nz-date-picker
+        name="firstDateFxbl"
+        [(ngModel)]="firstDateFxbl"
+        (ngModelChange)="onFirstDateFxblChange($event)"
+        nzFormat="DD-MM-YYYY"
+        nzPlaceHolder="DD-MM-YYYY"
+        nzShowToday="false"
+        style="width: 100%;"
+        [disabled]="option=='Edit'"
+      >
+      </nz-date-picker>
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- LAST DATE -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="5"
+      nzRequired
+    >
+      Last Date At Factory
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <nz-date-picker
+        name="lastDateFxbl"
+        [(ngModel)]="lastDateFxbl"
+        [nzDisabledDate]="disabledLastDateFxbl"
+        nzFormat="DD-MM-YYYY"
+        nzPlaceHolder="DD-MM-YYYY"
+        nzShowToday="false"
+        style="width: 100%;"
+      >
+      </nz-date-picker>
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+
+  <!-- ========================================= -->
+  <!-- REMARK -->
+  <!-- ========================================= -->
+
+  <nz-form-item nz-col [nzSpan]="24">
+
+    <nz-form-label
+      class="form-label"
+      [nzSpan]="4"
+    >
+      Remark
+    </nz-form-label>
+
+    <nz-form-control [nzSpan]="14">
+
+      <textarea
+        nz-input
+        [(ngModel)]="remark"
+        name="remark"
+        style="resize: none;"
+        rows="5"
+        placeholder="Remark"
+      >
+      </textarea>
+
+    </nz-form-control>
+
+  </nz-form-item>
+
+</form>
+
+
+<!-- ========================================= -->
+<!-- FOOTER -->
+<!-- ========================================= -->
+
+<div class="drawer-footer">
+
+  <button
+    nz-button
+    [nzType]="'default'"
+    (click)="cancel()"
+  >
+    Cancel
+  </button>
+
+  <!-- ADD BUTTON -->
+
+  <button
+    *ngIf="option == 'Add'"
+    nz-button
+    [nzType]="'primary'"
+    [disabled]="f.invalid"
+    (click)="add()"
+  >
+    Add
+  </button>
+
+  <!-- EDIT BUTTON -->
+
+  <button
+    *ngIf="option == 'Edit'"
+    nz-button
+    [nzType]="'primary'"
+    [disabled]="f.invalid"
+    (click)="edit()"
+  >
+    Edit
+  </button>
+
+</div>
