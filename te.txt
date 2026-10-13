@@ -5,10 +5,12 @@ getGuardPassCode(
 ): Observable<any[]> {
 
   if (!params || typeof params !== "string") {
+    console.error("Invalid params:", params);
     return of([]);
   }
 
   const prefix = "GuardPass-";
+
   const typeName = params.indexOf(prefix) === 0
     ? params.substring(prefix.length)
     : params;
@@ -33,102 +35,89 @@ getGuardPassCode(
     this.dealPostParamsEncrypt(requestParams);
 
   console.log("LIVE URL:", iwxServiceUrlF1);
-  console.log("REQUEST:", requestParams);
+  console.log("REQUEST PARAMS:", requestParams);
+  console.log("REQUEST BODY:", requestBody);
 
   return this.http
     .post(iwxServiceUrlF1, requestBody, null, config)
     .pipe(
       map((resp: any) => {
-        try {
-          console.log("RAW RESPONSE:", resp);
 
-          if (!resp || !resp.r) {
-            console.error("Response r is missing", resp);
-            return [];
-          }
+        console.log("RAW RESPONSE:", resp);
 
-          const decrypted = this.security.decrypt(
-            resp.r,
-            this.iwxKInfo
-          );
-
-          console.log("DECRYPTED RESPONSE:", decrypted);
-
-          if (!decrypted) {
-            return [];
-          }
-
-          const result = JSON.parse(decrypted);
-
-          console.log("PARSED RESULT:", result);
-
-          if (
-            String(result.IsOK) !== "1" ||
-            !Array.isArray(result.List)
-          ) {
-            console.error("API failed:", result);
-            return [];
-          }
-
-          const dropdownData: any[] = [];
-
-          result.List.forEach((item: any) => {
-            if (!item) {
-              return;
-            }
-
-            const name =
-              item.NAME ||
-              item.Name ||
-              item.name ||
-              item.BasicCode;
-
-            let id = item.BASE_CODE_ID;
-
-            if (id === undefined || id === null) {
-              id = item.BaseCodeId;
-            }
-
-            if (id === undefined || id === null) {
-              id = item.ID;
-            }
-
-            if (id === undefined || id === null) {
-              id = item.Id;
-            }
-
-            if (
-              name === undefined ||
-              name === null ||
-              id === undefined ||
-              id === null
-            ) {
-              console.warn("Invalid item:", item);
-              return;
-            }
-
-            dropdownData.push({
-              label: String(name).trim(),
-              value: isShowLabel
-                ? String(name).trim()
-                : Number(id)
-            });
-          });
-
-          console.log(
-            "FINAL MEAL PREFERENCE OPTIONS:",
-            dropdownData
-          );
-
-          return dropdownData;
-
-        } catch (error) {
-          console.error(
-            "getGuardPassCode error:",
-            error
-          );
+        if (!resp || !resp.r) {
+          console.error("Response is missing r:", resp);
           return [];
         }
+
+        const decrypted = this.security.decrypt(
+          resp.r,
+          this.iwxKInfo
+        );
+
+        console.log("DECRYPTED RESPONSE:", decrypted);
+
+        if (!decrypted) {
+          console.error("Decrypted response is empty");
+          return [];
+        }
+
+        const result = JSON.parse(decrypted);
+
+        console.log("API RESULT:", result);
+
+        if (
+          String(result.IsOK) !== "1" ||
+          !Array.isArray(result.List)
+        ) {
+          console.error("API failed:", result);
+          return [];
+        }
+
+        const dropdownData: any[] = [];
+
+        result.List.forEach((item: any) => {
+
+          const name =
+            item.NAME ||
+            item.Name ||
+            item.name;
+
+          let id = item.BASE_CODE_ID;
+
+          if (id === undefined || id === null) {
+            id = item.BaseCodeId;
+          }
+
+          if (id === undefined || id === null) {
+            id = item.ID;
+          }
+
+          if (id === undefined || id === null) {
+            id = item.Id;
+          }
+
+          if (
+            name === undefined ||
+            name === null ||
+            id === undefined ||
+            id === null
+          ) {
+            console.warn("Invalid dropdown item:", item);
+            return;
+          }
+
+          dropdownData.push({
+            label: String(name).trim(),
+            value: isShowLabel
+              ? String(name).trim()
+              : Number(id)
+          });
+        });
+
+        console.log("FINAL DROPDOWN DATA:", dropdownData);
+
+        return dropdownData;
       })
     );
 }
