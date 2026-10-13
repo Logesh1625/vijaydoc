@@ -2,14 +2,14 @@ import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
 import { environment } from "@env/environment";
 
-// layout
+// Layout
 import { LayoutProComponent } from "@brand";
 import { LayoutPassportComponent } from "../layout/passport/passport.component";
 
-// dashboard pages
+// Dashboard
 import { DashboardComponent } from "./dashboard/dashboard.component";
 
-// single pages
+// Callback
 import { CallbackComponent } from "./callback/callback.component";
 
 const routes: Routes = [
@@ -17,102 +17,181 @@ const routes: Routes = [
     path: "",
     component: LayoutProComponent,
     children: [
-      { path: "", redirectTo: "dashboard", pathMatch: "full" },
-      { path: "dashboard", component: DashboardComponent },
+      {
+        path: "",
+        redirectTo: "dashboard",
+        pathMatch: "full"
+      },
+      {
+        path: "dashboard",
+        component: DashboardComponent
+      },
 
-      // Exception & Template
+      // Exception
       {
         path: "exception",
-        loadChildren: () => import("./exception/exception.module").then(m => m.ExceptionModule)
-      },
-      {
-        path: "template",
-        loadChildren: () => import("./template/template.module").then(m => m.TemplateModule)
+        loadChildren: () =>
+          import("./exception/exception.module").then(
+            m => m.ExceptionModule
+          )
       },
 
-      // TMS (Transport Management System)
+      // Template
+      {
+        path: "template",
+        loadChildren: () =>
+          import("./template/template.module").then(
+            m => m.TemplateModule
+          )
+      },
+
+      // TMS
       {
         path: "baseinfo",
-        loadChildren: () => import("./TMS/base-info-manage/base-info-manage.module").then(m => m.BaseInfoManageModule)
+        loadChildren: () =>
+          import("./TMS/base-info-manage/base-info-manage.module").then(
+            m => m.BaseInfoManageModule
+          )
       },
       {
         path: "transport",
-        loadChildren: () => import("./TMS/transport-manage/transport-manage.module").then(m => m.TransportManageModule)
+        loadChildren: () =>
+          import("./TMS/transport-manage/transport-manage.module").then(
+            m => m.TransportManageModule
+          )
       },
       {
         path: "reports",
-        loadChildren: () => import("./TMS/reports/reports.module").then(m => m.ReportsModule)
+        loadChildren: () =>
+          import("./TMS/reports/reports.module").then(
+            m => m.ReportsModule
+          )
       },
       {
         path: "tms-dashboard",
-        loadChildren: () => import("./TMS/transport-dashboard/transport-dashboard.module").then(m => m.TransportDashboardModule)
+        loadChildren: () =>
+          import("./TMS/transport-dashboard/transport-dashboard.module").then(
+            m => m.TransportDashboardModule
+          )
       },
 
-      // CMS (Canteen Management System)
+      // CMS
       {
         path: "canteen",
-        loadChildren: () => import("./CMS/canteen-operations/canteen-operations.module").then(m => m.CanteenOperationsModule)
+        loadChildren: () =>
+          import("./CMS/canteen-operations/canteen-operations.module").then(
+            m => m.CanteenOperationsModule
+          )
       },
       {
         path: "vendorManage",
-        loadChildren: () => import("./CMS/vendor-management/vendor-management.module").then(m => m.VendorManagementModule)
+        loadChildren: () =>
+          import("./CMS/vendor-management/vendor-management.module").then(
+            m => m.VendorManagementModule
+          )
       },
       {
         path: "FoodManage",
-        loadChildren: () => import("./CMS/food-prepartion-manage/food-prepartion-manage.module").then(m => m.FoodPrepartionManageModule)
+        loadChildren: () =>
+          import("./CMS/food-prepartion-manage/food-prepartion-manage.module").then(
+            m => m.FoodPrepartionManageModule
+          )
       },
       {
         path: "costManage",
-        loadChildren: () => import("./CMS/cost-manage/cost-manage.module").then(m => m.CostManageModule)
+        loadChildren: () =>
+          import("./CMS/cost-manage/cost-manage.module").then(
+            m => m.CostManageModule
+          )
       },
       {
         path: "basicdata",
-        loadChildren: () => import("./CMS/basic-data/basic-data.module").then(m => m.BasicDataModule)
+        loadChildren: () =>
+          import("./CMS/basic-data/basic-data.module").then(
+            m => m.BasicDataModule
+          )
       },
       {
         path: "UserManage",
-        loadChildren: () => import("./CMS/user-manage/user-manage.module").then(m => m.UserManageModule)
+        loadChildren: () =>
+          import("./CMS/user-manage/user-manage.module").then(
+            m => m.UserManageModule
+          )
       },
 
-  
-      // CMS / F1 MEAL MANAGEMENT
-{
-  path: 'f1meal', // <-- MUST BE LOWERCASE 'f1meal'
-  loadChildren: () =>
-    import('./CMS/F1-Meal-Management/f1-meal-management.module')
-      .then(m => m.F1MealManagementModule)
-},
+      // F1 Meal Management
+      {
+        path: "f1meal",
+        loadChildren: () =>
+          import("./CMS/F1-Meal-Management/f1-meal-management.module").then(
+            m => m.F1MealManagementModule
+          )
+      },
 
-      // RMS (Repair Management System - distinct prefixes)
-       {
+      // RMS Basic Information
+      {
         path: "rms-basicdata",
-        loadChildren: () => import("./RMS/basic-information-manage/basic-information-manage.module").then(m => m.BasicInformationManageModule)
+        loadChildren: () =>
+          import("./RMS/basic-information-manage/basic-information-manage.module").then(
+            m => m.BasicInformationManageModule
+          )
       },
+
+      // RMS Repair Management
       {
         path: "repairmanagement",
-        loadChildren: () => import("./RMS/repair-management/repair-management.module").then(m => m.RepairManagementModule)
+        loadChildren: () =>
+          import("./RMS/repair-management/repair-management.module").then(
+            m => m.RepairManagementModule
+          )
       },
+
+      // RMS Reports
       {
         path: "rms-reports",
-        loadChildren: () => import("./RMS/repair-analysis-report/repair-analysis-report.module").then(m => m.RepairAnalysisReportModule)
+        loadChildren: () =>
+          import("./RMS/repair-analysis-report/repair-analysis-report.module").then(
+            m => m.RepairAnalysisReportModule
+          )
       },
+
+      // RMS User Management
       {
         path: "user",
-        loadChildren: () => import("./RMS/user-management/user-management.module").then(m => m.UserManagementModule)
+        loadChildren: () =>
+          import("./RMS/user-management/user-management.module").then(
+            m => m.UserManagementModule
+          )
       }
     ]
   },
-  // passport
+
+  // Passport
   {
     path: "passport",
     component: LayoutPassportComponent,
     children: [
-      { path: "", loadChildren: () => import("./passport/passport.module").then(m => m.PassportModule) }
+      {
+        path: "",
+        loadChildren: () =>
+          import("./passport/passport.module").then(
+            m => m.PassportModule
+          )
+      }
     ]
   },
-  // Single pages
-  { path: "callback/:type", component: CallbackComponent },
-  { path: "**", redirectTo: "exception/404" }
+
+  // Callback
+  {
+    path: "callback/:type",
+    component: CallbackComponent
+  },
+
+  // 404
+  {
+    path: "**",
+    redirectTo: "exception/404"
+  }
 ];
 
 @NgModule({
@@ -125,4 +204,104 @@ const routes: Routes = [
   ],
   exports: [RouterModule]
 })
-export class RouteRoutingModule { } 
+export class RouteRoutingModule {}
+
+
+
+
+
+
+
+
+
+
+
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+
+import { RepairAssignmentComponent } from './repair-assignment/repair-assignment.component';
+import { RepairProcessingComponent } from './repair-processing/repair-processing.component';
+
+const routes: Routes = [
+  // Default page
+  {
+    path: '',
+    redirectTo: 'repairassignment',
+    pathMatch: 'full'
+  },
+
+  // Repair Assignment
+  {
+    path: 'repairassignment',
+    component: RepairAssignmentComponent
+  },
+
+  // Repair Processing
+  {
+    path: 'repairprocessing',
+    component: RepairProcessingComponent
+  }
+];
+
+@NgModule({
+  imports: [
+    RouterModule.forChild(routes)
+  ],
+  exports: [
+    RouterModule
+  ]
+})
+export class RepairManagementRoutingModule {}
+
+
+
+
+
+
+
+
+
+
+import { NgModule } from '@angular/core';
+import { SharedModule } from '@shared';
+
+import { RepairManagementRoutingModule } from './repair-management-routing.module';
+
+import { RepairAssignmentComponent } from './repair-assignment/repair-assignment.component';
+import { RepairProcessingComponent } from './repair-processing/repair-processing.component';
+
+import { RepairAssignAssignmentComponent } from './Drawer/repair-assign-assignment/repair-assign-assignment.component';
+
+import { RepairStartHandlingComponent } from './Drawer/repair-start-handling-return-for-admin/repair-start-handling.component';
+
+import { CloseHandlingComponent } from './Drawer/close-handling-returnfor-repairman/close-handling.component';
+
+const COMPONENTS = [
+  RepairAssignmentComponent,
+  RepairProcessingComponent
+];
+
+const COMPONENTS_NOROUNT = [
+  RepairStartHandlingComponent,
+  RepairAssignAssignmentComponent,
+  CloseHandlingComponent
+];
+
+@NgModule({
+  imports: [
+    SharedModule,
+    RepairManagementRoutingModule
+  ],
+
+  declarations: [
+    ...COMPONENTS,
+    ...COMPONENTS_NOROUNT
+  ],
+
+  entryComponents: [
+    ...COMPONENTS_NOROUNT
+  ]
+})
+export class RepairManagementModule {}
+
+
