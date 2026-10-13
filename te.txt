@@ -1,210 +1,46 @@
-getGuardPassCode(
-  params?: any,
-  site?: any,
-  isShowLabel?: any
-): Observable<any[]> {
+Failed to compile.
 
-  // 1. Validate input
-  if (!params || typeof params !== "string") {
-    console.error(
-      "getGuardPassCode: Invalid params",
-      params
-    );
-    return of([]);
-  }
+src/app/routes/a_Public_net/Public_net.service.ts:1408:26 - error TS1109: Expression expected.
 
-  // Example:
-  // params = "GuardPass-Meal Preference"
-  // TypeName = "Meal Preference"
-  const prefix = "GuardPass-";
+1408               item.Name ??
+                              ~
+src/app/routes/a_Public_net/Public_net.service.ts:1409:26 - error TS1109: Expression expected.
 
-  const typeName = params.startsWith(prefix)
-    ? params.substring(prefix.length)
-    : params;
+1409               item.NAME ??
+                              ~
+src/app/routes/a_Public_net/Public_net.service.ts:1410:26 - error TS1109: Expression expected.
 
-  if (!typeName.trim()) {
-    console.error(
-      "getGuardPassCode: TypeName is empty"
-    );
-    return of([]);
-  }
+1410               item.name ??
+                              ~
+src/app/routes/a_Public_net/Public_net.service.ts:1411:31 - error TS1109: Expression expected.
 
-  // 2. API request parameters
-  const requestParams: any = {
-    TypeName: typeName.trim(),
-    Func: "CMS-GetBaseTypeInfo"
-  };
+1411               item.BasicCode ??
+                                   ~
+src/app/routes/a_Public_net/Public_net.service.ts:1412:30 - error TS1005: ':' expected.
 
-  if (site !== undefined && site !== null && site !== "") {
-    requestParams.Site = site;
-  }
+1412               item.BASIC_CODE;
+                                  ~
+src/app/routes/a_Public_net/Public_net.service.ts:1415:32 - error TS1109: Expression expected.
 
-  console.log(
-    "getGuardPassCode LIVE API URL:",
-    iwxServiceUrlF1
-  );
+1415               item.BaseCodeId ??
+                                    ~
+src/app/routes/a_Public_net/Public_net.service.ts:1416:34 - error TS1109: Expression expected.
 
-  console.log(
-    "getGuardPassCode params:",
-    requestParams
-  );
+1416               item.BASE_CODE_ID ??
+                                      ~
+src/app/routes/a_Public_net/Public_net.service.ts:1417:32 - error TS1109: Expression expected.
 
-  // 3. API headers
-  const config = {
-    headers: {
-      apiID: "ffff-1710991146185-10208193125-0170",
-      userKey: this.USER_TN
-    }
-  };
+1417               item.BaseCodeID ??
+                                    ~
+src/app/routes/a_Public_net/Public_net.service.ts:1418:24 - error TS1109: Expression expected.
 
-  // 4. Encrypt request
-  const requestBody =
-    this.dealPostParamsEncrypt(requestParams);
+1418               item.Id ??
+                            ~
+src/app/routes/a_Public_net/Public_net.service.ts:1419:24 - error TS1109: Expression expected.
 
-  // 5. Call LIVE Microservice
-  return this.http
-    .post(
-      iwxServiceUrlF1,
-      requestBody,
-      null,
-      config
-    )
-    .pipe(
-      map((resp: any) => {
+1419               item.ID ??
+                            ~
+src/app/routes/a_Public_net/Public_net.service.ts:1420:22 - error TS1005: ':' expected.
 
-        try {
-
-          console.log(
-            "getGuardPassCode LIVE RAW RESPONSE:",
-            resp
-          );
-
-          // 6. Validate response
-          if (!resp || !resp.r) {
-            console.error(
-              "getGuardPassCode: Response or resp.r is missing",
-              resp
-            );
-
-            return [];
-          }
-
-          // 7. Decrypt response
-          const decryptedResponse =
-            this.security.decrypt(
-              resp.r,
-              this.iwxKInfo
-            );
-
-          console.log(
-            "getGuardPassCode LIVE DECRYPTED RESPONSE:",
-            decryptedResponse
-          );
-
-          if (!decryptedResponse) {
-            console.error(
-              "getGuardPassCode: Decryption returned empty data"
-            );
-
-            return [];
-          }
-
-          // 8. Parse JSON
-          const result = JSON.parse(
-            decryptedResponse
-          );
-
-          console.log(
-            "getGuardPassCode LIVE API RESULT:",
-            result
-          );
-
-          // 9. Validate API result
-          if (
-            !result ||
-            String(result.IsOK) !== "1"
-          ) {
-            console.error(
-              "getGuardPassCode: API returned failure",
-              result
-            );
-
-            return [];
-          }
-
-          if (!Array.isArray(result.List)) {
-            console.error(
-              "getGuardPassCode: API List is not an array",
-              result.List
-            );
-
-            return [];
-          }
-
-          // 10. Convert API response to dropdown options
-          const dropdownData: any[] = [];
-
-          result.List.forEach((item: any) => {
-
-            if (!item) {
-              return;
-            }
-
-            const name =
-              item.Name ??
-              item.NAME ??
-              item.name ??
-              item.BasicCode ??
-              item.BASIC_CODE;
-
-            const id =
-              item.BaseCodeId ??
-              item.BASE_CODE_ID ??
-              item.BaseCodeID ??
-              item.Id ??
-              item.ID ??
-              item.id;
-
-            if (
-              name === undefined ||
-              name === null ||
-              id === undefined ||
-              id === null
-            ) {
-              console.warn(
-                "getGuardPassCode: Invalid dropdown item",
-                item
-              );
-
-              return;
-            }
-
-            const option = {
-              label: String(name).trim(),
-              value: isShowLabel
-                ? String(name).trim()
-                : Number(id)
-            };
-
-            dropdownData.push(option);
-          });
-
-          console.log(
-            "MEAL PREFERENCE LIVE LIST:",
-            dropdownData
-          );
-
-          return dropdownData;
-
-        } catch (error) {
-
-          console.error(
-            "getGuardPassCode: Error processing LIVE API response",
-            error
-          );
-
-          return [];
-        }
-      })
-    );
-}
+1420               item.id;
+                          ~
