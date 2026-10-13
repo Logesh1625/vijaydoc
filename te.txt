@@ -1,55 +1,91 @@
-getGuardPassCode(
-  params?: any,
-  site?: any,
-  isShowLabel?: any
-): Observable<any> {
+CREATE OR REPLACE PACKAGE BODY CMS.BASE_TYPE_PK
+AS
+-- Package body
+PROCEDURE INSERT_BASE_TYPE(
+V_TYPE_CODE IN VARCHAR2,
+V_TYPE_NAME IN VARCHAR2,
+V_REMARK IN VARCHAR2,
+V_CREATE_BY IN VARCHAR2,
+V_VALID_FLAG IN VARCHAR2,
+V_RES OUT VARCHAR2,
+V_RESULT OUT VARCHAR2
+) IS 
+l_count NUMBER;
+BEGIN 
+	SELECT COUNT(1) INTO l_count FROM CMS.C_BASE_TYPE_T WHERE TYPE_NAME = V_TYPE_NAME;
 
-  const code = params.slice(10);
+	IF l_count > 0 THEN
+	   V_RES := '0';
+	   V_result := 'Data Already Exist !!';
+	  RETURN;
+	  
+	ELSE
+	
+	INSERT INTO CMS.C_BASE_TYPE_T (
+	ID,
+	TYPE_CODE,
+	TYPE_NAME,
+	REMARK,
+	CREATE_BY,
+	CREATE_DATE,
+	VALID_FLAG 
+	) VALUES (
+	C_BASE_TYPE_T_SEQ.NEXTVAL,
+	V_TYPE_CODE,
+	V_TYPE_NAME,
+	V_REMARK,
+	V_CREATE_BY,
+	SYSDATE,
+	V_VALID_FLAG
+	);
+COMMIT;
+ END IF;
+V_RES := '1';
+V_RESULT := 'Success';
+	END;
 
-  const _param = {
-    TypeName: code,
-    Func: "CMS-GetBaseTypeInfo",
-    Site: site,
-  };
+PROCEDURE GET_BASE_TYPE(
+V_INPUT IN VARCHAR2,
+V_TYPE_NAME IN VARCHAR2,
+V_SITE IN VARCHAR2,
+P_CURSOR OUT SYS_REFCURSOR,
+V_RES OUT VARCHAR2,
+V_RESULT OUT VARCHAR2
+) IS 
+BEGIN
+		IF V_INPUT = 'Type_Name' THEN
+			OPEN P_CURSOR FOR
+				SELECT ID,TYPE_NAME FROM CMS.C_BASE_TYPE_T;
+		ELSIF V_TYPE_NAME IS NOT NULL THEN
+			OPEN P_CURSOR FOR
+				SELECT B.ID AS BASE_TYPE_ID,B.TYPE_NAME,A.ID AS BASE_CODE_ID,A.NAME 
+					FROM C_BASE_CODE_T A INNER JOIN C_BASE_TYPE_T B 
+					ON B.ID = A.TYPE_ID WHERE B.TYPE_NAME =V_TYPE_NAME AND A.DEL_FLAG ='0' AND A.VALID_FLAG = 'Y';
+		ELSIF V_SITE IS NOT NULL THEN
+		OPEN P_CURSOR FOR
+			SELECT B.NAME AS NAME,B.ID AS BASE_CODE_ID,F.ID AS NAME FROM CMS.C_CANTEEN_OPERATION_MANAGE_T C 
+			JOIN CMS.C_BASE_CODE_T B ON B.ID = C.NAME 
+			JOIN CMS.C_BASE_CODE_T F ON F.ID = C.FOOD_VENDOR 
+			WHERE C.DEL_FLAG = '0' AND B.DEL_FLAG = '0' AND C.SITE = V_SITE;
+		END IF;
+	V_RES := '1';
+	V_RESULT := 'Success';
+	END;
 
-  const config = {
-    headers: {
-      apiID: "ffff-1710991146185-10208193125-0170",
-      userKey: this.USER_TN,
-    },
-  };
+PROCEDURE DELETE_BASE_TYPE(
+L_IDS IN VARCHAR2,
+V_RES OUT VARCHAR2,
+V_RESULT OUT VARCHAR2
+) IS
+BEGIN
+	UPDATE CMS.C_BASE_TYPE_T SET DEL_FLAG = 1
+	WHERE INSTR(',' || L_IDS, ',' || ID || ',') > 0;
 
-  const param = this.dealPostParamsEncrypt(_param);
+	UPDATE CMS.C_BASE_CODE_T SET DEL_FLAG = 1
+	WHERE INSTR(',' || L_IDS, ',' || TYPE_ID || ',') > 0;
+COMMIT;
+V_RES := '1';
+V_RESULT := 'Success';
+	END;
 
-  return this.http
-    .post(iwxServiceUrl, param, null, config)
-    .pipe(
-      map((resp: any) => {
-        if (!resp || !resp.r) {
-          return [];
-        }
-
-        const res = JSON.parse(
-          this.security.decrypt(resp.r, this.iwxKInfo)
-        );
-
-        console.log("Meal Preference API response:", res);
-
-        if (
-          String(res.IsOK) !== "1" ||
-          !Array.isArray(res.List)
-        ) {
-          return [];
-        }
-
-        return res.List
-          .filter((item: any) => item)
-          .map((item: any) => ({
-            label: item.Name,
-            value: isShowLabel
-              ? item.Name
-              : Number(item.BaseCodeId),
-          }));
-      })
-    );
-}
+END BASE_TYPE_PK;
