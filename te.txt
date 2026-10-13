@@ -1,46 +1,28 @@
-Failed to compile.
+const name =
+  item.Name ||
+  item.NAME ||
+  item.name ||
+  item.BasicCode ||
+  item.BASIC_CODE;
 
-src/app/routes/a_Public_net/Public_net.service.ts:1408:26 - error TS1109: Expression expected.
+let id = item.BaseCodeId;
 
-1408               item.Name ??
-                              ~
-src/app/routes/a_Public_net/Public_net.service.ts:1409:26 - error TS1109: Expression expected.
+if (id === undefined || id === null) {
+  id = item.BASE_CODE_ID;
+}
 
-1409               item.NAME ??
-                              ~
-src/app/routes/a_Public_net/Public_net.service.ts:1410:26 - error TS1109: Expression expected.
+if (id === undefined || id === null) {
+  id = item.BaseCodeID;
+}
 
-1410               item.name ??
-                              ~
-src/app/routes/a_Public_net/Public_net.service.ts:1411:31 - error TS1109: Expression expected.
+if (id === undefined || id === null) {
+  id = item.Id;
+}
 
-1411               item.BasicCode ??
-                                   ~
-src/app/routes/a_Public_net/Public_net.service.ts:1412:30 - error TS1005: ':' expected.
+if (id === undefined || id === null) {
+  id = item.ID;
+}
 
-1412               item.BASIC_CODE;
-                                  ~
-src/app/routes/a_Public_net/Public_net.service.ts:1415:32 - error TS1109: Expression expected.
-
-1415               item.BaseCodeId ??
-                                    ~
-src/app/routes/a_Public_net/Public_net.service.ts:1416:34 - error TS1109: Expression expected.
-
-1416               item.BASE_CODE_ID ??
-                                      ~
-src/app/routes/a_Public_net/Public_net.service.ts:1417:32 - error TS1109: Expression expected.
-
-1417               item.BaseCodeID ??
-                                    ~
-src/app/routes/a_Public_net/Public_net.service.ts:1418:24 - error TS1109: Expression expected.
-
-1418               item.Id ??
-                            ~
-src/app/routes/a_Public_net/Public_net.service.ts:1419:24 - error TS1109: Expression expected.
-
-1419               item.ID ??
-                            ~
-src/app/routes/a_Public_net/Public_net.service.ts:1420:22 - error TS1005: ':' expected.
-
-1420               item.id;
-                          ~
+if (id === undefined || id === null) {
+  id = item.id;
+}
