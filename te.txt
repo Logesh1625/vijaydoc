@@ -928,9 +928,8 @@ AS
                          AND M.LAST_DATE_FXBL IS NOT NULL
                          AND V_DAY BETWEEN TRUNC(M.FIRST_DATE_FXBL) AND TRUNC(M.LAST_DATE_FXBL) )
                   )
-              AND M.ADD_DATE IS NOT NULL
-              AND ( V_FROM_D IS NULL OR TRUNC(M.ADD_DATE) >= V_FROM_D )
-              AND ( V_TO_D   IS NULL OR TRUNC(M.ADD_DATE) <= V_TO_D )
+          AND M.ADD_DATE IS NOT NULL
+AND TRUNC(M.ADD_DATE) = V_DAY
               AND ( V_ADD_BY IS NULL OR TRIM(V_ADD_BY) IS NULL
                     OR UPPER(TRIM(M.ADD_BY)) = UPPER(TRIM(V_ADD_BY)) )
               AND EXISTS (
