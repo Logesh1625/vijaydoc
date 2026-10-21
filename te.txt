@@ -1,163 +1,66 @@
+const handleGenerateSecret = async () => {
+  const headers = {
+    apiID: 'ffff-1694231787059-10208193125-0099',
+    userKey: 'YOUR_VALID_USER_KEY',
+  };
 
-ffff-1694231787059-10208193125-0099(User Key Generation)
-ConsoleHi Renuka A Logout
-INDIA
-INDIA_TEST
-Current Position：
-API / FMS / DMS /
+  try {
+    setErrorMessage('');
 
-Browse(180)
-UserManagement
-Provider：任國強
-The label： HR
-Do not know how to access? Enter immediatelyDocumentation 
-API List
-请输入关键字
-password_reset_qr_status
-insert_data_control_name_list
-insert_data_Control_menu_handl
-get_empid_based_access_details
-get_Data_Control_details
-getRole_Name_Based_On_empId
-get name_list details
-empId_based_menus
-User_and_Role_Assign
-User_Reactive_new
-User Verification
-User Key Generation
-User Creation to Access Dorm
-Update_user_new
-Update_secret_key_new
-Update_role_new
-Update_menu_new
-Update_login_log_new
-Update_Role_Manage
-Update_New_User_Manage
-Update_MenuName
-Update_Data_Control
-Secret Key for User
-Role_Menu_Manage
-Role_Menu_Assign
-Revoke Access GA_ADMIN
-Remove access for the user
-Re_activate_user_details
-QR_reset_new
-Menu_insert_new
-Insert_user_role_assign_new
-Insert_user_dormcontrols_new
-Insert_role_new
-Insert_role_menu_assign_new
-Insert_report_log_new
-Insert_login_log_new
-Insert_data_control_name_new
-Insert_User_dorm_assign_new
-Insert_Roles_and_Users
-Insert_Roles_and_Menus
-Insert_Roles
-Insert_Menus
-Insert_Data_Control_Details
-Insert New User
-Inser_user_new
-Grant Permission to User
-Get_user_role_new
-Get_user_dormcontrol_new
-Get_user_dorm_new
-Get_user_details_new
-Get_role_menu_assign
-Get_role_based_empid_new
-Get_emp_based_menus_new
-Get_dorm_comtrol-name_new
-Get_all_Menus
-Get_User_and_Role_Manage
-Get_Role_details_new
-Get_Role_Manage
-Get_New_User_Manage
-Get_Menu_details_new
-Get user details
-Get menu empId based
-Get Available Roles
-Get Available Menu Names
-Delete_user_manage
-Delete_role_new
-Delete_menu_new
-Delete_Role_Manage
-Delete_Menu_Name
-Deactive_user_new
- Get user details
-Version info:
-1.0
-Creater:
-HH0005809--Shojini J
-API status:
-Can use
-Request URL:
-https://microservice.abgind.foxconn.com/india/gateway
-Request way:
-POST
-API remark:
-get a particular user all details
+    const response = await axios.post(
+      'https://microservice.abgind.foxconn.com/india/gateway',
+      {},
+      { headers }
+    );
 
-Pressure test results:
- Header explain
+    console.log('HTTP Status:', response.status);
+    console.log('API Response:', response.data);
 
-Name
-Type
-Necessary
-Sample
-Default
-Description
-apiID	string	true	ffff-1693461297251-10208193125-0059	ffff-1693461297251-10208193125-0059	?API?ID
-userKey	string	true			?????API?????
- Input paramater explain
+    if (response.data?.r) {
+      const decrypted = decrypt(
+        response.data.r,
+        getdk(iwxKey)
+      );
 
-Name
-Type
-Necessary
-Sample
-Default
-Description
-empId	string	true			
- Return paramater
+      console.log('Decrypted API response:', decrypted);
 
-Name
-Type
-Default
-Description
-Msg	string		
-IsOK	string		
- Error code reference
+      if (!decrypted) {
+        throw new Error('Unable to decrypt API response');
+      }
 
-Error Code
-Explain
-204	请求成功处理，没有实体的主体返回
-UsedBy & Sign off progress
+      const result = JSON.parse(decrypted);
 
-Account
-Dri
-Dept
-userKey
-State
-operation
-empty
-No Data
+      console.log(
+        'Decrypted response fields:',
+        Object.keys(result)
+      );
 
- Mock address
+      if (result.secret) {
+        setsecretkey(result.secret);
+        setShowQRCode(true);
+      } else {
+        throw new Error(
+          'Secret field is missing. Check the API documentation.'
+        );
+      }
+    } else {
+      console.error(
+        'Unexpected API response:',
+        response.data
+      );
 
-Right data URL:
-https://iwx.idpbgind.efoxconn.com:8099/mock/trueExam.do?id=ffff-1693461297251-10208193125-0059
-Wrong data URL:
-https://iwx.idpbgind.efoxconn.com:8099/mock/falseExam.do?id=ffff-1693461297251-10208193125-0059
- Right data show
-[
-]
+      throw new Error(
+        'Expected encrypted response field "r" was not returned.'
+      );
+    }
+  } catch (error) {
+    console.error(
+      'Secret generation failed:',
+      error.response?.data || error.message
+    );
 
- Wrong data show
-[
-]
-
-Telephone: 0755-28128988  Transfer  568-89283   |   Email: winly.fe.dang@foxconn.com
-Copyright © 2018-2025 Foxconn A Business Group IT. All Rights Reserved
-
-操作指引
-使用文档
-
+    setErrorMessage(
+      'Unable to generate MFA secret. Please contact IT support.'
+    );
+  }
+};
