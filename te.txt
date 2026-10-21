@@ -15,72 +15,41 @@ const handleGenerateSecret = async () => {
       { headers }
     );
 
-    // Debug: inspect response structure without exposing values
-    console.log('Secret API HTTP status:', response.status);
-
     console.log(
-      'Secret API response keys:',
-      Object.keys(response.data || {})
+      'Secret API HTTP status:',
+      response.status
     );
 
-    console.log(
-      'Secret API response data type:',
-      typeof response.data
-    );
+    // API returns the secret directly
+    const res = response.data;
 
-    // Check response
-    if (!response?.data) {
-      throw new Error('API returned an empty response');
-    }
-
-    // Expected encrypted response
-    const encryptedResponse = response.data.r;
-
-    if (
-      typeof encryptedResponse !== 'string' ||
-      !encryptedResponse.trim()
-    ) {
+    if (!res || typeof res.secret !== 'string' || !res.secret.trim()) {
       console.error(
-        'Secret API response does not contain field r'
+        'Invalid secret API response structure'
       );
 
       throw new Error(
-        'Secret API response format is incorrect. Check the Network Response.'
+        'Secret field is missing from the API response'
       );
     }
 
-    // Decrypt response
-    const decryptedResponse = decrypt(
-      encryptedResponse,
-      getdk(iwxKey)
-    );
+    // Store the returned secret
+    setsecretkey(res.secret);
 
-    if (!decryptedResponse) {
-      throw new Error(
-        'Unable to decrypt the secret response'
-      );
-    }
-
-    // Parse JSON
-    const result = JSON.parse(decryptedResponse);
-
-    if (!result?.secret) {
-      throw new Error(
-        'The decrypted response does not contain a secret'
-      );
-    }
-
-    setsecretkey(result.secret);
+    // Display QR code
     setShowQRCode(true);
+
+    console.log('Secret generated successfully');
 
   } catch (error) {
     console.error(
-      'Secret generation failed:',
+      'Error generating secret:',
+      error.response?.status,
       error.message
     );
 
     setErrorMessage(
-      'Unable to generate MFA secret. Please contact IT support.'
+      'Unable to generate MFA secret. Please try again or contact IT support.'
     );
   }
 };
