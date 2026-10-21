@@ -1,1048 +1,163 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
-import {
-  Button,
-  TextField,
-  Typography,
-  Box,
-  Grid,
-  IconButton,
-  InputAdornment,
-  CircularProgress,
-} from '@mui/material';
+ffff-1694231787059-10208193125-0099(User Key Generation)
+ConsoleHi Renuka A Logout
+INDIA
+INDIA_TEST
+Current Position：
+API / FMS / DMS /
+
+Browse(180)
+UserManagement
+Provider：任國強
+The label： HR
+Do not know how to access? Enter immediatelyDocumentation 
+API List
+请输入关键字
+password_reset_qr_status
+insert_data_control_name_list
+insert_data_Control_menu_handl
+get_empid_based_access_details
+get_Data_Control_details
+getRole_Name_Based_On_empId
+get name_list details
+empId_based_menus
+User_and_Role_Assign
+User_Reactive_new
+User Verification
+User Key Generation
+User Creation to Access Dorm
+Update_user_new
+Update_secret_key_new
+Update_role_new
+Update_menu_new
+Update_login_log_new
+Update_Role_Manage
+Update_New_User_Manage
+Update_MenuName
+Update_Data_Control
+Secret Key for User
+Role_Menu_Manage
+Role_Menu_Assign
+Revoke Access GA_ADMIN
+Remove access for the user
+Re_activate_user_details
+QR_reset_new
+Menu_insert_new
+Insert_user_role_assign_new
+Insert_user_dormcontrols_new
+Insert_role_new
+Insert_role_menu_assign_new
+Insert_report_log_new
+Insert_login_log_new
+Insert_data_control_name_new
+Insert_User_dorm_assign_new
+Insert_Roles_and_Users
+Insert_Roles_and_Menus
+Insert_Roles
+Insert_Menus
+Insert_Data_Control_Details
+Insert New User
+Inser_user_new
+Grant Permission to User
+Get_user_role_new
+Get_user_dormcontrol_new
+Get_user_dorm_new
+Get_user_details_new
+Get_role_menu_assign
+Get_role_based_empid_new
+Get_emp_based_menus_new
+Get_dorm_comtrol-name_new
+Get_all_Menus
+Get_User_and_Role_Manage
+Get_Role_details_new
+Get_Role_Manage
+Get_New_User_Manage
+Get_Menu_details_new
+Get user details
+Get menu empId based
+Get Available Roles
+Get Available Menu Names
+Delete_user_manage
+Delete_role_new
+Delete_menu_new
+Delete_Role_Manage
+Delete_Menu_Name
+Deactive_user_new
+ Get user details
+Version info:
+1.0
+Creater:
+HH0005809--Shojini J
+API status:
+Can use
+Request URL:
+https://microservice.abgind.foxconn.com/india/gateway
+Request way:
+POST
+API remark:
+get a particular user all details
+
+Pressure test results:
+ Header explain
+
+Name
+Type
+Necessary
+Sample
+Default
+Description
+apiID	string	true	ffff-1693461297251-10208193125-0059	ffff-1693461297251-10208193125-0059	?API?ID
+userKey	string	true			?????API?????
+ Input paramater explain
+
+Name
+Type
+Necessary
+Sample
+Default
+Description
+empId	string	true			
+ Return paramater
+
+Name
+Type
+Default
+Description
+Msg	string		
+IsOK	string		
+ Error code reference
+
+Error Code
+Explain
+204	请求成功处理，没有实体的主体返回
+UsedBy & Sign off progress
+
+Account
+Dri
+Dept
+userKey
+State
+operation
+empty
+No Data
+
+ Mock address
+
+Right data URL:
+https://iwx.idpbgind.efoxconn.com:8099/mock/trueExam.do?id=ffff-1693461297251-10208193125-0059
+Wrong data URL:
+https://iwx.idpbgind.efoxconn.com:8099/mock/falseExam.do?id=ffff-1693461297251-10208193125-0059
+ Right data show
+[
+]
+
+ Wrong data show
+[
+]
+
+Telephone: 0755-28128988  Transfer  568-89283   |   Email: winly.fe.dang@foxconn.com
+Copyright © 2018-2025 Foxconn A Business Group IT. All Rights Reserved
+
+操作指引
+使用文档
 
-import { createTheme } from '@mui/material/styles';
-
-import {
-  Visibility,
-  VisibilityOff,
-} from '@mui/icons-material';
-
-import { makeStyles } from '@material-ui/core/styles';
-import { QRCodeCanvas } from 'qrcode.react';
-
-import {
-  dealPostParamsEncrypt,
-  iwxKey,
-  getdk,
-  encrypt,
-  decrypt,
-  iwxPost,
-} from '../EncryptDecrypt/Encryptfile';
-
-import {
-  fetchempbasicinfo,
-  getlogincredentials,
-} from '../Apiconfig/apiforloginandempdetails';
-
-import loginimage from './login-artwork.jpg';
-
-// ============================================================
-// THEME
-// ============================================================
-
-const theme = createTheme();
-
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    backgroundSize: 'cover',
-  },
-
-  formm: {
-    width: '100%',
-    maxWidth: '400px',
-    padding: theme.spacing(2),
-    backgroundColor: '#fff',
-    borderRadius: theme.spacing(1),
-    boxShadow: '0px 0px 10px 5px rgba(0,0,0,0.15)',
-    fontSize: 16,
-    fontWeight: 900,
-    textAlign: 'center',
-  },
-}));
-
-// ============================================================
-// COMPONENT
-// ============================================================
-
-const Login = () => {
-  const navigate = useNavigate();
-  const classes = useStyles(theme);
-
-  // ==========================================================
-  // STATE
-  // ==========================================================
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [loginStatus, setLoginStatus] = useState('');
-  const [account, setAccount] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [secretkey, setsecretkey] = useState('');
-  const [otp, setOTP] = useState('');
-  const [showQRCode, setShowQRCode] = useState(false);
-  const [otploading, setotploading] = useState(false);
-  const [secretLoading, setSecretLoading] = useState(false);
-
-  // ==========================================================
-  // CONSTANTS
-  // ==========================================================
-
-  const issuccessfullylogin =
-    sessionStorage.getItem('issuccessfullylogin');
-
-  const isscuessqr =
-    sessionStorage.getItem('qrstatus');
-
-  const encryptedBoolean = encrypt(
-    'true',
-    getdk(iwxKey)
-  );
-
-  const encryptedBooleannum = encrypt(
-    '0',
-    getdk(iwxKey)
-  );
-
-  const isMfaScreen =
-    issuccessfullylogin === encryptedBoolean;
-
-  // ==========================================================
-  // HELPERS
-  // ==========================================================
-
-  const getEmployeeNumber = () => {
-    const encryptedAccount =
-      sessionStorage.getItem('account');
-
-    if (!encryptedAccount) {
-      throw new Error('Account information is missing');
-    }
-
-    const value = decrypt(
-      encryptedAccount,
-      getdk(iwxKey)
-    );
-
-    if (!value) {
-      throw new Error('Unable to decrypt account information');
-    }
-
-    return value.replace(/"/g, '');
-  };
-
-  const parseEncryptedResponse = (response, apiName) => {
-    const encryptedResponse = response?.data?.r;
-
-    if (
-      typeof encryptedResponse !== 'string' ||
-      !encryptedResponse.trim()
-    ) {
-      // Do not print the response body because it may
-      // contain sensitive information.
-      console.error(
-        `${apiName}: expected encrypted response field "r" is missing`,
-        {
-          status: response?.status,
-          keys: Object.keys(response?.data || {}),
-        }
-      );
-
-      throw new Error(
-        `${apiName}: unexpected API response format`
-      );
-    }
-
-    const plaintext = decrypt(
-      encryptedResponse,
-      getdk(iwxKey)
-    );
-
-    if (!plaintext) {
-      throw new Error(
-        `${apiName}: unable to decrypt response`
-      );
-    }
-
-    try {
-      return JSON.parse(plaintext);
-    } catch {
-      throw new Error(
-        `${apiName}: decrypted response is not valid JSON`
-      );
-    }
-  };
-
-  // ==========================================================
-  // PASSWORD VISIBILITY
-  // ==========================================================
-
-  const handleTogglePassword = () => {
-    setShowPassword((previous) => !previous);
-  };
-
-  // ==========================================================
-  // EMPLOYEE DETAILS
-  // ==========================================================
-
-  const fetchdata = async () => {
-    const headers = {
-      apiID: 'ffff-1743480426986-1020912129-2253',
-      userKey: '10A33A67A312E649D907BBC927995B8A',
-    };
-
-    const params = {
-      EmpId: account,
-      EmpName: '',
-      Status: '',
-      StartPage: 1,
-      PageSize: 999999,
-      Func: 'UserManagement-Get_user_details_new',
-    };
-
-    const result = await iwxPost(
-      params,
-      { headers },
-      true
-    );
-
-    if (
-      !Array.isArray(result?.List) ||
-      result.List.length === 0
-    ) {
-      throw new Error(
-        'Employee details were not returned'
-      );
-    }
-
-    const qrStatus = result.List[0]?.QrStatus;
-
-    if (qrStatus === undefined || qrStatus === null) {
-      throw new Error('Employee QR status is missing');
-    }
-
-    sessionStorage.setItem(
-      'qrstatus',
-      encrypt(String(qrStatus), getdk(iwxKey))
-    );
-
-    return result.List;
-  };
-
-  // ==========================================================
-  // EMPLOYEE NAME
-  // ==========================================================
-
-  const fetchempName = async () => {
-    try {
-      return await fetchempbasicinfo(account);
-    } catch (error) {
-      console.error(
-        'Employee name lookup failed:',
-        error.message
-      );
-
-      return null;
-    }
-  };
-
-  // ==========================================================
-  // ROLE DATA
-  // ==========================================================
-
-  const fetchRoleData = async () => {
-    const headers = {
-      apiID: 'ffff-1743482300704-1020912129-2290',
-      userKey: '10A33A67A312E649D907BBC927995B8A',
-    };
-
-    return iwxPost(
-      {
-        EmpId: account,
-        Func: 'UserManagement-Get_role_based_empid_new',
-      },
-      { headers },
-      true
-    );
-  };
-
-  // ==========================================================
-  // LOGIN LOG
-  // ==========================================================
-
-  const StoreLoginLog = async (
-    message,
-    employeeName,
-    roles
-  ) => {
-    try {
-      const headers = {
-        apiID: 'ffff-1743483394185-1020912129-2312',
-        userKey: '10A33A67A312E649D907BBC927995B8A',
-      };
-
-      const result = await iwxPost(
-        {
-          EmpId: account,
-          SystemIp: '',
-          LoginStatus: message,
-          EmpName:
-            employeeName?.[0]?.EmployeeName || '',
-          UserRole:
-            roles?.List?.[0]?.RoleName || '',
-          Func: 'UserManagement-Insert_login_log_new',
-        },
-        { headers },
-        true
-      );
-
-      return result?.List?.[0]?.Id ?? null;
-    } catch (error) {
-      console.error(
-        'Login log failed:',
-        error.message
-      );
-
-      return null;
-    }
-  };
-
-  // ==========================================================
-  // GENERATE MFA SECRET
-  // ==========================================================
-
-  const handleGenerateSecret = async () => {
-    if (secretLoading) return;
-
-    setSecretLoading(true);
-    setShowQRCode(false);
-    setsecretkey('');
-
-    try {
-      const headers = {
-        apiID: 'ffff-1694231787059-10208193125-0099',
-        userKey: 'YOUR_EXISTING_SECRET_API_USER_KEY',
-      };
-
-      const response = await axios.post(
-        'https://microservice.abgind.foxconn.com/india/gateway',
-        {},
-        { headers }
-      );
-
-      // Your observed API response uses a top-level
-      // "secret" property rather than an encrypted "r".
-      const result = response?.data;
-
-      if (
-        !result ||
-        typeof result.secret !== 'string' ||
-        !result.secret.trim()
-      ) {
-        console.error(
-          'Secret API returned an unexpected structure',
-          {
-            status: response?.status,
-            keys: Object.keys(result || {}),
-          }
-        );
-
-        throw new Error(
-          'Secret is missing from the API response'
-        );
-      }
-
-      setsecretkey(result.secret);
-      setShowQRCode(true);
-    } catch (error) {
-      console.error(
-        'Secret generation failed:',
-        error.message
-      );
-
-      setErrorMessage(
-        'Unable to generate MFA secret. Please contact IT support.'
-      );
-    } finally {
-      setSecretLoading(false);
-    }
-  };
-
-  // ==========================================================
-  // QR CODE URI
-  // ==========================================================
-
-  const generateOTPURI = () => {
-    if (!secretkey) return '';
-
-    const employeeNumber = getEmployeeNumber();
-
-    return (
-      `otpauth://totp/DMS:${encodeURIComponent(employeeNumber)}` +
-      `?secret=${encodeURIComponent(secretkey)}` +
-      `&issuer=DMS`
-    );
-  };
-
-  // ==========================================================
-  // UPDATE QR SECRET
-  // ==========================================================
-
-  const updateQrStatus = async () => {
-    const employeeNumber = getEmployeeNumber();
-
-    const headers = {
-      apiID: 'ffff-1743483629535-1020912129-2321',
-      userKey: '10A33A67A312E649D907BBC927995B8A',
-    };
-
-    if (isscuessqr === encryptedBooleannum) {
-      if (!secretkey) {
-        throw new Error('MFA secret is missing');
-      }
-
-      await iwxPost(
-        {
-          EmpId: employeeNumber,
-          SecretKey: secretkey,
-          Func: 'UserManagement-Update_secret_key_new',
-        },
-        { headers },
-        true
-      );
-    }
-  };
-
-  // ==========================================================
-  // STORE OTP LOGIN LOG
-  // ==========================================================
-
-  const StoreOTPtologinlog = async (message) => {
-    const encryptedLogId =
-      sessionStorage.getItem('loginlogID');
-
-    if (!encryptedLogId) return;
-
-    const logId = decrypt(
-      encryptedLogId,
-      getdk(iwxKey)
-    );
-
-    if (!logId) {
-      throw new Error('Unable to decrypt login log ID');
-    }
-
-    const headers = {
-      apiID: 'ffff-1743483467265-1020912129-2315',
-      userKey: '10A33A67A312E649D907BBC927995B8A',
-    };
-
-    await iwxPost(
-      {
-        Update: 'OTP',
-        Id: logId,
-        Otp: otp,
-        OtpStatus: message,
-        Func: 'UserManagement-Update_login_log_new',
-      },
-      { headers },
-      true
-    );
-  };
-
-  // ==========================================================
-  // OTP VERIFICATION API
-  // ==========================================================
-
-  const verifyOTP22 = async (registeredSecret) => {
-    const secret =
-      isscuessqr === encryptedBooleannum
-        ? secretkey
-        : registeredSecret;
-
-    if (!secret) {
-      throw new Error('MFA secret is missing');
-    }
-
-    const headers = {
-      apiID: 'ffff-1694232123378-10208193125-0103',
-      userKey: 'YOUR_EXISTING_OTP_API_USER_KEY',
-    };
-
-    const params = dealPostParamsEncrypt({
-      secret,
-      otp,
-    });
-
-    const response = await axios.post(
-      'https://microservice.abgind.foxconn.com/india/gateway',
-      params,
-      { headers }
-    );
-
-    // Do not assume the response is successful just because
-    // HTTP status is 200.
-    //
-    // This parser expects the documented encrypted "r"
-    // response format. If the API returns another format,
-    // inspect its Network > Response and follow the API contract.
-    const result = parseEncryptedResponse(
-      response,
-      'OTP verification'
-    );
-
-    if (
-      result.IsOK === 1 ||
-      result.IsOK === '1'
-    ) {
-      await updateQrStatus();
-
-      const loginResponse =
-        sessionStorage.getItem('loginresponse');
-
-      if (!loginResponse) {
-        throw new Error('Login response is missing');
-      }
-
-      sessionStorage.setItem(
-        'data',
-        loginResponse
-      );
-
-      sessionStorage.setItem(
-        'isLoggedIn',
-        encryptedBoolean
-      );
-
-      await StoreOTPtologinlog(
-        result.Msg || 'OTP verified'
-      );
-
-      navigate('/home/Dashboard', {
-        state: { account },
-      });
-
-      return;
-    }
-
-    setErrorMessage(
-      result.Msg || 'Incorrect OTP'
-    );
-
-    await StoreOTPtologinlog(
-      result.Msg || 'Incorrect OTP'
-    );
-  };
-
-  // ==========================================================
-  // VERIFY OTP
-  // ==========================================================
-
-  const verifyOTP = async () => {
-    if (!otp.trim()) {
-      setErrorMessage('Enter OTP');
-      return;
-    }
-
-    if (otploading) return;
-
-    setotploading(true);
-    setErrorMessage('');
-
-    try {
-      const employeeNumber = getEmployeeNumber();
-
-      const headers = {
-        apiID: 'ffff-1743480426986-1020912129-2253',
-        userKey: '10A33A67A312E649D907BBC927995B8A',
-      };
-
-      const result = await iwxPost(
-        {
-          EmpId: employeeNumber,
-          EmpName: '',
-          Status: '',
-          StartPage: 1,
-          PageSize: 999999,
-          Func: 'UserManagement-Get_user_details_new',
-        },
-        { headers },
-        true
-      );
-
-      const employees = result?.List;
-
-      if (!Array.isArray(employees) || !employees.length) {
-        throw new Error('Employee details are unavailable');
-      }
-
-      const registeredSecret = employees[0]?.SecretKey;
-
-      if (
-        isscuessqr !== encryptedBooleannum &&
-        !registeredSecret
-      ) {
-        throw new Error('Registered MFA secret is missing');
-      }
-
-      await verifyOTP22(registeredSecret);
-    } catch (error) {
-      console.error(
-        'OTP verification failed:',
-        error.message
-      );
-
-      setErrorMessage(
-        error.message ||
-        'Unable to verify OTP. Please contact IT support.'
-      );
-    } finally {
-      setotploading(false);
-    }
-  };
-
-  // ==========================================================
-  // LOGIN
-  // ==========================================================
-
-  const handleLogin = async (event) => {
-    event.preventDefault();
-
-    if (isLoading) return;
-
-    if (!account.trim() || !password) {
-      setErrorMessage('Enter username and password');
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage('');
-
-    try {
-      const employees = await fetchdata();
-
-      const employee = employees.find(
-        (item) => item.EmpId === account
-      );
-
-      if (!employee || employee.DelFlag === '1') {
-        setErrorMessage(
-          "You don't have access to this system."
-        );
-
-        return;
-      }
-
-      const encryptedAccount =
-        dealPostParamsEncrypt(account);
-
-      sessionStorage.setItem(
-        'account',
-        encryptedAccount.s
-      );
-
-      const employeeName = await fetchempName();
-
-      let roles = null;
-
-      try {
-        roles = await fetchRoleData();
-      } catch (error) {
-        console.error(
-          'Role lookup failed:',
-          error.message
-        );
-      }
-
-      const encryptedParams = dealPostParamsEncrypt({
-        Func: 'APPFrame-AccountLoginPhoneSpv3-IWX',
-        Account: account,
-        Password: password,
-        OsType: '1',
-        DeviceId: '1',
-        OsVer: '1',
-        AppVer: '1',
-        DeviceType: '1',
-        AppVersion: '1',
-      });
-
-      const response = await getlogincredentials(
-        encryptedParams
-      );
-
-      if (!response?.r) {
-        throw new Error(
-          'Login API response is missing'
-        );
-      }
-
-      const plaintext = decrypt(
-        response.r,
-        getdk(iwxKey)
-      );
-
-      if (!plaintext) {
-        throw new Error(
-          'Unable to decrypt login response'
-        );
-      }
-
-      const loginResult = JSON.parse(plaintext);
-
-      if (
-        loginResult.IsOK === '1' ||
-        loginResult.IsOK === 1
-      ) {
-        const logId = await StoreLoginLog(
-          loginResult.Msg || 'Login successful',
-          employeeName,
-          roles
-        );
-
-        if (logId !== null) {
-          sessionStorage.setItem(
-            'loginlogID',
-            encrypt(String(logId), getdk(iwxKey))
-          );
-        }
-
-        sessionStorage.setItem(
-          'loginresponse',
-          response.r
-        );
-
-        sessionStorage.setItem(
-          'issuccessfullylogin',
-          encryptedBoolean
-        );
-
-        setLoginStatus('success');
-      } else {
-        await StoreLoginLog(
-          loginResult.Msg || 'Login failed',
-          employeeName,
-          roles
-        );
-
-        setErrorMessage(
-          loginResult.Msg || 'Login failed'
-        );
-
-        setLoginStatus('error');
-      }
-    } catch (error) {
-      console.error(
-        'Login failed:',
-        error.message
-      );
-
-      setErrorMessage(
-        error.message ||
-        'Login failed. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ==========================================================
-  // BACK TO LOGIN
-  // ==========================================================
-
-  const handlebacklogin = () => {
-    [
-      'issuccessfullylogin',
-      'qrstatus',
-      'loginresponse',
-      'loginlogID',
-      'account',
-      'isLoggedIn',
-    ].forEach((key) => {
-      sessionStorage.removeItem(key);
-    });
-
-    setsecretkey('');
-    setOTP('');
-    setShowQRCode(false);
-    setErrorMessage('');
-    setLoginStatus('');
-    setAccount('');
-    setPassword('');
-
-    navigate('/login');
-  };
-
-  // ==========================================================
-  // CLEAR ERRORS
-  // ==========================================================
-
-  useEffect(() => {
-    setErrorMessage('');
-  }, [account, password, otp]);
-
-  // ==========================================================
-  // GENERATE SECRET WHEN NEEDED
-  // ==========================================================
-
-  useEffect(() => {
-    const currentLogin =
-      sessionStorage.getItem('issuccessfullylogin');
-
-    if (
-      currentLogin === null ||
-      currentLogin === encryptedBoolean
-    ) {
-      handleGenerateSecret();
-    }
-    // Avoid adding handleGenerateSecret here: it is recreated
-    // on each render. This effect follows the existing flow.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [issuccessfullylogin, loginStatus]);
-
-  // ==========================================================
-  // UI
-  // ==========================================================
-
-  return (
-    <Grid
-      container
-      component="main"
-      sx={{
-        minHeight: '100vh',
-        backgroundImage: `url(${loginimage})`,
-        backgroundRepeat: 'no-repeat',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      <Grid
-        item
-        xs={12}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '85vh',
-          padding: 2,
-        }}
-      >
-        <Box className={classes.root}>
-          <Box className={classes.formm}>
-            <img
-              src="/images/logo1.png"
-              alt="Company Logo"
-              style={{
-                maxWidth: '180px',
-                height: 'auto',
-              }}
-            />
-
-            {isMfaScreen ? (
-              <div>
-                <Typography
-                  sx={{
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                  }}
-                >
-                  MFA Auth
-                </Typography>
-
-                {isscuessqr === encryptedBooleannum && (
-                  <Box sx={{ mt: 2 }}>
-                    {secretLoading ? (
-                      <CircularProgress size={28} />
-                    ) : showQRCode && secretkey ? (
-                      <>
-                        <QRCodeCanvas
-                          value={generateOTPURI()}
-                          size={128}
-                        />
-
-                        <Typography
-                          sx={{
-                            fontSize: '10px',
-                            overflowWrap: 'anywhere',
-                            mt: 1,
-                          }}
-                        >
-                          Scan this QR code with your
-                          authenticator app.
-                        </Typography>
-                      </>
-                    ) : (
-                      <Button
-                        onClick={handleGenerateSecret}
-                        disabled={secretLoading}
-                      >
-                        Generate QR Code
-                      </Button>
-                    )}
-                  </Box>
-                )}
-
-                {errorMessage && (
-                  <Typography
-                    color="error"
-                    sx={{ mt: 2 }}
-                  >
-                    {errorMessage}
-                  </Typography>
-                )}
-
-                <TextField
-                  margin="normal"
-                  fullWidth
-                  label="Enter OTP"
-                  type="text"
-                  value={otp}
-                  onChange={(event) => {
-                    setOTP(
-                      event.target.value.replace(/\D/g, '')
-                    );
-                  }}
-                  inputProps={{
-                    inputMode: 'numeric',
-                    maxLength: 8,
-                  }}
-                />
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  sx={{ mt: 2, mb: 2 }}
-                  disabled={!otp.trim() || otploading}
-                  onClick={verifyOTP}
-                >
-                  {otploading ? (
-                    <CircularProgress size={24} />
-                  ) : (
-                    'Verify OTP'
-                  )}
-                </Button>
-
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={handlebacklogin}
-                >
-                  Back to Login
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleLogin}>
-                <Typography
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '1rem',
-                    mb: 2,
-                  }}
-                >
-                  Login
-                </Typography>
-
-                <TextField
-                  margin="normal"
-                  fullWidth
-                  label="Username"
-                  value={account}
-                  autoComplete="username"
-                  onChange={(event) => {
-                    setAccount(event.target.value);
-                  }}
-                />
-
-                <TextField
-                  margin="normal"
-                  fullWidth
-                  label="Password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  autoComplete="current-password"
-                  onChange={(event) => {
-                    setPassword(event.target.value);
-                  }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={handleTogglePassword}
-                          edge="end"
-                          aria-label="Toggle password visibility"
-                        >
-                          {showPassword ? (
-                            <Visibility />
-                          ) : (
-                            <VisibilityOff />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                {errorMessage && (
-                  <Typography
-                    color="error"
-                    sx={{ mt: 2 }}
-                  >
-                    {errorMessage}
-                  </Typography>
-                )}
-
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{ mt: 3, mb: 2 }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <CircularProgress size={24} />
-                  ) : (
-                    'Login'
-                  )}
-                </Button>
-              </form>
-            )}
-          </Box>
-        </Box>
-      </Grid>
-
-      <Grid
-        item
-        xs={12}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          padding: 2,
-          fontSize: '12px',
-          color: '#000',
-        }}
-      >
-        <div>
-          <div>
-            FXCN IT: Tel:533-26038 | Email:idpbg-it-tn-dev@mail.foxconn.com
-          </div>
-
-          <div>
-            Copyright 2020-2025 Foxconn A Business Group IT.
-            All Rights Reserved
-          </div>
-        </div>
-      </Grid>
-    </Grid>
-  );
-};
-
-export default Login;
