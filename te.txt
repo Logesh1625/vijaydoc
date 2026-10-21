@@ -1,27 +1,46 @@
+const response = await axios.post(
+  'https://microservice.abgind.foxconn.com/india/gateway',
+  params,
+  { headers }
+);
+
 const data = response?.data;
 
-console.log('OTP API raw response:', data);
+console.log('HTTP status:', response.status);
+console.log('Gateway response:', data);
 
-let res = null;
+let res;
 
-if (typeof data?.r === 'string' && data.r.length > 0) {
-  const decryptedResponse = decrypt(data.r, getdk(iwxKey));
+if (typeof data?.r === 'string' && data.r.trim()) {
+  const decryptedResponse = decrypt(
+    data.r,
+    getdk(iwxKey)
+  );
+
+  console.log('Decrypted OTP response:', decryptedResponse);
 
   if (!decryptedResponse) {
     throw new Error('Unable to decrypt OTP API response.');
   }
 
-  res = JSON.parse(decryptedResponse);
-} else if (data && typeof data.IsOK !== 'undefined') {
-  res = data;
+  try {
+    res = JSON.parse(decryptedResponse);
+  } catch (parseError) {
+    console.error('OTP response is not valid JSON.');
+    throw new Error('Unable to parse OTP API response.');
+  }
+} else if (data && typeof data.message === 'string') {
+  console.error('OTP API error:', data.message);
+  setErrorMessage(data.message);
+  return;
 } else {
-  console.error('Unexpected OTP response:', data);
-
-  setErrorMessage(
-    data?.message || 'OTP verification response is incomplete.'
-  );
-
+  console.error('Unexpected OTP API response:', data);
+  setErrorMessage('Unexpected OTP API response.');
   return;
 }
 
-console.log('Parsed OTP response:', res);
+if (Number(res?.IsOK) === 1) {
+  // Keep your existing successful OTP verification code here.
+} else {
+  setErrorMessage(res?.Msg || 'OTP verification failed.');
+}
