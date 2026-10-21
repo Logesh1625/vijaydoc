@@ -1,3 +1,167 @@
+import axios from 'axios';
+import CryptoJS from 'crypto-js';
+
+
+
+export const iwxKey = 'azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=';//facd81g656fcd8p7a7lkh6dfa81gf4ik
+// 将加密的密钥解密--字符串中间排列
+// export function getdk(key) {
+//     const str = window.atob(key);
+//     const middle = Math.floor(str.length / 2);
+//     let left = middle - 1;
+//     let right = str.length % 2 === 0 ? middle : middle + 1;
+//     let result = '';
+//     while (left >= 0 && right < str.length) {
+//       result += str[right];
+//       result += str[left];
+//       left--;
+//       right++;
+//     }
+//     return result + str.slice(right) + str.slice(0, left + 1);
+// }
+
+export function getdk(_0x172371){const _0x185768=window["\u0061\u0074\u006f\u0062"](_0x172371);const _0x281670=Math["\u0066\u006c\u006f\u006f\u0072"](_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]/(0x89f37^0x89f35));let _0x129f13=_0x281670-(0x5f1d1^0x5f1d0);let _0x3f4c6e=_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]%(0xe670e^0xe670c)===(0x74e40^0x74e40)?_0x281670:_0x281670+(0x8a0f3^0x8a0f2);let _0x287f0c="".split("").reverse().join("");while(_0x129f13>=(0xaa513^0xaa513)&&_0x3f4c6e<_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]){_0x287f0c+=_0x185768[_0x3f4c6e];_0x287f0c+=_0x185768[_0x129f13];_0x129f13--;_0x3f4c6e++;}return _0x287f0c+_0x185768["\u0073\u006c\u0069\u0063\u0065"](_0x3f4c6e)+_0x185768["\u0073\u006c\u0069\u0063\u0065"](0x787e0^0x787e0,_0x129f13+(0x88552^0x88553));}
+
+
+export const dealPostParamsEncrypt = (data = {}) => {
+  const res = {};
+  const o = encrypt(JSON.stringify({ Os: '', DeviceId: 'Utility', AppVer: '0' }), getdk(iwxKey));
+  let s = '';
+  s = encrypt(JSON.stringify(data), getdk(iwxKey));
+  res.s = s;
+  res.o = o;
+  return res;
+};
+
+export const encrypt = (str, key) => {
+  const k = CryptoJS.enc.Utf8.parse(key);
+  return CryptoJS.AES.encrypt(str, k, {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  }).toString();
+};
+
+export const decrypt = (str, key) => {
+  try{
+  const k = CryptoJS.enc.Utf8.parse(key);
+  const decrypted = CryptoJS.AES.decrypt(str, k, {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  }).toString(CryptoJS.enc.Utf8);
+  return decrypted;
+}catch(error){
+  console.error('Decryption error:', error);
+  return null;
+}
+};
+
+export const md5 = (str) => {
+  return CryptoJS.MD5(str)
+    .toString()
+    .toUpperCase();
+};
+
+export const dealPostParams =  (data = {}) => {
+  let params = "";
+  let res = null;
+
+  for (const key in data) {
+    // Replacing "=" and "&" with encoded values
+    data[key] = data[key].replace("=", "%3D").replace("&", "%26");
+    // Appending key-value pair to params string
+    params += `${key}=${data[key]}&`;
+  }
+
+  // Removing the last "&"
+  params = params.substring(0, params.length - 1);
+
+  // Returning the resulting params as an object
+  res = {
+    inputString: params,
+  };
+
+  return res;
+};
+
+
+
+
+export const getuserAccount= () =>{
+const data= sessionStorage.getItem('data')
+const decryptedResponse = decrypt(data, getdk(iwxKey));
+const decryptedResponseObj = JSON.parse(decryptedResponse);
+const UserName = decryptedResponseObj?.List[0]?.UserName
+const account = decryptedResponseObj?.List[0]?.AccountId
+return account
+}
+
+
+
+
+export const iwxPost  =async ( params ={},config ={},encrypt) =>{
+ // console.log(params)
+ // console.log(config)
+ 
+  const param =  encrypt ? dealPostParamsEncrypt(params)  :dealPostParams(params)
+  // const res = await axios.post("http://10.208.193.125:8086/gateway/manager",param,null ,{config})
+//console.log(res.data)
+try{
+const result = await axios.post("https://microservice.abgind.foxconn.com/india/gateway", param, {
+  headers: {
+    ...config.headers, // Append any custom headers
+  },
+});
+const res = encrypt
+? JSON.parse(decrypt(result.data.r, getdk(iwxKey)))
+: result.data;
+return res
+//setResponse(res); // Update state with response
+} catch (error) {
+console.error("Request failed:", error);
+}
+  }
+
+  
+export const  decryptForWeb =(str)=> {
+ const cfg= {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7
+   
+}
+  const key = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
+  const decrypted = CryptoJS.AES.decrypt(str, key, cfg
+  );
+  return CryptoJS.enc.Utf8.stringify(decrypted);
+}
+
+export const encryptForWeb =(str) => {
+//  console.log(str)
+  const cfg= {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7
+   
+}
+  const k = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
+  const encry =CryptoJS.AES.encrypt(str, k, cfg).toString()
+ // console.log(encry)
+  return encry
+}
+
+
+
+
+
+
+
+
+
+
+
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -551,162 +715,3 @@ console.log(fetchroles)
 };
 
 export default Login;
-
-import axios from 'axios';
-import CryptoJS from 'crypto-js';
-
-
-
-export const iwxKey = 'azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=';//facd81g656fcd8p7a7lkh6dfa81gf4ik
-// 将加密的密钥解密--字符串中间排列
-// export function getdk(key) {
-//     const str = window.atob(key);
-//     const middle = Math.floor(str.length / 2);
-//     let left = middle - 1;
-//     let right = str.length % 2 === 0 ? middle : middle + 1;
-//     let result = '';
-//     while (left >= 0 && right < str.length) {
-//       result += str[right];
-//       result += str[left];
-//       left--;
-//       right++;
-//     }
-//     return result + str.slice(right) + str.slice(0, left + 1);
-// }
-
-export function getdk(_0x172371){const _0x185768=window["\u0061\u0074\u006f\u0062"](_0x172371);const _0x281670=Math["\u0066\u006c\u006f\u006f\u0072"](_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]/(0x89f37^0x89f35));let _0x129f13=_0x281670-(0x5f1d1^0x5f1d0);let _0x3f4c6e=_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]%(0xe670e^0xe670c)===(0x74e40^0x74e40)?_0x281670:_0x281670+(0x8a0f3^0x8a0f2);let _0x287f0c="".split("").reverse().join("");while(_0x129f13>=(0xaa513^0xaa513)&&_0x3f4c6e<_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]){_0x287f0c+=_0x185768[_0x3f4c6e];_0x287f0c+=_0x185768[_0x129f13];_0x129f13--;_0x3f4c6e++;}return _0x287f0c+_0x185768["\u0073\u006c\u0069\u0063\u0065"](_0x3f4c6e)+_0x185768["\u0073\u006c\u0069\u0063\u0065"](0x787e0^0x787e0,_0x129f13+(0x88552^0x88553));}
-
-
-export const dealPostParamsEncrypt = (data = {}) => {
-  const res = {};
-  const o = encrypt(JSON.stringify({ Os: '', DeviceId: 'Utility', AppVer: '0' }), getdk(iwxKey));
-  let s = '';
-  s = encrypt(JSON.stringify(data), getdk(iwxKey));
-  res.s = s;
-  res.o = o;
-  return res;
-};
-
-export const encrypt = (str, key) => {
-  const k = CryptoJS.enc.Utf8.parse(key);
-  return CryptoJS.AES.encrypt(str, k, {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  }).toString();
-};
-
-export const decrypt = (str, key) => {
-  try{
-  const k = CryptoJS.enc.Utf8.parse(key);
-  const decrypted = CryptoJS.AES.decrypt(str, k, {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7,
-  }).toString(CryptoJS.enc.Utf8);
-  return decrypted;
-}catch(error){
-  console.error('Decryption error:', error);
-  return null;
-}
-};
-
-export const md5 = (str) => {
-  return CryptoJS.MD5(str)
-    .toString()
-    .toUpperCase();
-};
-
-export const dealPostParams =  (data = {}) => {
-  let params = "";
-  let res = null;
-
-  for (const key in data) {
-    // Replacing "=" and "&" with encoded values
-    data[key] = data[key].replace("=", "%3D").replace("&", "%26");
-    // Appending key-value pair to params string
-    params += `${key}=${data[key]}&`;
-  }
-
-  // Removing the last "&"
-  params = params.substring(0, params.length - 1);
-
-  // Returning the resulting params as an object
-  res = {
-    inputString: params,
-  };
-
-  return res;
-};
-
-
-
-
-export const getuserAccount= () =>{
-const data= sessionStorage.getItem('data')
-const decryptedResponse = decrypt(data, getdk(iwxKey));
-const decryptedResponseObj = JSON.parse(decryptedResponse);
-const UserName = decryptedResponseObj?.List[0]?.UserName
-const account = decryptedResponseObj?.List[0]?.AccountId
-return account
-}
-
-
-
-
-export const iwxPost  =async ( params ={},config ={},encrypt) =>{
- // console.log(params)
- // console.log(config)
- 
-  const param =  encrypt ? dealPostParamsEncrypt(params)  :dealPostParams(params)
-  // const res = await axios.post("http://10.208.193.125:8086/gateway/manager",param,null ,{config})
-//console.log(res.data)
-try{
-const result = await axios.post("https://microservice.abgind.foxconn.com/india/gateway", param, {
-  headers: {
-    ...config.headers, // Append any custom headers
-  },
-});
-const res = encrypt
-? JSON.parse(decrypt(result.data.r, getdk(iwxKey)))
-: result.data;
-return res
-//setResponse(res); // Update state with response
-} catch (error) {
-console.error("Request failed:", error);
-}
-  }
-
-  
-export const  decryptForWeb =(str)=> {
- const cfg= {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7
-   
-}
-  const key = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
-  const decrypted = CryptoJS.AES.decrypt(str, key, cfg
-  );
-  return CryptoJS.enc.Utf8.stringify(decrypted);
-}
-
-export const encryptForWeb =(str) => {
-//  console.log(str)
-  const cfg= {
-    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-    mode: CryptoJS.mode.CBC,
-    padding: CryptoJS.pad.Pkcs7
-   
-}
-  const k = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
-  const encry =CryptoJS.AES.encrypt(str, k, cfg).toString()
- // console.log(encry)
-  return encry
-}
-
-
-
-
-
-
