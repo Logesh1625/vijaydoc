@@ -1,60 +1,43 @@
-// ============================================================
-// GENERATE MFA SECRET
-// ============================================================
 
-const handleGenerateSecret = async () => {
-  const headers = {
-    apiID: 'YOUR_EXISTING_SECRET_API_ID',
-    userKey: 'YOUR_EXISTING_USER_KEY',
-  };
+ffff-1694231787059-10208193125-0099(User Key Generation)
+ConsoleHi Renuka A Logout
+INDIA
+INDIA_TEST
+Current Position：：
+API / FMS / DMS / UserManagement
+Basic Info
+API Name 
+VersionNum 
+1.0
+Explain 
+User Key Generation
 
-  try {
-    setShowQRCode(false);
-    setsecretkey('');
-    setErrorMessage('');
+Header
+Request URL 
+https://microservice.abgind.foxconn.com/india/gateway
+Request Way 
+System Code 
+apiID 
+ffff-1694231787059-10208193125-0099
+* userKey 
+Input parameter
+Form-DataJson
 
-    const response = await axios.post(
-      'https://microservice.abgind.foxconn.com/india/gateway',
-      {},
-      { headers }
-    );
+Whether to call formal API
+ Reminder：
+1、Before debugging, please confirm whether the parameters are encrypted and whether the encryption has a secret key！
+2、Debugging supports Xform normal parameter submission, form data file submission and JSON parameter submission. If you need other debugging methods, please contact the system service personnel
+3、Common abnormal error reporting analysis, for details, please refer to Documentation 
+Debug informationSDKQuery LogSwagger Editor
+message:
 
-    console.log('MFA API Status:', response.status);
+              
+secret: "FF6TC5JXOEQTO5KHJ4WG2QKHJU5GQQTH"
 
-    const result = response.data;
+            
+Telephone: 0755-28128988  Transfer  568-89283   |   Email: winly.fe.dang@foxconn.com
+Copyright © 2018-2025 Foxconn A Business Group IT. All Rights Reserved
 
-    console.log(
-      'MFA API Response Fields:',
-      Object.keys(result || {})
-    );
+操作指引
+使用文档
 
-    // API returns secret directly
-    if (
-      !result ||
-      typeof result.secret !== 'string' ||
-      !result.secret.trim()
-    ) {
-      throw new Error(
-        'MFA Secret is missing from API response'
-      );
-    }
-
-    // Store secret in component state
-    setsecretkey(result.secret);
-
-    // Display QR code
-    setShowQRCode(true);
-
-    console.log('MFA Secret generated successfully');
-
-  } catch (error) {
-    console.error(
-      'MFA Secret Generation Failed:',
-      error.response?.data || error.message
-    );
-
-    setErrorMessage(
-      'Unable to generate MFA secret. Please contact IT support.'
-    );
-  }
-};
