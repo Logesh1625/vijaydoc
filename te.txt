@@ -1,76 +1,7 @@
-export const decrypt = (str, key) => {
-  try {
-    if (typeof str !== 'string' || !str.trim()) {
-      console.error('Decryption failed: encrypted input is missing.');
-      return null;
-    }
-
-    if (typeof key !== 'string' || !key) {
-      console.error('Decryption failed: encryption key is missing.');
-      return null;
-    }
-
-    const k = CryptoJS.enc.Utf8.parse(key);
-
-    const decrypted = CryptoJS.AES.decrypt(str, k, {
-      iv: CryptoJS.enc.Hex.parse('0000000000000000'),
-      mode: CryptoJS.mode.CBC,
-      padding: CryptoJS.pad.Pkcs7,
-    });
-
-    const result = decrypted.toString(CryptoJS.enc.Utf8);
-
-    if (!result) {
-      console.error('Decryption failed: empty result or incorrect key/input.');
-      return null;
-    }
-
-    return result;
-  } catch (error) {
-    console.error('Decryption error:', error.message);
-    return null;
-  }
-};
-
-
-
-
-
-
-export const getuserAccount = () => {
-  try {
-    const data = sessionStorage.getItem('data');
-
-    if (!data) {
-      console.error('User data is missing from sessionStorage.');
-      return null;
-    }
-
-    const decryptedResponse = decrypt(data, getdk(iwxKey));
-
-    if (!decryptedResponse) {
-      console.error('Unable to decrypt stored user data.');
-      return null;
-    }
-
-    const decryptedResponseObj = JSON.parse(decryptedResponse);
-
-    return decryptedResponseObj?.List?.[0]?.AccountId ?? null;
-  } catch (error) {
-    console.error('Unable to retrieve user account:', error.message);
-    return null;
-  }
-};
-
-
-
-
-
-
 const handleGenerateSecret = async () => {
   const headers = {
     apiID: 'ffff-1694231787059-10208193125-0099',
-    userKey: '10A33A67A312E649D907BBC927995B8A',
+    userKey: 'YOUR_EXISTING_USER_KEY',
   };
 
   try {
@@ -80,35 +11,40 @@ const handleGenerateSecret = async () => {
       { headers }
     );
 
-    if (!response?.data?.r) {
-      console.error('Secret API response is missing encrypted data.');
-      setErrorMessage('Unable to generate MFA secret.');
-      return;
-    }
-
-    const decryptedResponse = decrypt(
-      response.data.r,
-      getdk(iwxKey)
-    );
-
-    if (!decryptedResponse) {
-      console.error('Unable to decrypt secret API response.');
-      setErrorMessage('Unable to process MFA response.');
-      return;
-    }
+    // Debug: inspect response structure without logging the secret
+    console.log('Secret API status:', response.status);
+    console.log('Secret API response keys:', Object.keys(response.data || {}));
 
     let res;
 
-    try {
+    // Case 1: API returns secret directly
+    if (typeof response.data?.secret === 'string') {
+      res = response.data;
+    }
+    // Case 2: API returns an object inside Data
+    else if (typeof response.data?.Data?.secret === 'string') {
+      res = response.data.Data;
+    }
+    // Case 3: API returns encrypted response in r
+    else if (typeof response.data?.r === 'string') {
+      const decryptedResponse = decrypt(
+        response.data.r,
+        getdk(iwxKey)
+      );
+
+      if (!decryptedResponse) {
+        throw new Error('Unable to decrypt MFA response.');
+      }
+
       res = JSON.parse(decryptedResponse);
-    } catch (error) {
-      console.error('Invalid MFA response JSON:', error.message);
-      setErrorMessage('Invalid response from MFA service.');
+    } else {
+      console.error('Unexpected secret API response structure.');
+      setErrorMessage('Unexpected response from MFA service.');
       return;
     }
 
-    if (!res || typeof res.secret !== 'string' || !res.secret.trim()) {
-      console.error('MFA response does not contain a valid secret.');
+    if (typeof res?.secret !== 'string' || !res.secret.trim()) {
+      console.error('MFA secret is missing from API response.');
       setErrorMessage('MFA secret was not returned by the service.');
       return;
     }
@@ -116,14 +52,13 @@ const handleGenerateSecret = async () => {
     setsecretkey(res.secret);
     setShowQRCode(true);
     setErrorMessage('');
+
   } catch (error) {
     console.error(
-      'Secret generation request failed:',
+      'Secret generation failed:',
       error.response?.status || error.message
     );
 
-    setErrorMessage('Unable to connect to the MFA service.');
+    setErrorMessage('Unable to generate MFA secret.');
   }
 };
-
-
