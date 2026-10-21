@@ -1,1184 +1,712 @@
-CREATE OR REPLACE PACKAGE BODY CMS.F1_MEAL_MANAGEMENT
-AS
-
-    /* ============================================================
-       PRIVATE: active CMS user check
-       ============================================================ */
-    FUNCTION IS_ACTIVE_CMS_USER(P_EMP_ID IN VARCHAR2) RETURN NUMBER IS
-        L_COUNT NUMBER;
-    BEGIN
-        SELECT COUNT(1) INTO L_COUNT
-        FROM CMS.C_USER_MANAGE_T U
-        WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(P_EMP_ID))
-          AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-          AND NVL(U.DEL_FLAG, 0) = 0;
-
-        RETURN CASE WHEN L_COUNT > 0 THEN 1 ELSE 0 END;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN 0;
-    END IS_ACTIVE_CMS_USER;
-
-
-    /* ============================================================
-       PRIVATE: does employee have access to a given site?
-       ============================================================ */
-    FUNCTION HAS_SITE_ACCESS(P_EMP_ID IN VARCHAR2, P_SITE IN VARCHAR2) RETURN NUMBER IS
-        L_COUNT NUMBER;
-    BEGIN
-        SELECT COUNT(1) INTO L_COUNT
-        FROM CMS.C_USER_MANAGE_T U
-        WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(P_EMP_ID))
-          AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-          AND NVL(U.DEL_FLAG, 0) = 0
-          AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(P_SITE));
-
-        RETURN CASE WHEN L_COUNT > 0 THEN 1 ELSE 0 END;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN 0;
-    END HAS_SITE_ACCESS;
-
-
-    /* ============================================================
-       PRIVATE: active user's site (MIN if more than one)
-       ============================================================ */
-    FUNCTION GET_USER_SITE(P_EMP_ID IN VARCHAR2)
-        RETURN CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE IS
-        L_SITE CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-    BEGIN
-        SELECT MIN(U.SITE) INTO L_SITE
-        FROM CMS.C_USER_MANAGE_T U
-        WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(P_EMP_ID))
-          AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-          AND NVL(U.DEL_FLAG, 0) = 0;
-
-        RETURN L_SITE;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN NULL;
-    END GET_USER_SITE;
-
-
-    /* ============================================================
-       PUBLIC: site code -> site name
-       ============================================================ */
-    FUNCTION GET_SITE_NAME(P_SITE IN VARCHAR2) RETURN VARCHAR2 IS
-    BEGIN
-        RETURN CASE TRIM(P_SITE)
-                   WHEN '95326' THEN 'FXBL'
-                   WHEN '69941' THEN 'FXCN'
-                   ELSE P_SITE
-               END;
-    END GET_SITE_NAME;
-
-
-    /* ============================================================
-       PRIVATE: DD-MM-YYYY -> DATE (NULL if blank)
-       ============================================================ */
-    FUNCTION PARSE_DDMMYYYY(P_VAL IN VARCHAR2) RETURN DATE IS
-    BEGIN
-        IF P_VAL IS NULL OR TRIM(P_VAL) IS NULL THEN
-            RETURN NULL;
-        END IF;
-        RETURN TRUNC(TO_DATE(TRIM(P_VAL), 'DD-MM-YYYY'));
-    END PARSE_DDMMYYYY;
-
-
-    /* ============================================================
-       PUBLIC: badge passes ADD_DATE range + Added By filter?
-       1 = include, 0 = exclude. No filter given -> 1.
-       ============================================================ */
-    FUNCTION BADGE_IN_FILTER(
-        P_BADGE   IN VARCHAR2,
-        P_FROM    IN DATE,
-        P_TO      IN DATE,
-        P_ADD_BY  IN VARCHAR2
-    ) RETURN NUMBER IS
-        L_CNT NUMBER;
-    BEGIN
-        IF P_FROM IS NULL AND P_TO IS NULL
-           AND (P_ADD_BY IS NULL OR TRIM(P_ADD_BY) IS NULL) THEN
-            RETURN 1;
-        END IF;
-
-        SELECT COUNT(1) INTO L_CNT
-        FROM CMS.C_F1_MEAL_INFO M
-        WHERE UPPER(TRIM(M.FX_BADGE)) = UPPER(TRIM(P_BADGE))
-          AND NVL(M.DEL_FLAG, 0) = 0
-          AND M.ADD_DATE IS NOT NULL
-          AND ( P_FROM IS NULL OR TRUNC(M.ADD_DATE) >= P_FROM )
-          AND ( P_TO   IS NULL OR TRUNC(M.ADD_DATE) <= P_TO )
-          AND ( P_ADD_BY IS NULL OR TRIM(P_ADD_BY) IS NULL
-                OR UPPER(TRIM(M.ADD_BY)) = UPPER(TRIM(P_ADD_BY)) );
-
-        RETURN CASE WHEN L_CNT > 0 THEN 1 ELSE 0 END;
-    EXCEPTION
-        WHEN OTHERS THEN RETURN 0;
-    END BADGE_IN_FILTER;
-
-
-    /* ============================================================
-       INSERT F1 MENU
-       ============================================================ */
-    PROCEDURE INSERT_F1_MENU(
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_ADD_BY            IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    ) IS
-        V_SITE_VAL   CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-        V_FIRST_DATE DATE;
-        V_LAST_DATE  DATE;
-    BEGIN
-
-        IF IS_ACTIVE_CMS_USER(V_ADD_BY) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_ADD_BY;
-            RETURN;
-        END IF;
-
-        V_SITE_VAL := GET_USER_SITE(V_ADD_BY);
-
-        IF V_SITE_VAL IS NULL THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user/site not found for employee: ' || V_ADD_BY;
-            RETURN;
-        END IF;
-
-        BEGIN
-            V_FIRST_DATE := TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY');
-            V_LAST_DATE  := TO_DATE(V_LAST_DATE_FXBL,  'DD-MM-YYYY');
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                RETURN;
-        END;
-
-        IF V_FIRST_DATE > V_LAST_DATE THEN
-            V_RES := '0';
-            V_RESULT := 'First date cannot be greater than last date';
-            RETURN;
-        END IF;
-
-        INSERT INTO CMS.C_F1_MEAL_INFO (
-            ID, GROUPS, PROPERTY_01, MEAL_PREFERENCE, FX_BADGE, NAME,
-            FIRST_DATE_FXBL, LAST_DATE_FXBL, ADD_BY, ADD_DATE, DEL_FLAG
-        ) VALUES (
-            CMS.SEQ_C_F1_MEAL_INFO.NEXTVAL, V_GROUPS, V_SITE_VAL, V_MEAL_PREFERENCE,
-            V_FX_BADGE, V_NAME, V_FIRST_DATE, V_LAST_DATE, V_ADD_BY, SYSDATE, 0
-        );
-
-        COMMIT;
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END INSERT_F1_MENU;
-
-
-    /* ============================================================
-       BULK F1 MENU
-       ============================================================ */
-    PROCEDURE BULK_F1_MENU(
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_ADD_BY            IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    ) IS
-    BEGIN
-        INSERT_F1_MENU(
-            V_GROUPS          => V_GROUPS,
-            V_MEAL_PREFERENCE => V_MEAL_PREFERENCE,
-            V_FX_BADGE        => V_FX_BADGE,
-            V_NAME            => V_NAME,
-            V_FIRST_DATE_FXBL => V_FIRST_DATE_FXBL,
-            V_LAST_DATE_FXBL  => V_LAST_DATE_FXBL,
-            V_ADD_BY          => V_ADD_BY,
-            V_RES             => V_RES,
-            V_RESULT          => V_RESULT
-        );
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END BULK_F1_MENU;
-
-
-    /* ============================================================
-       GET F1 MENU MANAGEMENT
-       ============================================================ */
-    PROCEDURE GET_F1_MENU_MANAGE(
-        V_EMP_ID        IN VARCHAR2,
-        V_GROUPS        IN VARCHAR2,
-        V_SITE          IN VARCHAR2,
-        V_FX_BADGE      IN VARCHAR2,
-        V_ADD_BY        IN VARCHAR2,
-        L_START_PAGE    IN VARCHAR2,
-        L_PAGE_SIZE     IN VARCHAR2,
-        V_RES           OUT VARCHAR2,
-        V_RESULT        OUT VARCHAR2,
-        P_CURSOR        OUT SYS_REFCURSOR
-    ) IS
-        L_START_PAGE_NUM NUMBER;
-        L_PAGE_SIZE_NUM  NUMBER;
-    BEGIN
-
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            RETURN;
-        END IF;
-
-        BEGIN
-            L_START_PAGE_NUM := TO_NUMBER(NVL(NULLIF(TRIM(L_START_PAGE), ''), '1'));
-            L_PAGE_SIZE_NUM  := TO_NUMBER(NVL(NULLIF(TRIM(L_PAGE_SIZE), ''), '10'));
-            IF L_START_PAGE_NUM < 1 THEN L_START_PAGE_NUM := 1; END IF;
-            IF L_PAGE_SIZE_NUM  < 1 THEN L_PAGE_SIZE_NUM  := 10; END IF;
-        EXCEPTION
-            WHEN VALUE_ERROR THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid pagination values';
-                RETURN;
-        END;
-
-        OPEN P_CURSOR FOR
-        SELECT
-            RN, ROWSCOUNT, ID, GROUPS, SITE, SITE_NAME, MEAL_PREFERENCE,
-            FX_BADGE, NAME, FIRST_DATE_FXBL, LAST_DATE_FXBL,
-            ADD_BY, ADD_DATE, EDIT_BY, EDIT_DATE
-        FROM
-        (
-            SELECT
-                ROW_NUMBER() OVER (ORDER BY V.ADD_DATE DESC, V.ID DESC) AS RN,
-                COUNT(1) OVER () AS ROWSCOUNT,
-                V.ID,
-                V.GROUPS,
-                V.PROPERTY_01 AS SITE,
-                GET_SITE_NAME(V.PROPERTY_01) AS SITE_NAME,
-                BC.NAME AS MEAL_PREFERENCE,
-                V.FX_BADGE,
-                V.NAME,
-                TO_CHAR(V.FIRST_DATE_FXBL, 'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-                TO_CHAR(V.LAST_DATE_FXBL,  'DD-MM-YYYY') AS LAST_DATE_FXBL,
-                V.ADD_BY,
-                TO_CHAR(V.ADD_DATE, 'DD-MM-YYYY HH24:MI:SS') AS ADD_DATE,
-                V.EDIT_BY,
-                TO_CHAR(V.EDIT_DATE, 'DD-MM-YYYY HH24:MI:SS') AS EDIT_DATE
-            FROM CMS.C_F1_MEAL_INFO V
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 1001
-            WHERE NVL(V.DEL_FLAG, 0) = 0
-              AND ( V_GROUPS IS NULL OR TRIM(V_GROUPS) IS NULL
-                    OR UPPER(V.GROUPS) LIKE '%' || UPPER(TRIM(V_GROUPS)) || '%' )
-              AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL
-                    OR UPPER(TRIM(V.PROPERTY_01)) = UPPER(TRIM(V_SITE)) )
-              AND ( V_FX_BADGE IS NULL OR TRIM(V_FX_BADGE) IS NULL
-                    OR UPPER(V.FX_BADGE) LIKE '%' || UPPER(TRIM(V_FX_BADGE)) || '%' )
-              AND ( V_ADD_BY IS NULL OR TRIM(V_ADD_BY) IS NULL
-                    OR UPPER(TRIM(V.ADD_BY)) = UPPER(TRIM(V_ADD_BY)) )
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(V.PROPERTY_01))
-                  )
-        )
-        WHERE RN >  (L_START_PAGE_NUM - 1) * L_PAGE_SIZE_NUM
-          AND RN <= L_START_PAGE_NUM * L_PAGE_SIZE_NUM;
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_F1_MENU_MANAGE;
-
-
-    /* ============================================================
-       UPDATE F1 MENU MANAGEMENT
-       ============================================================ */
-    PROCEDURE UPDATE_F1_MENU_MANAGE(
-        V_ID                IN NUMBER,
-        V_GROUPS            IN VARCHAR2,
-        V_MEAL_PREFERENCE   IN VARCHAR2,
-        V_FX_BADGE          IN VARCHAR2,
-        V_NAME              IN VARCHAR2,
-        V_FIRST_DATE_FXBL   IN VARCHAR2,
-        V_LAST_DATE_FXBL    IN VARCHAR2,
-        V_EDIT_BY           IN VARCHAR2,
-        V_RES               OUT VARCHAR2,
-        V_RESULT            OUT VARCHAR2
-    ) IS
-        V_FIRST_DATE DATE;
-        V_LAST_DATE  DATE;
-    BEGIN
-
-        BEGIN
-            V_FIRST_DATE := TO_DATE(V_FIRST_DATE_FXBL, 'DD-MM-YYYY');
-            V_LAST_DATE  := TO_DATE(V_LAST_DATE_FXBL,  'DD-MM-YYYY');
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                RETURN;
-        END;
-
-        IF V_FIRST_DATE > V_LAST_DATE THEN
-            V_RES := '0';
-            V_RESULT := 'First date cannot be greater than last date';
-            RETURN;
-        END IF;
-
-        UPDATE CMS.C_F1_MEAL_INFO V
-        SET V.GROUPS = V_GROUPS,
-            V.MEAL_PREFERENCE = V_MEAL_PREFERENCE,
-            V.FX_BADGE = V_FX_BADGE,
-            V.NAME = V_NAME,
-            V.FIRST_DATE_FXBL = V_FIRST_DATE,
-            V.LAST_DATE_FXBL = V_LAST_DATE,
-            V.EDIT_BY = V_EDIT_BY,
-            V.EDIT_DATE = SYSDATE
-        WHERE V.ID = V_ID
-          AND NVL(V.DEL_FLAG, 0) = 0
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EDIT_BY))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(V.PROPERTY_01))
-              );
-
-        IF SQL%ROWCOUNT = 0 THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'No authorized active record found with ID = ' || V_ID;
-            RETURN;
-        END IF;
-
-        COMMIT;
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END UPDATE_F1_MENU_MANAGE;
-
-
-    /* ============================================================
-       DELETE F1 MENU MANAGEMENT
-       ============================================================ */
-    PROCEDURE DELETE_F1_MENU_MANAGE(
-        L_IDS       IN VARCHAR2,
-        V_EDIT_BY   IN VARCHAR2,
-        V_RES       OUT VARCHAR2,
-        V_RESULT    OUT VARCHAR2
-    ) IS
-    BEGIN
-
-        IF L_IDS IS NULL OR TRIM(L_IDS) IS NULL THEN
-            V_RES := '0';
-            V_RESULT := 'No ID selected for delete';
-            RETURN;
-        END IF;
-
-        UPDATE CMS.C_F1_MEAL_INFO V
-        SET V.DEL_FLAG = 1,
-            V.EDIT_DATE = SYSDATE,
-            V.EDIT_BY = V_EDIT_BY
-        WHERE INSTR(',' || REPLACE(L_IDS, ' ', '') || ',', ',' || TO_CHAR(V.ID) || ',') > 0
-          AND NVL(V.DEL_FLAG, 0) = 0
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EDIT_BY))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(V.PROPERTY_01))
-              );
-
-        IF SQL%ROWCOUNT = 0 THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'No authorized active record found for selected ID(s)';
-            RETURN;
-        END IF;
-
-        COMMIT;
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            ROLLBACK;
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END DELETE_F1_MENU_MANAGE;
-
-
-    /* ============================================================
-       GET F1 MENU BY FX BADGE
-       ============================================================ */
-PROCEDURE GET_F1_MENU_BY_FXBADGE(
-    V_EMP_ID    IN VARCHAR2,
-    V_SITE      IN VARCHAR2,
-    V_FX_BADGE  IN VARCHAR2,
-    V_RES       OUT VARCHAR2,
-    V_RESULT    OUT VARCHAR2,
-    P_CURSOR    OUT SYS_REFCURSOR
-) IS
-    V_COUNT       NUMBER;
-    V_ALREADY     NUMBER;
-    V_RECORD_SITE CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-BEGIN
-
-    IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-        V_RES := '0';
-        V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-
-        OPEN P_CURSOR FOR
-            SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE
-            FROM DUAL WHERE 1 = 0;
-        RETURN;
-    END IF;
-
-    IF V_SITE IS NOT NULL AND TRIM(V_SITE) IS NOT NULL THEN
-        IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'You are not authorized for the selected site.';
-
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE
-                FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
-    END IF;
-
-    /*
-     * Only badges added today are eligible for lookup.
-     */
-    SELECT COUNT(1)
-    INTO V_COUNT
-    FROM CMS.C_F1_MEAL_INFO M
-    WHERE UPPER(TRIM(M.FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-      AND NVL(M.DEL_FLAG, 0) = 0
-      AND M.ADD_DATE >= TRUNC(SYSDATE)
-      AND M.ADD_DATE < TRUNC(SYSDATE) + 1;
-
-    IF V_COUNT = 0 THEN
-        V_RES := '0';
-        V_RESULT := 'FX Badge not found';
-
-        OPEN P_CURSOR FOR
-            SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE
-            FROM DUAL WHERE 1 = 0;
-        RETURN;
-    END IF;
-
-    /*
-     * Get the latest record added today.
-     */
-    SELECT PROPERTY_01
-    INTO V_RECORD_SITE
-    FROM (
-        SELECT
-            M.PROPERTY_01,
-            ROW_NUMBER() OVER (
-                ORDER BY M.ADD_DATE DESC, M.ID DESC
-            ) AS RN
-        FROM CMS.C_F1_MEAL_INFO M
-        WHERE UPPER(TRIM(M.FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-          AND NVL(M.DEL_FLAG, 0) = 0
-          AND M.ADD_DATE >= TRUNC(SYSDATE)
-          AND M.ADD_DATE < TRUNC(SYSDATE) + 1
-    )
-    WHERE RN = 1;
-
-    IF HAS_SITE_ACCESS(V_EMP_ID, V_RECORD_SITE) = 0 THEN
-        V_RES := '0';
-        V_RESULT := 'This FX Badge does not belong to your assigned site.';
-
-        OPEN P_CURSOR FOR
-            SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE
-            FROM DUAL WHERE 1 = 0;
-        RETURN;
-    END IF;
-
-    SELECT COUNT(1)
-    INTO V_ALREADY
-    FROM CMS.C_F1_SCAN_LOG
-    WHERE UPPER(TRIM(FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-      AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-      AND NVL(DEL_FLAG, 0) = 0
-      AND COLLECTED_DATA = 'SUCCESS';
-
-    OPEN P_CURSOR FOR
-        SELECT
-            V.GROUPS,
-            V.PROPERTY_01 AS SITE,
-            GET_SITE_NAME(V.PROPERTY_01) AS SITE_NAME,
-            BC.NAME AS MEAL_PREFERENCE,
-            V.FX_BADGE,
-            V.NAME,
-            TO_CHAR(V.FIRST_DATE_FXBL, 'DD-MM-YYYY')
-                AS FIRST_DATE_FXBL,
-            TO_CHAR(V.LAST_DATE_FXBL, 'DD-MM-YYYY')
-                AS LAST_DATE_FXBL,
-            CASE
-                WHEN UPPER(TRIM(BC.NAME)) = 'NO MEAL REQUIRED'
-                    THEN 'NOT_ENTITLED'
-
-                WHEN V.FIRST_DATE_FXBL IS NULL
-                  OR V.LAST_DATE_FXBL IS NULL
-                    THEN 'NOT_UPDATED'
-
-                WHEN TRUNC(SYSDATE) NOT BETWEEN
-                     TRUNC(V.FIRST_DATE_FXBL)
-                     AND TRUNC(V.LAST_DATE_FXBL)
-                    THEN 'LAST DATE EXPIRED'
-
-                WHEN V_ALREADY > 0
-                    THEN 'ALREADY_SCANNED'
-
-                ELSE 'ENTITLED'
-            END AS ENTITLEMENT_STATUS
-        FROM (
-            SELECT
-                M.*,
-                ROW_NUMBER() OVER (
-                    ORDER BY M.ADD_DATE DESC, M.ID DESC
-                ) AS RN
-            FROM CMS.C_F1_MEAL_INFO M
-            WHERE UPPER(TRIM(M.FX_BADGE)) =
-                  UPPER(TRIM(V_FX_BADGE))
-              AND NVL(M.DEL_FLAG, 0) = 0
-              AND M.ADD_DATE >= TRUNC(SYSDATE)
-              AND M.ADD_DATE < TRUNC(SYSDATE) + 1
-        ) V
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(V.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 1001
-        WHERE V.RN = 1;
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        V_RES := '0';
-        V_RESULT := 'FX Badge not found';
-
-        OPEN P_CURSOR FOR
-            SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE
-            FROM DUAL WHERE 1 = 0;
-
-    WHEN OTHERS THEN
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END GET_F1_MENU_BY_FXBADGE;
-    /* ============================================================
-       INSERT MEAL SCAN LOG
-       ============================================================ */
-  PROCEDURE INSERT_MEAL_SCAN_LOG(
-    V_EMP_ID    IN VARCHAR2,
-    V_SITE      IN VARCHAR2,
-    V_FX_BADGE  IN VARCHAR2,
-    V_RES       OUT VARCHAR2,
-    V_RESULT    OUT VARCHAR2,
-    P_CURSOR    OUT SYS_REFCURSOR
-) IS
-    V_COUNT         NUMBER := 0;
-    V_ALREADY_COUNT NUMBER := 0;
-
-    V_GROUPS         CMS.C_F1_MEAL_INFO.GROUPS%TYPE;
-    V_SITE_VAL       CMS.C_F1_MEAL_INFO.PROPERTY_01%TYPE;
-    V_NAME           CMS.C_F1_MEAL_INFO.NAME%TYPE;
-    V_MEAL_PREF      CMS.C_F1_MEAL_INFO.MEAL_PREFERENCE%TYPE;
-    V_MEAL_PREF_NAME CMS.C_BASE_CODE_T.NAME%TYPE;
-    V_FIRST_DATE     CMS.C_F1_MEAL_INFO.FIRST_DATE_FXBL%TYPE;
-    V_LAST_DATE      CMS.C_F1_MEAL_INFO.LAST_DATE_FXBL%TYPE;
-
-    V_STATUS  VARCHAR2(50);
-    V_MESSAGE VARCHAR2(200);
-
-BEGIN
-
-    IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-        V_RES := '0';
-        V_RESULT := 'Active CMS user not found for employee: '
-                    || V_EMP_ID;
-        RETURN;
-    END IF;
-
-    IF V_SITE IS NOT NULL AND TRIM(V_SITE) IS NOT NULL THEN
-        IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'You are not authorized for the selected site.';
-            RETURN;
-        END IF;
-    END IF;
-
-    /*
-     * IMPORTANT:
-     * Only records added today can be scanned.
-     */
-    BEGIN
-        SELECT
-            GROUPS,
-            PROPERTY_01,
-            NAME,
-            MEAL_PREFERENCE,
-            FIRST_DATE_FXBL,
-            LAST_DATE_FXBL
-        INTO
-            V_GROUPS,
-            V_SITE_VAL,
-            V_NAME,
-            V_MEAL_PREF,
-            V_FIRST_DATE,
-            V_LAST_DATE
-        FROM (
-            SELECT
-                M.*,
-                ROW_NUMBER() OVER (
-                    ORDER BY M.ADD_DATE DESC, M.ID DESC
-                ) AS RN
-            FROM CMS.C_F1_MEAL_INFO M
-            WHERE UPPER(TRIM(M.FX_BADGE)) =
-                  UPPER(TRIM(V_FX_BADGE))
-              AND NVL(M.DEL_FLAG, 0) = 0
-              AND M.ADD_DATE >= TRUNC(SYSDATE)
-              AND M.ADD_DATE < TRUNC(SYSDATE) + 1
-        )
-        WHERE RN = 1;
-
-        V_COUNT := 1;
-
-    EXCEPTION
-        WHEN NO_DATA_FOUND THEN
-            V_COUNT := 0;
-    END;
-
-    /*
-     * Badge not found or added before today.
-     */
-    IF V_COUNT = 0 THEN
-
-        V_RES := '0';
-        V_RESULT := 'FX Badge not found';
-
-        OPEN P_CURSOR FOR
-            SELECT
-                V_FX_BADGE AS FX_BADGE,
-                CAST(NULL AS VARCHAR2(200)) AS NAME,
-                CAST(NULL AS VARCHAR2(100)) AS SITE,
-                CAST(NULL AS VARCHAR2(100)) AS SITE_NAME,
-                CAST(NULL AS VARCHAR2(200)) AS MEAL_PREFERENCE,
-                TO_CHAR(SYSDATE, 'DD-MM-YYYY HH24:MI:SS')
-                    AS SCAN_TIME,
-                'INVALID' AS STATUS,
-                'FX Badge not found' AS STATUS_MESSAGE
-            FROM DUAL;
-
-        RETURN;
-
-    END IF;
-
-    /*
-     * Validate site ownership.
-     */
-    IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE_VAL) = 0 THEN
-        V_RES := '0';
-        V_RESULT := 'This FX Badge does not belong to your assigned site.';
-        RETURN;
-    END IF;
-
-    /*
-     * Get meal preference name.
-     */
-    SELECT NVL(MAX(BC.NAME), TO_CHAR(V_MEAL_PREF))
-    INTO V_MEAL_PREF_NAME
-    FROM CMS.C_BASE_CODE_T BC
-    WHERE BC.TYPE_ID = 1001
-      AND TO_CHAR(BC.ID) = TO_CHAR(V_MEAL_PREF);
-
-    /*
-     * Validate meal eligibility.
-     */
-    IF UPPER(TRIM(V_MEAL_PREF_NAME)) = 'NO MEAL REQUIRED' THEN
-
-        V_STATUS := 'INVALID';
-        V_MESSAGE := 'NO MEAL REQUIRED BUT COME TO COLLECT';
-
-    ELSIF V_FIRST_DATE IS NULL OR V_LAST_DATE IS NULL THEN
-
-        V_STATUS := 'INVALID';
-        V_MESSAGE := 'Dates not updated';
-
-    ELSIF TRUNC(SYSDATE) NOT BETWEEN
-          TRUNC(V_FIRST_DATE) AND TRUNC(V_LAST_DATE) THEN
-
-        V_STATUS := 'INVALID';
-        V_MESSAGE := 'LAST DATE EXPIRED';
-
-    ELSE
-
-        V_STATUS := 'SUCCESS';
-        V_MESSAGE := 'Eligible for meal';
-
-    END IF;
-
-    /*
-     * Check whether the meal was already collected today.
-     */
-    IF V_STATUS = 'SUCCESS' THEN
-
-        SELECT COUNT(1)
-        INTO V_ALREADY_COUNT
-        FROM CMS.C_F1_SCAN_LOG
-        WHERE UPPER(TRIM(FX_BADGE)) = UPPER(TRIM(V_FX_BADGE))
-          AND TRUNC(MEAL_DATE) = TRUNC(SYSDATE)
-          AND NVL(DEL_FLAG, 0) = 0
-          AND COLLECTED_DATA = 'SUCCESS';
-
-        IF V_ALREADY_COUNT > 0 THEN
-            V_STATUS := 'ALREADY_SCANNED';
-            V_MESSAGE := 'Meal already collected today';
-        END IF;
-
-    END IF;
-
-    /*
-     * Insert today's scan result.
-     */
-    INSERT INTO CMS.C_F1_SCAN_LOG (
-        ID,
-        GROUPS,
-        PROPERTY_01,
-        MEAL_PREFERENCE,
-        FX_BADGE,
-        NAME,
-        FIRST_DATE_FXBL,
-        LAST_DATE_FXBL,
-        COLLECTED_DATA,
-        STATUS_MESSAGE,
-        MEAL_DATE,
-        FIRST_SCANTIME,
-        LAST_SCANTIME,
-        DEL_FLAG
-    )
-    VALUES (
-        CMS.SEQ_C_F1_SCAN_LOG.NEXTVAL,
-        V_GROUPS,
-        V_SITE_VAL,
-        V_MEAL_PREF,
-        V_FX_BADGE,
-        V_NAME,
-        V_FIRST_DATE,
-        V_LAST_DATE,
-        V_STATUS,
-        V_MESSAGE,
-        SYSDATE,
-        SYSDATE,
-        SYSDATE,
-        0
-    );
-
-    COMMIT;
-
-    OPEN P_CURSOR FOR
-        SELECT
-            V_FX_BADGE AS FX_BADGE,
-            V_NAME AS NAME,
-            V_SITE_VAL AS SITE,
-            GET_SITE_NAME(V_SITE_VAL) AS SITE_NAME,
-            V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
-            TO_CHAR(SYSDATE, 'DD-MM-YYYY HH24:MI:SS')
-                AS SCAN_TIME,
-            V_STATUS AS STATUS,
-            V_MESSAGE AS STATUS_MESSAGE
-        FROM DUAL;
-
-    V_RES := '1';
-    V_RESULT := 'Success';
-
-EXCEPTION
-    WHEN DUP_VAL_ON_INDEX THEN
-        ROLLBACK;
-
-        V_RES := '1';
-        V_RESULT := 'Already scanned today';
-
-        OPEN P_CURSOR FOR
-            SELECT
-                V_FX_BADGE AS FX_BADGE,
-                V_NAME AS NAME,
-                V_SITE_VAL AS SITE,
-                GET_SITE_NAME(V_SITE_VAL) AS SITE_NAME,
-                V_MEAL_PREF_NAME AS MEAL_PREFERENCE,
-                TO_CHAR(SYSDATE, 'DD-MM-YYYY HH24:MI:SS')
-                    AS SCAN_TIME,
-                'ALREADY_SCANNED' AS STATUS,
-                'Meal already collected today' AS STATUS_MESSAGE
-            FROM DUAL;
-
-    WHEN OTHERS THEN
-        ROLLBACK;
-
-        V_RES := '0';
-        V_RESULT := 'Error: ' || SQLERRM;
-
-END INSERT_MEAL_SCAN_LOG;
-/* ============================================================
-       GET MEAL SCAN LOG
-       ============================================================ */
-    PROCEDURE GET_MEAL_SCAN_LOG(
-        V_EMP_ID         IN VARCHAR2,
-        V_SEARCH_TEXT    IN VARCHAR2,
-        V_STATUS_FILTER  IN VARCHAR2,
-        V_SITE           IN VARCHAR2,
-        V_RES            OUT VARCHAR2,
-        V_RESULT         OUT VARCHAR2,
-        P_CURSOR         OUT SYS_REFCURSOR,
-        P_SUMMARY_CURSOR OUT SYS_REFCURSOR,
-        V_FROM_FXBL      IN VARCHAR2,
-        V_TO_FXBL        IN VARCHAR2,
-        V_ADD_BY         IN VARCHAR2
-    ) IS
-        V_FROM_D DATE;
-        V_TO_D   DATE;
-    BEGIN
-
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-            OPEN P_SUMMARY_CURSOR FOR
-                SELECT 0 AS TOTAL_SCANS, 0 AS SUCCESS_COUNT,
-                       0 AS ALREADY_SCANNED_COUNT, 0 AS INVALID_COUNT FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
-
-        BEGIN
-            V_FROM_D := PARSE_DDMMYYYY(V_FROM_FXBL);
-            V_TO_D   := PARSE_DDMMYYYY(V_TO_FXBL);
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                OPEN P_CURSOR FOR
-                    SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-                OPEN P_SUMMARY_CURSOR FOR
-                    SELECT 0 AS TOTAL_SCANS, 0 AS SUCCESS_COUNT,
-                           0 AS ALREADY_SCANNED_COUNT, 0 AS INVALID_COUNT FROM DUAL WHERE 1 = 0;
-                RETURN;
-        END;
-
-        IF V_FROM_D IS NOT NULL AND V_TO_D IS NOT NULL AND V_FROM_D > V_TO_D THEN
-            V_RES := '0';
-            V_RESULT := 'From date cannot be greater than to date';
-            OPEN P_CURSOR FOR
-                SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-            OPEN P_SUMMARY_CURSOR FOR
-                SELECT 0 AS TOTAL_SCANS, 0 AS SUCCESS_COUNT,
-                       0 AS ALREADY_SCANNED_COUNT, 0 AS INVALID_COUNT FROM DUAL WHERE 1 = 0;
-            RETURN;
-        END IF;
-
-        IF V_SITE IS NOT NULL AND TRIM(V_SITE) IS NOT NULL
-           AND UPPER(TRIM(V_SITE)) <> 'ALL' THEN
-            IF HAS_SITE_ACCESS(V_EMP_ID, V_SITE) = 0 THEN
-                V_RES := '0';
-                V_RESULT := 'You are not authorized for the selected site.';
-                OPEN P_CURSOR FOR
-                    SELECT CAST(NULL AS VARCHAR2(100)) AS FX_BADGE FROM DUAL WHERE 1 = 0;
-                OPEN P_SUMMARY_CURSOR FOR
-                    SELECT 0 AS TOTAL_SCANS, 0 AS SUCCESS_COUNT,
-                           0 AS ALREADY_SCANNED_COUNT, 0 AS INVALID_COUNT FROM DUAL WHERE 1 = 0;
-                RETURN;
-            END IF;
-        END IF;
-
-        OPEN P_CURSOR FOR
-        SELECT
-            S.FX_BADGE,
-            S.NAME,
-            S.GROUPS,
-            S.PROPERTY_01 AS SITE,
-            GET_SITE_NAME(S.PROPERTY_01) AS SITE_NAME,
-            BC.NAME AS MEAL_PREFERENCE,
-            TO_CHAR(S.FIRST_DATE_FXBL, 'DD-MM-YYYY') AS FIRST_DATE_FXBL,
-            TO_CHAR(S.LAST_DATE_FXBL,  'DD-MM-YYYY') AS LAST_DATE_FXBL,
-            TO_CHAR(NVL(S.LAST_SCANTIME, S.FIRST_SCANTIME), 'DD-MM-YYYY HH24:MI:SS') AS SCAN_TIME,
-            S.COLLECTED_DATA AS STATUS,
-            S.STATUS_MESSAGE
-        FROM CMS.C_F1_SCAN_LOG S
-        LEFT JOIN CMS.C_BASE_CODE_T BC
-            ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-           AND BC.TYPE_ID = 1001
-        WHERE NVL(S.DEL_FLAG, 0) = 0
-          AND ( V_SEARCH_TEXT IS NULL OR TRIM(V_SEARCH_TEXT) IS NULL
-                OR UPPER(S.FX_BADGE) LIKE '%' || UPPER(TRIM(V_SEARCH_TEXT)) || '%'
-                OR UPPER(S.NAME) LIKE '%' || UPPER(TRIM(V_SEARCH_TEXT)) || '%' )
-          AND ( V_STATUS_FILTER IS NULL OR TRIM(V_STATUS_FILTER) IS NULL
-                OR UPPER(TRIM(V_STATUS_FILTER)) = 'ALL'
-                OR S.COLLECTED_DATA = V_STATUS_FILTER )
-          AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE)) )
-          AND BADGE_IN_FILTER(S.FX_BADGE, V_FROM_D, V_TO_D, V_ADD_BY) = 1
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-              )
-        ORDER BY S.MEAL_DATE DESC, S.ID DESC;
-
-        OPEN P_SUMMARY_CURSOR FOR
-        SELECT
-            COUNT(1) AS TOTAL_SCANS,
-            NVL(SUM(CASE WHEN S.COLLECTED_DATA = 'SUCCESS' THEN 1 ELSE 0 END), 0) AS SUCCESS_COUNT,
-            NVL(SUM(CASE WHEN S.COLLECTED_DATA = 'ALREADY_SCANNED' THEN 1 ELSE 0 END), 0) AS ALREADY_SCANNED_COUNT,
-            NVL(SUM(CASE WHEN S.COLLECTED_DATA = 'INVALID' THEN 1 ELSE 0 END), 0) AS INVALID_COUNT
-        FROM CMS.C_F1_SCAN_LOG S
-        WHERE NVL(S.DEL_FLAG, 0) = 0
-          AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                OR UPPER(TRIM(S.PROPERTY_01)) = UPPER(TRIM(V_SITE)) )
-          AND BADGE_IN_FILTER(S.FX_BADGE, V_FROM_D, V_TO_D, V_ADD_BY) = 1
-          AND EXISTS (
-                SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                  AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                  AND NVL(U.DEL_FLAG, 0) = 0
-                  AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-              );
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_MEAL_SCAN_LOG;
-
-
-    /* ============================================================
-       GET MEAL DASHBOARD
-       ============================================================ */
-    PROCEDURE GET_MEAL_DASHBOARD(
-        V_EMP_ID         IN VARCHAR2,
-        V_DATE           IN VARCHAR2,
-        V_SITE           IN VARCHAR2,
-        V_RES            OUT VARCHAR2,
-        V_RESULT         OUT VARCHAR2,
-        P_CURSOR         OUT SYS_REFCURSOR,
-        P_SUMMARY_CURSOR OUT SYS_REFCURSOR,
-        V_FROM_FXBL      IN VARCHAR2,
-        V_TO_FXBL        IN VARCHAR2,
-        V_ADD_BY         IN VARCHAR2
-    ) IS
-        V_DAY           DATE;
-        V_FROM_D        DATE;
-        V_TO_D          DATE;
-        V_TOTAL         NUMBER := 0;
-        V_NO_MEAL       NUMBER := 0;
-        V_COLLECTED     NUMBER := 0;
-        V_NOT_REQ_CAME  NUMBER := 0;
-        V_NOT_COLLECTED NUMBER := 0;
-    BEGIN
-
-        IF IS_ACTIVE_CMS_USER(V_EMP_ID) = 0 THEN
-            V_RES := '0';
-            V_RESULT := 'Active CMS user not found for employee: ' || V_EMP_ID;
-            RETURN;
-        END IF;
-
-        BEGIN
-            V_DAY    := TRUNC(TO_DATE(V_DATE, 'DD-MM-YYYY'));
-            V_FROM_D := PARSE_DDMMYYYY(V_FROM_FXBL);
-            V_TO_D   := PARSE_DDMMYYYY(V_TO_FXBL);
-        EXCEPTION
-            WHEN OTHERS THEN
-                V_RES := '0';
-                V_RESULT := 'Invalid date. Expected format DD-MM-YYYY';
-                RETURN;
-        END;
-
-        IF V_FROM_D IS NOT NULL AND V_TO_D IS NOT NULL AND V_FROM_D > V_TO_D THEN
-            V_RES := '0';
-            V_RESULT := 'From date cannot be greater than to date';
-            RETURN;
-        END IF;
-
-        WITH EMP AS
-        (
-            SELECT
-                M.FX_BADGE,
-                BC.NAME AS MEAL_PREFERENCE_NAME
-            FROM CMS.C_F1_MEAL_INFO M
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(M.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 1001
-            WHERE NVL(M.DEL_FLAG, 0) = 0
-              /* Filter given: ADD_DATE decides.
-                 No filter: badge must be valid on the meal date. */
-              AND (
-                    V_FROM_D IS NOT NULL OR V_TO_D IS NOT NULL
-                    OR ( M.FIRST_DATE_FXBL IS NOT NULL
-                         AND M.LAST_DATE_FXBL IS NOT NULL
-                         AND V_DAY BETWEEN TRUNC(M.FIRST_DATE_FXBL) AND TRUNC(M.LAST_DATE_FXBL) )
-                  )
-          AND M.ADD_DATE IS NOT NULL
-AND TRUNC(M.ADD_DATE) = V_DAY
-              AND ( V_ADD_BY IS NULL OR TRIM(V_ADD_BY) IS NULL
-                    OR UPPER(TRIM(M.ADD_BY)) = UPPER(TRIM(V_ADD_BY)) )
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(M.PROPERTY_01))
-                      AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                            OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                  )
-        ),
-        COLLECTED AS
-        (
-            SELECT DISTINCT S.FX_BADGE
-            FROM CMS.C_F1_SCAN_LOG S
-            WHERE NVL(S.DEL_FLAG, 0) = 0
-              AND TRUNC(S.MEAL_DATE) = V_DAY
-              AND S.COLLECTED_DATA = 'SUCCESS'
-              AND BADGE_IN_FILTER(S.FX_BADGE, V_FROM_D, V_TO_D, V_ADD_BY) = 1
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-                      AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                            OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                  )
-        )
-        SELECT
-            ( SELECT COUNT(DISTINCT FX_BADGE) FROM EMP ),
-            ( SELECT COUNT(DISTINCT FX_BADGE) FROM EMP
-              WHERE UPPER(TRIM(MEAL_PREFERENCE_NAME)) = 'NO MEAL REQUIRED' ),
-            ( SELECT COUNT(*) FROM COLLECTED ),
-            ( SELECT COUNT(DISTINCT S.FX_BADGE)
-              FROM CMS.C_F1_SCAN_LOG S
-              LEFT JOIN CMS.C_BASE_CODE_T BC
-                  ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-                 AND BC.TYPE_ID = 1001
-              WHERE NVL(S.DEL_FLAG, 0) = 0
-                AND TRUNC(S.MEAL_DATE) = V_DAY
-                AND UPPER(TRIM(BC.NAME)) = 'NO MEAL REQUIRED'
-                AND BADGE_IN_FILTER(S.FX_BADGE, V_FROM_D, V_TO_D, V_ADD_BY) = 1
-                AND EXISTS (
-                      SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                      WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                        AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                        AND NVL(U.DEL_FLAG, 0) = 0
-                        AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-                        AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                              OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                    ) ),
-            ( SELECT COUNT(DISTINCT E.FX_BADGE) FROM EMP E
-              WHERE UPPER(NVL(TRIM(E.MEAL_PREFERENCE_NAME), 'X')) <> 'NO MEAL REQUIRED'
-                AND NOT EXISTS ( SELECT 1 FROM COLLECTED C WHERE C.FX_BADGE = E.FX_BADGE ) )
-        INTO
-            V_TOTAL, V_NO_MEAL, V_COLLECTED, V_NOT_REQ_CAME, V_NOT_COLLECTED
-        FROM DUAL;
-
-        OPEN P_CURSOR FOR
-        SELECT
-            V_TOTAL         AS TOTAL_EMPLOYEES,
-            V_COLLECTED     AS MEALS_COLLECTED,
-            V_NOT_COLLECTED AS MEALS_NOT_COLLECTED,
-            V_NO_MEAL       AS NO_MEAL_REQUIRED,
-            V_NOT_REQ_CAME  AS NOT_REQUIRED_CAME
-        FROM DUAL;
-
-        OPEN P_SUMMARY_CURSOR FOR
-        WITH CATS AS
-        (
-            SELECT 1 AS SORT_NO, 'Indian Veg' AS CATEGORY FROM DUAL
-            UNION ALL SELECT 2, 'Indian Non-Veg' FROM DUAL
-            UNION ALL SELECT 3, 'Western Veg' FROM DUAL
-            UNION ALL SELECT 4, 'Western Non-Veg' FROM DUAL
-            UNION ALL SELECT 5, 'Chinese Non-Veg' FROM DUAL
-            UNION ALL SELECT 6, 'Chinese Veg' FROM DUAL
-            UNION ALL SELECT 7, 'Jain' FROM DUAL
-            UNION ALL SELECT 8, 'Vegan' FROM DUAL
-        ),
-        CNT AS
-        (
-            SELECT UPPER(TRIM(BC.NAME)) AS PREF, COUNT(DISTINCT S.FX_BADGE) AS TOTAL_COUNT
-            FROM CMS.C_F1_SCAN_LOG S
-            LEFT JOIN CMS.C_BASE_CODE_T BC
-                ON TO_CHAR(S.MEAL_PREFERENCE) = TO_CHAR(BC.ID)
-               AND BC.TYPE_ID = 1001
-            WHERE NVL(S.DEL_FLAG, 0) = 0
-              AND TRUNC(S.MEAL_DATE) = V_DAY
-              AND S.COLLECTED_DATA = 'SUCCESS'
-              AND BADGE_IN_FILTER(S.FX_BADGE, V_FROM_D, V_TO_D, V_ADD_BY) = 1
-              AND EXISTS (
-                    SELECT 1 FROM CMS.C_USER_MANAGE_T U
-                    WHERE UPPER(TRIM(U.EMP_ID)) = UPPER(TRIM(V_EMP_ID))
-                      AND UPPER(TRIM(U.SYSTEM_TYPE)) = 'CMS'
-                      AND NVL(U.DEL_FLAG, 0) = 0
-                      AND UPPER(TRIM(U.SITE)) = UPPER(TRIM(S.PROPERTY_01))
-                      AND ( V_SITE IS NULL OR TRIM(V_SITE) IS NULL OR UPPER(TRIM(V_SITE)) = 'ALL'
-                            OR UPPER(TRIM(U.SITE)) = UPPER(TRIM(V_SITE)) )
-                  )
-            GROUP BY UPPER(TRIM(BC.NAME))
-        )
-        SELECT
-            C.CATEGORY,
-            NVL(N.TOTAL_COUNT, 0) AS COLLECTED_COUNT,
-            CASE WHEN V_COLLECTED = 0 THEN 0
-                 ELSE ROUND(NVL(N.TOTAL_COUNT, 0) * 100 / V_COLLECTED) END AS PERCENTAGE
-        FROM CATS C
-        LEFT JOIN CNT N ON N.PREF = UPPER(TRIM(C.CATEGORY))
-        ORDER BY C.SORT_NO;
-
-        V_RES := '1';
-        V_RESULT := 'Success';
-
-    EXCEPTION
-        WHEN OTHERS THEN
-            V_RES := '0';
-            V_RESULT := 'Error: ' || SQLERRM;
-
-    END GET_MEAL_DASHBOARD;
-
-END F1_MEAL_MANAGEMENT;
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  TextField,
+  Typography,
+  Box,
+  Grid,
+  IconButton,
+  InputAdornment,
+  CircularProgress
+} from '@mui/material';
+import { createTheme } from '@mui/material/styles';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { makeStyles } from '@material-ui/core/styles';
+//import QRCode from "qrcode.react";
+import { QRCodeCanvas } from 'qrcode.react';
+
+import {
+  dealPostParamsEncrypt,
+  iwxKey,
+  getdk,
+  encrypt,
+  decrypt,
+  iwxPost
+} from '../EncryptDecrypt/Encryptfile';
+import { fetchempbasicinfo, getlogincredentials } from '../Apiconfig/apiforloginandempdetails';
+import loginimage from './login-artwork.jpg';
+
+const theme = createTheme();
+const useStyles = makeStyles((theme) => ({
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+    backgroundSize: "cover",
+  },
+  formm: {
+    width: "100%",
+    maxWidth: "400px",
+    padding: theme.spacing(2),
+    backgroundColor: "#fff",
+    borderRadius: theme.spacing(1),
+    boxShadow: "0px x0px 10px 10px rgba(0,0,0,0.25)",
+    fontSize: 16,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  textField: {
+    marginBottom: theme.spacing(2),
+  },
+  button: {
+    marginBottom: theme.spacing(1),
+  },
+}));
+
+const Login = () => {
+  const navigate = useNavigate();
+  const classes = useStyles(theme);
+  
+  // State declarations
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginStatus, setLoginStatus] = useState('');
+  const [account, setAccount] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [secretkey, setsecretkey] = useState('');
+  const [otp, setOTP] = useState("");
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [otploading, setotploading] = useState(false);
+
+  // Constants
+  const issuccessfullylogin = sessionStorage.getItem('issuccessfullylogin');
+  const isscuessqr = sessionStorage?.getItem('qrstatus');
+  const originalBoolean = true;
+  const encryptedBoolean = encrypt(originalBoolean.toString(), getdk(iwxKey));
+  const orginalnumberboo = 0;
+  const encryptedBooleannum = encrypt(orginalnumberboo.toString(), getdk(iwxKey));
+
+  // Handlers
+  const handleTogglePassword = () => {
+    setShowPassword(prev => !prev);
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleLogin(event);
+    }
+  };
+
+  // API functions
+  const fetchdata = async () => {
+    try {
+      const headers = {
+        apiID: 'ffff-1743480426986-1020912129-2253',
+        userKey: '10A33A67A312E649D907BBC927995B8A'
+      };
+      const params = {
+        EmpId: account,
+        EmpName: '',
+        Status: '',
+        StartPage: 1,
+        PageSize: 999999,
+        Func: 'UserManagement-Get_user_details_new'
+      };
+      const res = await iwxPost(params, { headers }, true);
+      const response = res.List;
+     // console.log(response)
+      const qrStatusValue = response[0].QrStatus;
+      const qrencrypt = encrypt(qrStatusValue.toString(), getdk(iwxKey));
+      sessionStorage.setItem('qrstatus', qrencrypt);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchempName = async () => {
+    try {
+      return await fetchempbasicinfo(account);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const StoreLoginLog = async (msg, empname, roles) => {
+   // console.log(empname)
+  //  console.log(roles)
+    try {
+      const headers = {
+        apiID: 'ffff-1743483394185-1020912129-2312',
+        userKey: '10A33A67A312E649D907BBC927995B8A'
+      };
+      const params = {
+        EmpId: account,
+        SystemIp: "",
+        LoginStatus: msg,
+        EmpName: empname ? empname[0].EmployeeName : '',
+        UserRole : roles ? roles.List[0]?.RoleName : '',
+        Func: 'UserManagement-Insert_login_log_new'
+      };
+     console.log(params)
+     const res= await iwxPost(params, { headers }, true);
+   //  console.log(res.List[0]?.Id);
+     return res.List[0]?.Id;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchRoleData = async () => {
+    const headers = {
+      apiID: 'ffff-1743482300704-1020912129-2290',
+      userKey: '10A33A67A312E649D907BBC927995B8A'
+    };
+    const params = {
+      EmpId: account,
+      Func: 'UserManagement-Get_role_based_empid_new'
+    };
+    try {
+      return await iwxPost(params, { headers }, true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const updatateqrstatua = async () => {
+    const acnt = sessionStorage.getItem('account');
+    const decryptemp = decrypt(acnt, getdk(iwxKey));
+    const empnumber = decryptemp.replace(/"/g, '');
+    const headers = {
+      apiID: 'ffff-1743483629535-1020912129-2321',
+      userKey: '10A33A67A312E649D907BBC927995B8A'
+    };
+    const params = {
+      EmpId: empnumber,
+      SecretKey: secretkey,
+      Func: 'UserManagement-Update_secret_key_new'
+    };
+    try {
+      if (isscuessqr === encryptedBooleannum) {
+        await iwxPost(params, { headers }, true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleGenerateSecret = async () => {
+    const headers = {
+      apiID: 'ffff-1694231787059-10208193125-0099',
+      userKey: '10A33A67A312E649D907BBC927995B8A'
+    };
+    try {
+     const response = await axios.post('https://microservice.abgind.foxconn.com/india/gateway', {}, { headers });
+   //const response = await axios.post('http://10.209.110.101:5665/G_Authenticator/Key/Generation', {}, { headers });
+      const res = JSON.parse(decrypt(response.data.r, getdk(iwxKey)));
+    //  console.log(res)
+      setsecretkey(res.secret);
+      setShowQRCode(true);
+      
+    } catch (error) {
+      console.error('Error generating secret:', error);
+    }
+  };
+
+  const generateOTPURI = () => {
+    const acnt = sessionStorage.getItem('account');
+    const decryptemp = decrypt(acnt, getdk(iwxKey));
+    const empnumber = decryptemp.replace(/"/g, '');
+    return `otpauth://totp/DMS:${encodeURIComponent(empnumber)}?secret=${secretkey}`;
+  };
+
+  const StoreOTPtologinlog = async (msg) => {
+    const getloginlogid = sessionStorage.getItem('loginlogID');
+    const decryptloginlog = decrypt(getloginlogid, getdk(iwxKey));
+    try {
+      const headers = {
+        apiID: 'ffff-1743483467265-1020912129-2315',
+        userKey: '10A33A67A312E649D907BBC927995B8A'
+      };
+      const params = {
+        Update: 'OTP',
+        Id: decryptloginlog,
+        Otp: otp,
+        OtpStatus: msg,
+        Func: 'UserManagement-Update_login_log_new',
+      };
+      await iwxPost(params, { headers }, true);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const verifyOTP = async () => {
+    setotploading(true);
+    const acnt = sessionStorage.getItem('account');
+    if (!acnt) return;
+
+    const decryptemp = decrypt(acnt, getdk(iwxKey));
+    const empnumber = decryptemp.replace(/"/g, '');
+    const headers = {
+      apiID: 'ffff-1743480426986-1020912129-2253',
+      userKey: '10A33A67A312E649D907BBC927995B8A'
+    };
+    const params = {
+      EmpId: empnumber,
+      EmpName: '',
+      Status: '',
+      StartPage: 1,
+      PageSize: 999999,
+      Func: 'UserManagement-Get_user_details_new'
+    };
+    const res = await iwxPost(params, { headers }, true);
+    const response = res.List;
+    const secretkeyget = response[0]?.SecretKey;
+    await verifyOTP22(secretkeyget);
+  };
+
+  const verifyOTP22 = async (secretkeyget) => {
+    const headers = {
+      apiID: 'ffff-1694232123378-10208193125-0103',
+      userKey: '433F1BB575A5F60E2547453C13FAFA32'
+    };
+    const params =dealPostParamsEncrypt({ 
+     secret: isscuessqr === encryptedBooleannum ? secretkey : secretkeyget,
+      otp: otp
+    });
+//console.log(params)
+    try {
+      const response = await axios.post('https://microservice.abgind.foxconn.com/india/gateway', params, { headers });
+   // const response = await axios.post('http://10.209.110.101:5665/G_Authenticator/OTP/User_Verifivation', params, { headers });
+    
+ const res =JSON.parse(decrypt(response.data.r, getdk(iwxKey)))
+//console.log(res)
+      if (res.IsOK===1) {
+        await updatateqrstatua();
+        sessionStorage.setItem('isLoggedIn', encryptedBoolean);
+        const getloginstatus = sessionStorage.getItem('loginresponse');
+        sessionStorage.setItem('data', getloginstatus);
+        await StoreOTPtologinlog(res.Msg);
+        navigate(`/home/Dashboard`, { state: { account } });
+      } else  {
+        setErrorMessage('Incorrect OTP');
+        await StoreOTPtologinlog(res.Msg);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setotploading(false);
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (!account || !password) {
+        setErrorMessage('Fill in all fields.');
+        setIsLoading(false);
+        return;
+      }
+
+      setErrorMessage('');
+      await fetchdata();
+      const accountt = dealPostParamsEncrypt(account);
+      sessionStorage.setItem('account', accountt.s);
+
+      const fetchempname = await fetchempName();
+      const fetchroles = await fetchRoleData();
+console.log(fetchempname)
+console.log(fetchroles)
+      try {
+        const headers = {
+          apiID: 'ffff-1743480426986-1020912129-2253',
+          userKey: '10A33A67A312E649D907BBC927995B8A'
+        };
+        const params = {
+          EmpId: account,
+          EmpName: '',
+          Status: '',
+          StartPage: 1,
+          PageSize: 999999,
+          Func: 'UserManagement-Get_user_details_new'
+        };
+        const res = await iwxPost(params, { headers }, true);
+        const response = res.List;
+        const findempdata = response.filter((dorm) => dorm.EmpId === account);
+
+        if (response.length === 0) {
+          setErrorMessage('You don\'t have access to this system.');
+          const msg = 'You don\'t have access to this system';
+          await StoreLoginLog(msg, fetchempname, fetchroles);
+          return;
+        } else if (findempdata[0]?.DelFlag === '1') {
+          setErrorMessage('You don\'t have access to this system.');
+          const msg = 'You don\'t have access to this system';
+          await StoreLoginLog(msg, fetchempname, fetchroles);
+          return;
+        }
+      } catch (error) {
+        setErrorMessage('Error checking account availability.');
+        const msg = 'Error checking account availability';
+        await StoreLoginLog(msg, fetchempname, fetchroles);
+        return;
+      }
+
+      const encryptedParams = dealPostParamsEncrypt({
+        Func: 'APPFrame-AccountLoginPhoneSpv3-IWX',
+        Account: account,
+        Password: password,
+        OsType: '1',
+        DeviceId: '1',
+        OsVer: '1',
+        AppVer: '1',
+        DeviceType: '1',
+        AppVersion: '1',
+      });
+
+      const response = await getlogincredentials(encryptedParams);
+      const decryptedResponse = decrypt(response.r, getdk(iwxKey));
+      const decryptedResponseObj = JSON.parse(decryptedResponse);
+
+      if (decryptedResponse && decryptedResponseObj.IsOK === '1') {
+        const loginlogresponse = await StoreLoginLog(decryptedResponseObj.Msg, fetchempname, fetchroles);
+        const encryptedloginlogid = encrypt(loginlogresponse.toString(), getdk(iwxKey));
+        sessionStorage.setItem('loginlogID', encryptedloginlogid);
+        sessionStorage.setItem('loginresponse', response.r);
+        sessionStorage.setItem('issuccessfullylogin', encryptedBoolean);
+        setLoginStatus('success');
+      } else {
+        await StoreLoginLog(decryptedResponseObj.Msg, fetchempname, fetchroles);
+        setErrorMessage(decryptedResponseObj.Msg);
+        setLoginStatus('error');
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlebacklogin = () => {
+    sessionStorage.removeItem('issuccessfullylogin');
+    sessionStorage.removeItem('qrstatus');
+    sessionStorage.removeItem('loginresponse');
+    sessionStorage.removeItem('loginlogID');
+    navigate('/login');
+    setAccount('');
+    setPassword('');
+  };
+
+  useEffect(() => {
+    setErrorMessage("");
+  }, [account, password, otp]);
+
+  useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('issuccessfullylogin');
+    if (isLoggedIn === null || isLoggedIn === encryptedBoolean) {
+      handleGenerateSecret();
+    }
+  }, [issuccessfullylogin, loginStatus]);
+
+  return (
+    <Grid container component="main" sx={{
+      height: "100vh",
+      backgroundImage: `url(${loginimage})`,
+      backgroundRepeat: "no-repeat",
+      height: "92vh",
+      opacity: 0.8,
+      zIndex: -1,
+      backgroundPosition: "center",
+    }}>
+      <Grid
+        item
+        xs={24}
+        sm={24}
+        md={24}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          bottom: 0,
+          justifyContent: "center",
+          marginTop: 'auto',
+          height: '100%',
+        }}
+      >
+      
+        <Box className={classes.root} onKeyPress={handleKeyPress}>
+          <Box className={classes.formm}>
+            <img
+              src="/images/logo1.png"
+              alt="MUI Image"
+            />
+            {issuccessfullylogin === encryptedBoolean ? (
+              <div>
+                <Typography sx={{ fontFamily: '"Open Sans","Helvetica","Arial",sans-serif', fontWeight: 600, fontSize: '1rem' }}>
+                  MFA Auth
+                </Typography>
+
+                {isscuessqr === encryptedBooleannum && (
+                  <>
+                    <br />
+                    {showQRCode && (
+                      <div>
+                        <QRCodeCanvas  value={generateOTPURI()} size={128} />
+                        <Typography sx={{ fontFamily: '"Open Sans","Helvetica","Arial",sans-serif', fontWeight: 600, fontSize: '10px' }}>
+                          Secret Key:<br /> {secretkey}
+                        </Typography>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <br />
+                <TextField
+                  error
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  helperText={errorMessage}
+                  onChange={(e) => setOTP(e.target.value)}
+                />
+                <Button fullWidth disabled={!otp} onClick={verifyOTP} sx={{ mt: 3, mb: 4 }} variant='contained'>
+                  {otploading ? <CircularProgress /> : "Verify OTP"}
+                </Button>
+                <Button onClick={handlebacklogin} variant='contained'>Back to login</Button>
+              </div>
+            ) : (
+              <form onSubmit={handleLogin}>
+                <Typography sx={{ fontFamily: '"Open Sans","Helvetica","Arial",sans-serif', fontWeight: 700, fontSize: '1rem' }}>
+                  Login
+                </Typography>
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Username"
+                  value={account}
+                  autoComplete="username"
+                  onChange={(e) => setAccount(e.target.value)}
+                />
+                <TextField
+                  autoComplete="current-password"
+                  margin="normal"
+                  fullWidth
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={handleTogglePassword} edge="end">
+                          {showPassword ? <Visibility /> : <VisibilityOff />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                {errorMessage && (
+                  <Typography color="error" variant="h6">
+                    {errorMessage}
+                  </Typography>
+                )}
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 3, mb: 2 }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? <CircularProgress /> : 'Login'}
+                </Button>
+              </form>
+            )}
+          </Box>
+        </Box>
+      </Grid>
+      <Grid
+        item
+        xs={24}
+        sm={24}
+        md={24}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          bottom: 0,
+          justifyContent: "center",
+          marginTop: "auto",
+          fontSize: "16px !important",
+        }}
+      >
+        <div>
+          <li style={{ listStyleType: "none", color: "#000 !important" }}>
+            FXCN IT: Tel:533-26038 | Email:idpbg-it-tn-dev@mail.foxconn.com
+          </li>
+          <li style={{ listStyleType: "none" }}>
+            Copyright 2020-2025 Foxconn A Business Group IT. All Rights Reserved
+          </li>
+        </div>
+      </Grid>
+    </Grid>
+  );
+};
+
+export default Login;
+
+import axios from 'axios';
+import CryptoJS from 'crypto-js';
+
+
+
+export const iwxKey = 'azRnOGY2azc3OGM2NjFkYWZjOGc1ZmRwYWxoZGExZmk=';//facd81g656fcd8p7a7lkh6dfa81gf4ik
+// 将加密的密钥解密--字符串中间排列
+// export function getdk(key) {
+//     const str = window.atob(key);
+//     const middle = Math.floor(str.length / 2);
+//     let left = middle - 1;
+//     let right = str.length % 2 === 0 ? middle : middle + 1;
+//     let result = '';
+//     while (left >= 0 && right < str.length) {
+//       result += str[right];
+//       result += str[left];
+//       left--;
+//       right++;
+//     }
+//     return result + str.slice(right) + str.slice(0, left + 1);
+// }
+
+export function getdk(_0x172371){const _0x185768=window["\u0061\u0074\u006f\u0062"](_0x172371);const _0x281670=Math["\u0066\u006c\u006f\u006f\u0072"](_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]/(0x89f37^0x89f35));let _0x129f13=_0x281670-(0x5f1d1^0x5f1d0);let _0x3f4c6e=_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]%(0xe670e^0xe670c)===(0x74e40^0x74e40)?_0x281670:_0x281670+(0x8a0f3^0x8a0f2);let _0x287f0c="".split("").reverse().join("");while(_0x129f13>=(0xaa513^0xaa513)&&_0x3f4c6e<_0x185768["\u006c\u0065\u006e\u0067\u0074\u0068"]){_0x287f0c+=_0x185768[_0x3f4c6e];_0x287f0c+=_0x185768[_0x129f13];_0x129f13--;_0x3f4c6e++;}return _0x287f0c+_0x185768["\u0073\u006c\u0069\u0063\u0065"](_0x3f4c6e)+_0x185768["\u0073\u006c\u0069\u0063\u0065"](0x787e0^0x787e0,_0x129f13+(0x88552^0x88553));}
+
+
+export const dealPostParamsEncrypt = (data = {}) => {
+  const res = {};
+  const o = encrypt(JSON.stringify({ Os: '', DeviceId: 'Utility', AppVer: '0' }), getdk(iwxKey));
+  let s = '';
+  s = encrypt(JSON.stringify(data), getdk(iwxKey));
+  res.s = s;
+  res.o = o;
+  return res;
+};
+
+export const encrypt = (str, key) => {
+  const k = CryptoJS.enc.Utf8.parse(key);
+  return CryptoJS.AES.encrypt(str, k, {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  }).toString();
+};
+
+export const decrypt = (str, key) => {
+  try{
+  const k = CryptoJS.enc.Utf8.parse(key);
+  const decrypted = CryptoJS.AES.decrypt(str, k, {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  }).toString(CryptoJS.enc.Utf8);
+  return decrypted;
+}catch(error){
+  console.error('Decryption error:', error);
+  return null;
+}
+};
+
+export const md5 = (str) => {
+  return CryptoJS.MD5(str)
+    .toString()
+    .toUpperCase();
+};
+
+export const dealPostParams =  (data = {}) => {
+  let params = "";
+  let res = null;
+
+  for (const key in data) {
+    // Replacing "=" and "&" with encoded values
+    data[key] = data[key].replace("=", "%3D").replace("&", "%26");
+    // Appending key-value pair to params string
+    params += `${key}=${data[key]}&`;
+  }
+
+  // Removing the last "&"
+  params = params.substring(0, params.length - 1);
+
+  // Returning the resulting params as an object
+  res = {
+    inputString: params,
+  };
+
+  return res;
+};
+
+
+
+
+export const getuserAccount= () =>{
+const data= sessionStorage.getItem('data')
+const decryptedResponse = decrypt(data, getdk(iwxKey));
+const decryptedResponseObj = JSON.parse(decryptedResponse);
+const UserName = decryptedResponseObj?.List[0]?.UserName
+const account = decryptedResponseObj?.List[0]?.AccountId
+return account
+}
+
+
+
+
+export const iwxPost  =async ( params ={},config ={},encrypt) =>{
+ // console.log(params)
+ // console.log(config)
+ 
+  const param =  encrypt ? dealPostParamsEncrypt(params)  :dealPostParams(params)
+  // const res = await axios.post("http://10.208.193.125:8086/gateway/manager",param,null ,{config})
+//console.log(res.data)
+try{
+const result = await axios.post("https://microservice.abgind.foxconn.com/india/gateway", param, {
+  headers: {
+    ...config.headers, // Append any custom headers
+  },
+});
+const res = encrypt
+? JSON.parse(decrypt(result.data.r, getdk(iwxKey)))
+: result.data;
+return res
+//setResponse(res); // Update state with response
+} catch (error) {
+console.error("Request failed:", error);
+}
+  }
+
+  
+export const  decryptForWeb =(str)=> {
+ const cfg= {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7
+   
+}
+  const key = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
+  const decrypted = CryptoJS.AES.decrypt(str, key, cfg
+  );
+  return CryptoJS.enc.Utf8.stringify(decrypted);
+}
+
+export const encryptForWeb =(str) => {
+//  console.log(str)
+  const cfg= {
+    iv: CryptoJS.enc.Hex.parse('0000000000000000'),
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7
+   
+}
+  const k = CryptoJS.enc.Utf8.parse(getdk('Mjk0ZjA3YzQ5NTU1NjVmOTc0YzhhYWE4Y2E0NDI3MWM='));//794fc586a5a5a589c4ac47402f7419c2
+  const encry =CryptoJS.AES.encrypt(str, k, cfg).toString()
+ // console.log(encry)
+  return encry
+}
+
+
+
+
+
+
