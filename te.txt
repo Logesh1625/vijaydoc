@@ -1,100 +1,27 @@
-const verifyOTP22 = async (secretkeyget) => {
-  setotploading(true);
+const data = response?.data;
 
-  const headers = {
-    apiID: 'ffff-1694232123378-10208193125-0103',
-    // userKey: 'YOUR_EXISTING_OTP_API_USER_KEY',
-          userKey: '433F1BB575A5F60E2547453C13FAFA32'
+console.log('OTP API raw response:', data);
 
-  };
+let res = null;
 
-  const selectedSecret =
-    isscuessqr === encryptedBooleannum
-      ? secretkey
-      : secretkeyget;
+if (typeof data?.r === 'string' && data.r.length > 0) {
+  const decryptedResponse = decrypt(data.r, getdk(iwxKey));
 
-  if (!selectedSecret || !otp.trim()) {
-    setErrorMessage('Secret or OTP is missing.');
-    setotploading(false);
-    return;
+  if (!decryptedResponse) {
+    throw new Error('Unable to decrypt OTP API response.');
   }
 
-  const params = dealPostParamsEncrypt({
-    secret: selectedSecret,
-    otp: otp.trim(),
-  });
+  res = JSON.parse(decryptedResponse);
+} else if (data && typeof data.IsOK !== 'undefined') {
+  res = data;
+} else {
+  console.error('Unexpected OTP response:', data);
 
-  try {
-    const response = await axios.post(
-      'https://microservice.abgind.foxconn.com/india/gateway',
-      params,
-      { headers }
-    );
+  setErrorMessage(
+    data?.message || 'OTP verification response is incomplete.'
+  );
 
-    const data = response?.data;
+  return;
+}
 
-    let res;
-
-    if (typeof data?.r === 'string') {
-      const decryptedResponse = decrypt(
-        data.r,
-        getdk(iwxKey)
-      );
-
-      if (!decryptedResponse) {
-        throw new Error('Unable to decrypt OTP API response.');
-      }
-
-      res = JSON.parse(decryptedResponse);
-    } else if (typeof data?.IsOK !== 'undefined') {
-      res = data;
-    } else {
-      console.error(
-        'OTP API returned an unexpected response structure.'
-      );
-
-      setErrorMessage(
-        data?.message || 'OTP verification failed.'
-      );
-
-      return;
-    }
-
-    if (Number(res.IsOK) === 1) {
-      await updatateqrstatua();
-
-      sessionStorage.setItem(
-        'isLoggedIn',
-        encryptedBoolean
-      );
-
-      const getloginstatus =
-        sessionStorage.getItem('loginresponse');
-
-      sessionStorage.setItem('data', getloginstatus);
-
-      await StoreOTPtologinlog(res.Msg);
-
-      navigate('/home/Dashboard', {
-        state: { account },
-      });
-    } else {
-      setErrorMessage(res.Msg || 'Incorrect OTP.');
-
-      await StoreOTPtologinlog(
-        res.Msg || 'OTP verification failed'
-      );
-    }
-  } catch (error) {
-    console.error(
-      'OTP verification error:',
-      error.response?.status || error.message
-    );
-
-    setErrorMessage(
-      'Unable to verify OTP. Please check the API response.'
-    );
-  } finally {
-    setotploading(false);
-  }
-};
+console.log('Parsed OTP response:', res);
