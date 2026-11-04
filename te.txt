@@ -1,60 +1,163 @@
 CREATE OR REPLACE PROCEDURE DMS.RUN_SUMMARY_REPORT_PK
 IS
-v_seq_number NUMBER;
+    v_seq_number NUMBER;
 BEGIN
---	SELECT DMS.C_SUMMARY_REPORT_SEQ.NEXTVAL INTO v_seq_number FROM DUAL; 
 
-	 INSERT INTO DMS.C_SUMMARY_REPORT_T(ID, WORK_DATE, DORM_NAME, DORM_LOCATION, Overall_Dorm_Capacity, Overall_Floor_Capacity, Occupied_Floor_Capacity,
-	 Vacant_Floor_Capacity, SUM_ROOM_CAPACITY, Occupied_Room_Capacity, Vacant_Room_Capacity, Sum_of_Bed_Capacity,
-      Occupied_Bed_Capacity, Vacant_Bed_Capacity,occupied_bed_ratio,vacant_bed_ratio,DORM_ID)
- SELECT DMS.C_SUMMARY_REPORT_SEQ.NEXTVAL,
+    INSERT INTO DMS.C_SUMMARY_REPORT_T
+    (
+        ID,
         WORK_DATE,
-       DORM_NAME,
-       DORM_LOCATION,
-       DORM_CAPACITY,
-       FLOOR_CAPACITY,
-       Occupied_Floor_Capacity,
-       Vacant_Floor_Capacity,
-       SUM_ROOM_CAPACITY,
-       Occupied_Room_Capacity,
-       Vacant_Room_Capacity,
-       Sum_of_Bed_Capacity,
-       Occupied_Bed_Capacity,
-       Vacant_Bed_Capacity,
-       occupied_bed_ratio,
-       vacant_bed_ratio,
-       DORM_ID
- FROM (
-SELECT   --DMS.C_SUMMARY_REPORT_SEQ.NEXTVAL, 
-		 TRUNC(SYSDATE) AS WORK_DATE,
-          d.DORM_NAME,
-          d.DORM_LOCATION,
-          d.DORM_CAPACITY ,
-          d.FLOOR_CAPACITY ,
-          COUNT(DISTINCT CASE WHEN B.CREATE_BED_FORM_STATUS = 1 THEN B.FLOOR_ID END) AS Occupied_Floor_Capacity,
-          COUNT(DISTINCT CASE WHEN f.CREATE_FLOOR_FORM_STATUS != 3 THEN f.ID END) AS Vacant_Floor_Capacity,
-          (SELECT SUM(f2.ROOM_CAPACITY) FROM DMS.C_FLOOR_CREATION_T f2 WHERE f2.DORM_ID = d.ID) AS SUM_ROOM_CAPACITY,
-          --COUNT(DISTINCT CASE WHEN b.CREATE_BED_FORM_STATUS =1 THEN b.ROOM_ID END) AS Occupied_Room_Capacity,
-          (SELECT SUM(f2.ROOM_CAPACITY) FROM DMS.C_FLOOR_CREATION_T f2 WHERE f2.DORM_ID = d.ID) -  
-    	  (COUNT(DISTINCT CASE WHEN b.CREATE_BED_FORM_STATUS NOT IN(1,3) THEN r.ID END)) AS Occupied_Room_Capacity,
-          --(SELECT SUM(f2.ROOM_CAPACITY) FROM DMS.C_FLOOR_CREATION_T f2 WHERE f2.DORM_ID = d.ID) - COUNT(CASE WHEN r.CREATE_ROOM_FORM_STATUS = 1 THEN r.ID END) AS Vacant_Room_Capacity,
-          COUNT(DISTINCT CASE WHEN b.CREATE_BED_FORM_STATUS NOT IN(1,3) THEN r.ID END) AS Vacant_Room_Capacity,
-          NVL((SELECT SUM(r2.BED_CAPACITY) FROM DMS.C_ROOM_CREATION_T r2 WHERE r2.DORM_ID = d.ID), 0) AS Sum_of_Bed_Capacity,
-          COUNT(CASE WHEN b.CREATE_BED_FORM_STATUS = 1 THEN 1 END) AS Occupied_Bed_Capacity,
-          COUNT(CASE WHEN b.CREATE_BED_FORM_STATUS = 0 THEN 1 END) AS Vacant_Bed_Capacity,
-          (COUNT(DISTINCT CASE WHEN CREATE_BED_FORM_STATUS = 1 THEN b.ID END)/ MAX(DORM_CAPACITY)) * 100 AS occupied_bed_ratio,
-          ((MAX(DORM_CAPACITY) - COUNT(DISTINCT CASE WHEN CREATE_BED_FORM_STATUS = 1 THEN b.ID END)) / MAX(DORM_CAPACITY)) * 100 AS vacant_bed_ratio,
-          d.ID AS DORM_ID 
-      FROM
-          DMS.C_DORM_CREATION_T d
-          LEFT JOIN DMS.C_FLOOR_CREATION_T f ON d.ID = f.DORM_ID AND f.DEL_FLAG = '0'
-          LEFT JOIN DMS.C_ROOM_CREATION_T r ON f.ID = r.FLOOR_ID AND r.DEL_FLAG = '0'
-          LEFT JOIN DMS.C_BED_CREATION_T b ON r.ID = b.ROOM_ID AND b.DEL_FLAG = '0'
-          WHERE 1=1 AND d.DEL_FLAG = '0'
-          GROUP BY
-      d.DORM_NAME,
-      d.DORM_LOCATION,
-      d.DORM_CAPACITY,
-      d.FLOOR_CAPACITY,
-      d.ID);
+        DORM_NAME,
+        DORM_LOCATION,
+        Overall_Dorm_Capacity,
+        Overall_Floor_Capacity,
+        Occupied_Floor_Capacity,
+        Vacant_Floor_Capacity,
+        SUM_ROOM_CAPACITY,
+        Occupied_Room_Capacity,
+        Vacant_Room_Capacity,
+        Sum_of_Bed_Capacity,
+        Occupied_Bed_Capacity,
+        Vacant_Bed_Capacity,
+        occupied_bed_ratio,
+        vacant_bed_ratio,
+        DORM_ID
+    )
+
+    SELECT
+        DMS.C_SUMMARY_REPORT_SEQ.NEXTVAL,
+        WORK_DATE,
+        DORM_NAME,
+        DORM_LOCATION,
+        DORM_CAPACITY,
+        FLOOR_CAPACITY,
+        Occupied_Floor_Capacity,
+        Vacant_Floor_Capacity,
+        SUM_ROOM_CAPACITY,
+        Occupied_Room_Capacity,
+        Vacant_Room_Capacity,
+        Sum_of_Bed_Capacity,
+        Occupied_Bed_Capacity,
+        Vacant_Bed_Capacity,
+        occupied_bed_ratio,
+        vacant_bed_ratio,
+        DORM_ID
+
+    FROM
+    (
+        SELECT
+            TRUNC(SYSDATE) AS WORK_DATE,
+            D.DORM_NAME,
+            D.DORM_LOCATION,
+            D.DORM_CAPACITY,
+            D.FLOOR_CAPACITY,
+
+            COUNT(DISTINCT CASE
+                WHEN B.CREATE_BED_FORM_STATUS = 1
+                THEN B.FLOOR_ID
+            END) AS Occupied_Floor_Capacity,
+
+            COUNT(DISTINCT CASE
+                WHEN F.CREATE_FLOOR_FORM_STATUS != 3
+                THEN F.ID
+            END) AS Vacant_Floor_Capacity,
+
+            -- Active Floor Room Capacity
+            (
+                SELECT NVL(SUM(F2.ROOM_CAPACITY), 0)
+                FROM DMS.C_FLOOR_CREATION_T F2
+                WHERE F2.DORM_ID = D.ID
+                  AND F2.DEL_FLAG = '0'
+            ) AS SUM_ROOM_CAPACITY,
+
+            -- Occupied Room Capacity
+            (
+                SELECT NVL(SUM(F2.ROOM_CAPACITY), 0)
+                FROM DMS.C_FLOOR_CREATION_T F2
+                WHERE F2.DORM_ID = D.ID
+                  AND F2.DEL_FLAG = '0'
+            )
+            -
+            COUNT(DISTINCT CASE
+                WHEN B.CREATE_BED_FORM_STATUS NOT IN (1,3)
+                THEN R.ID
+            END) AS Occupied_Room_Capacity,
+
+            -- Active Room Bed Capacity
+            NVL(
+                (
+                    SELECT SUM(R2.BED_CAPACITY)
+                    FROM DMS.C_ROOM_CREATION_T R2
+                    WHERE R2.DORM_ID = D.ID
+                      AND R2.DEL_FLAG = '0'
+                ), 0
+            ) AS Sum_of_Bed_Capacity,
+
+            COUNT(CASE
+                WHEN B.CREATE_BED_FORM_STATUS = 1
+                THEN 1
+            END) AS Occupied_Bed_Capacity,
+
+            COUNT(CASE
+                WHEN B.CREATE_BED_FORM_STATUS = 0
+                THEN 1
+            END) AS Vacant_Bed_Capacity,
+
+            CASE
+                WHEN MAX(D.DORM_CAPACITY) > 0
+                THEN
+                    (
+                        COUNT(DISTINCT CASE
+                            WHEN B.CREATE_BED_FORM_STATUS = 1
+                            THEN B.ID
+                        END)
+                        / MAX(D.DORM_CAPACITY)
+                    ) * 100
+                ELSE 0
+            END AS occupied_bed_ratio,
+
+            CASE
+                WHEN MAX(D.DORM_CAPACITY) > 0
+                THEN
+                    (
+                        (
+                            MAX(D.DORM_CAPACITY)
+                            -
+                            COUNT(DISTINCT CASE
+                                WHEN B.CREATE_BED_FORM_STATUS = 1
+                                THEN B.ID
+                            END)
+                        )
+                        / MAX(D.DORM_CAPACITY)
+                    ) * 100
+                ELSE 0
+            END AS vacant_bed_ratio,
+
+            D.ID AS DORM_ID
+
+        FROM DMS.C_DORM_CREATION_T D
+
+        LEFT JOIN DMS.C_FLOOR_CREATION_T F
+            ON D.ID = F.DORM_ID
+            AND F.DEL_FLAG = '0'
+
+        LEFT JOIN DMS.C_ROOM_CREATION_T R
+            ON F.ID = R.FLOOR_ID
+            AND R.DEL_FLAG = '0'
+
+        LEFT JOIN DMS.C_BED_CREATION_T B
+            ON R.ID = B.ROOM_ID
+            AND B.DEL_FLAG = '0'
+
+        WHERE D.DEL_FLAG = '0'
+
+        GROUP BY
+            D.DORM_NAME,
+            D.DORM_LOCATION,
+            D.DORM_CAPACITY,
+            D.FLOOR_CAPACITY,
+            D.ID
+    );
+
 END RUN_SUMMARY_REPORT_PK;
+/
